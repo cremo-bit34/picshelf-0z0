@@ -664,6 +664,8 @@ function saveStateImmediate() {
     localStorage.setItem('photo_org_biometric_lock', state.biometricLock ? 'true' : 'false');
     if (state.appLockPin) {
       localStorage.setItem('photo_org_app_pin', state.appLockPin);
+    } else {
+      localStorage.removeItem('photo_org_app_pin');
     }
     localStorage.setItem('photo_org_theme_pref', state.themePref || 'dark');
     localStorage.setItem('photo_org_accent_color', state.accentColor || '#f43f5e');
@@ -1202,19 +1204,59 @@ function renderSettings() {
     else totalDataLength += 160000;
   });
   const mbUsed = Math.max(1.6, totalDataLength / (1024 * 1024)).toFixed(1);
-  const totalGb = isPro ? 25 : 5;
+
+  // Dynamic Real Device Storage Detection
+  let totalGb = 128; // Modern standard phone base capacity
+  let freeGb = null;
+  let devicePercent = null;
+
+  if (window.AndroidApp && typeof window.AndroidApp.getDeviceStorageInfo === 'function') {
+    try {
+      const infoStr = window.AndroidApp.getDeviceStorageInfo();
+      const info = JSON.parse(infoStr);
+      if (info && info.totalGb) {
+        totalGb = info.totalGb;
+        freeGb = info.freeGb;
+        if (info.usedGb && info.totalGb) {
+          devicePercent = Math.min(100, Math.max(5, (parseFloat(info.usedGb) / parseFloat(info.totalGb)) * 100));
+        }
+      }
+    } catch (_) {}
+  } else if (navigator.storage && navigator.storage.estimate) {
+    try {
+      navigator.storage.estimate().then(est => {
+        if (est && est.quota) {
+          const quotaGb = Math.round(est.quota / (1024 * 1024 * 1024));
+          if (quotaGb > 0) {
+            const el = document.getElementById('storageUsageText');
+            if (el && (!window.AndroidApp || typeof window.AndroidApp.getDeviceStorageInfo !== 'function')) {
+              el.textContent = window.t
+                ? window.t('settings_storage_used', { used: mbUsed, total: quotaGb })
+                : `${mbUsed} MB used of ${quotaGb} GB`;
+            }
+          }
+        }
+      }).catch(() => {});
+    } catch (_) {}
+  }
 
   const storageUsageText = document.getElementById('storageUsageText');
   if (storageUsageText) {
-    storageUsageText.textContent = window.t
+    let usageStr = window.t
       ? window.t('settings_storage_used', { used: mbUsed, total: totalGb })
       : `${mbUsed} MB used of ${totalGb} GB`;
+    if (freeGb) {
+      usageStr += ` (${freeGb} GB free)`;
+    }
+    storageUsageText.textContent = usageStr;
   }
 
   const storageProgressBar = document.getElementById('storageProgressBar');
   if (storageProgressBar) {
-    const percent = Math.min(100, Math.max(5, (parseFloat(mbUsed) / (totalGb * 10.24))));
-    storageProgressBar.style.width = `${percent}%`;
+    const percent = devicePercent !== null
+      ? devicePercent
+      : Math.min(100, Math.max(5, (parseFloat(mbUsed) / (totalGb * 10.24))));
+    storageProgressBar.style.width = `${percent.toFixed(1)}%`;
   }
 
   const activePhotos = state.photos.filter(p => !p.deletedAt && !p.isPending).length;
@@ -1458,15 +1500,23 @@ function cancelPasscodeSetup() {
   setupFirstPasscode = '';
   setupPasscodePhase = 'create';
 
-  // If user cancelled initial setup and no valid pin was configured, revert toggle
-  const currentPin = state.appLockPin || localStorage.getItem('photo_org_app_pin');
-  if (!currentPin) {
-    state.biometricLock = false;
-    saveState();
-    const toggle = document.getElementById('biometricLockToggle');
-    if (toggle) toggle.checked = false;
-    const sub = document.getElementById('appLockSubControls');
-    if (sub) sub.style.display = 'none';
+  // If cancelling initial setup or reset without setting a new PIN, ensure lock is disabled so user is never locked out
+  if (setupModalMode === 'reset' || setupModalMode === 'setup') {
+    if (!state.appLockPin) {
+      state.biometricLock = false;
+      state.isAppLocked = false;
+      try {
+        localStorage.setItem('photo_org_biometric_lock', 'false');
+        localStorage.removeItem('photo_org_app_pin');
+      } catch (_) {}
+      saveStateImmediate();
+      const toggle = document.getElementById('biometricLockToggle');
+      if (toggle) toggle.checked = false;
+      const sub = document.getElementById('appLockSubControls');
+      if (sub) sub.style.display = 'none';
+      hideAppLock();
+      showToast('Vault Lock disabled');
+    }
   }
 }
 
@@ -1685,10 +1735,28 @@ function recoverPasscodeWithBiometrics() {
 }
 
 function resetPasscodeSecurityVault() {
-  if (confirm('Reset your Vault Lock? You will be prompted to create a new passcode.')) {
+  if (confirm('Reset your Vault Passcode? This will clear the forgotten passcode and let you set a new 4-digit passcode, or keep the lock disabled.')) {
+    // Clear old forgotten passcode and disable lock immediately so user is never locked out
+    state.appLockPin = null;
+    state.biometricLock = false;
+    state.isAppLocked = false;
+    try {
+      localStorage.removeItem('photo_org_app_pin');
+      localStorage.setItem('photo_org_biometric_lock', 'false');
+    } catch (_) {}
+    saveStateImmediate();
+
+    const toggle = document.getElementById('biometricLockToggle');
+    if (toggle) toggle.checked = false;
+    const sub = document.getElementById('appLockSubControls');
+    if (sub) sub.style.display = 'none';
+
     closeForgotPasscodeModal();
     hideAppLock();
-    openPasscodeSetupScreen('reset');
+    showToast('Vault Passcode Cleared');
+    setTimeout(() => {
+      openPasscodeSetupScreen('reset');
+    }, 250);
   }
 }
 
@@ -2283,8 +2351,11 @@ window.toggleLocationSuggestionForPhoto = toggleLocationSuggestionForPhoto;
 // Storage Management Handlers
 function clearAppCache() {
   showToast('Cleaning temporary caches...');
+  if (window.AndroidApp && typeof window.AndroidApp.clearCache === 'function') {
+    try { window.AndroidApp.clearCache(); } catch (_) {}
+  }
   setTimeout(() => {
-    showToast('Cleaned 14.8 MB of image caches & temporary thumbs!');
+    showToast('Cleaned image caches & temporary thumbs!');
     renderSettings();
   }, 400);
 }
@@ -3470,13 +3541,19 @@ async function downloadSinglePhoto(id) {
 
   showToast(`Preparing '${cleanName}.jpg'... 🖼️`);
 
+  // Fallback to gradient generation if dataUrl is empty
+  const srcDataUrl = photo.dataUrl || (photo.gradient ? generateGradientImage(photo.displayName, photo.category, photo.gradient) : null);
+  if (!srcDataUrl) {
+    showToast('No image data found');
+    return;
+  }
+
   // Ensure image is cleanly encoded as genuine JPEG format
-  const { blob, dataUrl: jpegDataUrl } = await convertToJpegBlob(photo.dataUrl, 0.95);
-  const finalDataUrl = jpegDataUrl || photo.dataUrl;
+  const { blob, dataUrl: jpegDataUrl } = await convertToJpegBlob(srcDataUrl, 0.95);
+  const finalDataUrl = jpegDataUrl || srcDataUrl;
 
   if (window.AndroidApp && typeof window.AndroidApp.downloadPhoto === 'function') {
     window.AndroidApp.downloadPhoto(finalDataUrl, fileName);
-    showToast(`Saved '${cleanName}.jpg' to Gallery & Downloads! 🖼️`);
   } else {
     // Fail-safe browser download: use FileSaver saveAs or native Blob download
     if (blob) {
@@ -6974,12 +7051,30 @@ async function exportPhotosToZip(photoList, zipFilename) {
     }
 
     const content = await zip.generateAsync({ type: 'blob' });
-    if (window.AndroidApp && typeof window.AndroidApp.downloadZip === 'function') {
-      const reader = new FileReader();
-      reader.onloadend = function() {
-        window.AndroidApp.downloadZip(reader.result, `${zipFilename}.zip`);
-      };
-      reader.readAsDataURL(content);
+    if (window.AndroidApp) {
+      // 1. Direct Native Save: Save each photo directly into the Android Phone Gallery
+      if (typeof window.AndroidApp.downloadMultiplePhotosToGallery === 'function') {
+        try {
+          const payload = photoList.map(p => ({
+            displayName: p.displayName || 'Photo',
+            dataUrl: p.dataUrl || (p.gradient ? generateGradientImage(p.displayName, p.category, p.gradient) : null)
+          })).filter(p => !!p.dataUrl);
+          if (payload.length > 0) {
+            window.AndroidApp.downloadMultiplePhotosToGallery(JSON.stringify(payload), zipFilename);
+          }
+        } catch (galErr) {
+          console.warn('downloadMultiplePhotosToGallery failed:', galErr);
+        }
+      }
+
+      // 2. Also save ZIP archive to Downloads for backup/archiving
+      if (typeof window.AndroidApp.downloadZip === 'function') {
+        const reader = new FileReader();
+        reader.onloadend = function() {
+          window.AndroidApp.downloadZip(reader.result, `${zipFilename}.zip`);
+        };
+        reader.readAsDataURL(content);
+      }
     } else {
       // Fail-safe browser download using native Blob object URL and FileSaver fallback
       if (typeof saveAs === 'function') {
@@ -8826,12 +8921,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    
     state.moveCopyTargetIds = ids;
     state.moveCopyIsAlbumMode = false;
     state.moveCopySourceAlbum = sourceAlbumName || (state.selectedFilterTags && state.selectedFilterTags.size === 1 ? Array.from(state.selectedFilterTags)[0] : null);
     state.moveCopyMode = state.moveCopyMode || 'copy';
     state.moveCopyDestinationAlbum = null;
     state.moveCopySearchQuery = '';
+    state.moveCopyMultiTags = [];
+    state.moveCopyIsMultiTagDest = false;
+    state.moveCopyDestinationTags = null;
+    state.moveCopyMultiTagExpanded = false;
+
+    resetMultiTagUI();
 
     const modal = document.getElementById('moveCopyModal');
     const modalTitle = document.getElementById('moveCopyModalTitle');
@@ -8899,10 +9001,17 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    
     state.moveCopyTargetIds = validPhotos.map(p => p.id);
     state.moveCopyMode = state.moveCopyMode || 'copy';
     state.moveCopyDestinationAlbum = null;
     state.moveCopySearchQuery = '';
+    state.moveCopyMultiTags = [];
+    state.moveCopyIsMultiTagDest = false;
+    state.moveCopyDestinationTags = null;
+    state.moveCopyMultiTagExpanded = false;
+
+    resetMultiTagUI();
 
     const modal = document.getElementById('moveCopyModal');
     const modalTitle = document.getElementById('moveCopyModalTitle');
@@ -8949,10 +9058,17 @@ document.addEventListener('DOMContentLoaded', () => {
       ? albumNameToHighlight
       : (state.moveCopyIsAlbumMode ? state.moveCopySourceAlbum : null);
 
+    
     state.moveCopyTargetIds = [];
     state.moveCopyDestinationAlbum = null;
     state.moveCopySourceAlbum = null;
     state.moveCopyIsAlbumMode = false;
+    state.moveCopyMultiTags = [];
+    state.moveCopyIsMultiTagDest = false;
+    state.moveCopyDestinationTags = null;
+    state.moveCopyMultiTagExpanded = false;
+
+    resetMultiTagUI();
 
     const sourceBadge = document.getElementById('moveCopySourceBadge');
     if (sourceBadge) sourceBadge.style.display = 'none';
@@ -9084,9 +9200,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.selectMoveCopyDestination = function(albumName) {
+    state.moveCopyIsMultiTagDest = false;
+    state.moveCopyDestinationTags = null;
     state.moveCopyDestinationAlbum = albumName;
     updateMoveCopyConfirmButton();
     window.renderMoveCopyAlbumsList();
+    if (typeof window.updateMultiTagIntersection === 'function') {
+      window.updateMultiTagIntersection();
+    }
   };
 
   function updateMoveCopyConfirmButton() {
@@ -9097,6 +9218,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const count = (state.moveCopyTargetIds || []).length;
     const dest = state.moveCopyDestinationAlbum;
+
+    if (state.moveCopyIsMultiTagDest && state.moveCopyDestinationTags && state.moveCopyDestinationTags.length > 0) {
+      btn.disabled = false;
+      const combinedName = state.moveCopyDestinationTags.join(' + ');
+      const actionLabel = state.moveCopyMode === 'copy'
+        ? (window.t ? window.t('organize_multitag_copy_to', { dest: combinedName }) : `Copy to '${combinedName}'`)
+        : (window.t ? window.t('organize_multitag_move_to', { dest: combinedName }) : `Move to '${combinedName}'`);
+      text.textContent = actionLabel;
+      const countNoun = count === 1 ? (window.t ? window.t('organize_photo_singular') : 'photo') : (window.t ? window.t('organize_photos_plural') : 'photos');
+      btn.title = `${actionLabel} (${count} ${countNoun})`;
+      if (icon) icon.className = state.moveCopyMode === 'copy' ? 'fa-solid fa-copy' : 'fa-solid fa-arrow-right-arrow-left';
+      return;
+    }
 
     if (!dest) {
       btn.disabled = true;
@@ -9139,7 +9273,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const validPhotos = state.photos.filter(p => !p.isPending && !p.deletedAt);
 
-    list.innerHTML = availableTags.map(tag => {
+    // Multi-tag combined row at top if >= 2 valid tags
+    const multiTags = (state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0);
+    let multiTagTopRowHtml = '';
+    if (multiTags.length >= 2) {
+      const combinedName = multiTags.join(' + ');
+      const isMultiSelected = !!state.moveCopyIsMultiTagDest;
+      const matchCount = validPhotos.filter(p =>
+        multiTags.every(vt => p.tags && p.tags.some(pt => pt.toLowerCase() === vt.toLowerCase()))
+      ).length;
+      const countNoun = matchCount === 1
+        ? (window.t ? window.t('organize_photo_singular') : 'photo')
+        : (window.t ? window.t('organize_photos_plural') : 'photos');
+
+      const dotStackHtml = multiTags.map(t => {
+        const tagObj = (state.tags || []).find(tag => tag.name.toLowerCase() === t.toLowerCase());
+        const color = tagObj ? tagObj.color : '#fbbf24';
+        return `<span class="multitag-stack-dot" style="background: ${color};" title="${escapeHtml(t)}"></span>`;
+      }).join('');
+
+      multiTagTopRowHtml = `
+        <div class="move-copy-album-row multitag-combined-row ${isMultiSelected ? 'selected' : ''}" 
+             onclick="selectMultiTagAsDestination()" title="Select combined multi-tag destination">
+          <div class="album-row-left">
+            <div class="multitag-result-dot-stack">
+              ${dotStackHtml}
+            </div>
+            <div>
+              <div class="album-row-name" style="color: #fbbf24; font-weight: 700;">
+                ${escapeHtml(combinedName)}
+                <span style="font-size: 10px; background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 1px 6px; border-radius: 8px; margin-left: 6px;">VIP MULTI-TAG</span>
+              </div>
+              <div class="album-row-count">${matchCount} ${escapeHtml(countNoun)} match</div>
+            </div>
+          </div>
+          <div class="album-row-radio">
+            <i class="fa-solid fa-check"></i>
+          </div>
+        </div>
+      `;
+    }
+
+    list.innerHTML = multiTagTopRowHtml + availableTags.map(tag => {
       const isSelected = state.moveCopyDestinationAlbum === tag.name;
       // In album mode, disable source album for both copy and move (cannot copy/move an album into itself)
       // In photo mode, only disable source in move mode
@@ -9180,10 +9355,398 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   };
 
+
+  // -------------------------------------------------------------
+  // VIP MULTI-TAG ALBUM INTERSECTION ENGINE
+  // -------------------------------------------------------------
+  function resetMultiTagUI() {
+    const multiTagContainer = document.getElementById('moveCopyMultiTagContainer');
+    const multiTagToggleBtn = document.getElementById('multiTagToggleBtn');
+    const multiTagBody = document.getElementById('multiTagBuilderBody');
+    const multiTagBadge = document.getElementById('multiTagActiveBadge');
+    const multiTagCard = document.getElementById('multiTagResultCard');
+    const multiTagRow = document.getElementById('multiTagChainRow');
+    if (multiTagContainer) multiTagContainer.classList.remove('highlighted-dest');
+    if (multiTagToggleBtn) {
+      multiTagToggleBtn.classList.remove('expanded');
+      multiTagToggleBtn.setAttribute('aria-expanded', 'false');
+    }
+    if (multiTagBody) multiTagBody.style.display = 'none';
+    if (multiTagBadge) multiTagBadge.style.display = 'none';
+    if (multiTagCard) {
+      multiTagCard.style.display = 'none';
+      multiTagCard.classList.remove('active-destination');
+    }
+    if (multiTagRow) multiTagRow.innerHTML = '';
+  }
+
+  window.toggleMultiTagBuilder = function() {
+    state.moveCopyMultiTagExpanded = !state.moveCopyMultiTagExpanded;
+    const body = document.getElementById('multiTagBuilderBody');
+    const toggleBtn = document.getElementById('multiTagToggleBtn');
+    if (!body || !toggleBtn) return;
+
+    if (state.moveCopyMultiTagExpanded) {
+      body.style.display = 'block';
+      toggleBtn.classList.add('expanded');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      if (!Array.isArray(state.moveCopyMultiTags) || state.moveCopyMultiTags.length === 0) {
+        const available = state.tags || [];
+        state.moveCopyMultiTags = available.length > 0 ? [available[0].name] : [''];
+      }
+      window.renderMultiTagChain();
+    } else {
+      body.style.display = 'none';
+      toggleBtn.classList.remove('expanded');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+  };
+
+  window.renderMultiTagChain = function() {
+    const chainRow = document.getElementById('multiTagChainRow');
+    const badge = document.getElementById('multiTagActiveBadge');
+    if (!chainRow) return;
+
+    if (!Array.isArray(state.moveCopyMultiTags) || state.moveCopyMultiTags.length === 0) {
+      state.moveCopyMultiTags = [''];
+    }
+
+    const allTags = state.tags || [];
+    const validTags = state.moveCopyMultiTags.filter(t => t && t.trim().length > 0);
+
+    // Update active badge in toggle header
+    if (badge) {
+      if (validTags.length > 0) {
+        badge.style.display = 'inline-block';
+        badge.textContent = window.t ? window.t('organize_multitag_badge', { count: validTags.length }) : `${validTags.length} tags`;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    const itemsHtml = state.moveCopyMultiTags.map((currentTag, idx) => {
+      const tagObj = allTags.find(t => t.name.toLowerCase() === (currentTag || '').toLowerCase());
+      const dotColor = tagObj ? tagObj.color : '#64748b';
+
+      // Other selected tags to exclude from this dropdown
+      const selectedElsewhere = new Set(
+        state.moveCopyMultiTags
+          .filter((t, k) => k !== idx && t && t.trim().length > 0)
+          .map(t => t.toLowerCase())
+      );
+
+      const availableForThisSlot = allTags.filter(t => !selectedElsewhere.has(t.name.toLowerCase()));
+
+      const placeholderText = window.t ? window.t('organize_multitag_placeholder') : 'Select album tag...';
+      const optionsHtml = [
+        `<option value="" ${!currentTag ? 'selected' : ''}>${placeholderText}</option>`,
+        ...availableForThisSlot.map(t => {
+          const isSelected = currentTag && t.name.toLowerCase() === currentTag.toLowerCase();
+          return `<option value="${escapeHtml(t.name)}" ${isSelected ? 'selected' : ''}>${escapeHtml(t.name)}</option>`;
+        })
+      ].join('');
+
+      const removeBtnHtml = (state.moveCopyMultiTags.length > 1 || currentTag)
+        ? `<button type="button" class="multitag-remove-btn" onclick="removeMultiTagChainItem(${idx})" title="Remove tag" aria-label="Remove tag"><i class="fa-solid fa-xmark"></i></button>`
+        : '';
+
+      return `
+        <div class="multitag-item ${currentTag ? 'selected' : ''}">
+          <span class="multitag-dot" style="background: ${dotColor};"></span>
+          <select class="multitag-select" onchange="handleMultiTagChainChange(${idx}, this.value)" aria-label="Select Album Tag ${idx + 1}">
+            ${optionsHtml}
+          </select>
+          ${removeBtnHtml}
+        </div>
+      `;
+    }).join('');
+
+    // Check if at least one tag is selected and there are remaining unselected tags in state.tags
+    const selectedSet = new Set(state.moveCopyMultiTags.filter(t => t && t.trim().length > 0).map(t => t.toLowerCase()));
+    const unselectedRemaining = allTags.filter(t => !selectedSet.has(t.name.toLowerCase()));
+    const hasAtLeastOneSelected = state.moveCopyMultiTags.some(t => t && t.trim().length > 0);
+
+    const plusBtnHtml = (hasAtLeastOneSelected && unselectedRemaining.length > 0)
+      ? `<button type="button" class="multitag-add-tag-btn" onclick="addMultiTagChainItem()" title="${window.t ? window.t('organize_multitag_add_btn') : 'Add another tag'}" aria-label="Add another tag"><i class="fa-solid fa-plus"></i></button>`
+      : '';
+
+    chainRow.innerHTML = itemsHtml + plusBtnHtml;
+
+    // Recalculate intersection
+    window.updateMultiTagIntersection();
+  };
+
+  window.addMultiTagChainItem = function() {
+    const allTags = state.tags || [];
+    const selectedSet = new Set((state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0).map(t => t.toLowerCase()));
+    const unselected = allTags.filter(t => !selectedSet.has(t.name.toLowerCase()));
+
+    if (unselected.length > 0) {
+      state.moveCopyMultiTags.push(unselected[0].name);
+      window.renderMultiTagChain();
+      window.renderMoveCopyAlbumsList();
+    }
+  };
+
+  window.removeMultiTagChainItem = function(idx) {
+    if (!Array.isArray(state.moveCopyMultiTags)) return;
+    state.moveCopyMultiTags.splice(idx, 1);
+    if (state.moveCopyMultiTags.length === 0) {
+      state.moveCopyMultiTags = [''];
+    }
+
+    const validTags = state.moveCopyMultiTags.filter(t => t && t.trim().length > 0);
+    if (validTags.length < 2 && state.moveCopyIsMultiTagDest) {
+      state.moveCopyIsMultiTagDest = false;
+      state.moveCopyDestinationAlbum = null;
+      state.moveCopyDestinationTags = null;
+      updateMoveCopyConfirmButton();
+    }
+
+    window.renderMultiTagChain();
+    window.renderMoveCopyAlbumsList();
+  };
+
+  window.handleMultiTagChainChange = function(idx, value) {
+    if (!Array.isArray(state.moveCopyMultiTags)) state.moveCopyMultiTags = [];
+    state.moveCopyMultiTags[idx] = value;
+
+    const validTags = state.moveCopyMultiTags.filter(t => t && t.trim().length > 0);
+    if (state.moveCopyIsMultiTagDest) {
+      if (validTags.length >= 2) {
+        state.moveCopyDestinationTags = [...validTags];
+        state.moveCopyDestinationAlbum = validTags.join(' + ');
+      } else {
+        state.moveCopyIsMultiTagDest = false;
+        state.moveCopyDestinationAlbum = null;
+        state.moveCopyDestinationTags = null;
+      }
+      updateMoveCopyConfirmButton();
+    }
+
+    window.renderMultiTagChain();
+    window.renderMoveCopyAlbumsList();
+  };
+
+  window.updateMultiTagIntersection = function() {
+    const card = document.getElementById('multiTagResultCard');
+    const dotStack = document.getElementById('multiTagDotStack');
+    const label = document.getElementById('multiTagResultLabel');
+    const countEl = document.getElementById('multiTagResultCount');
+    const selectDestBtn = document.getElementById('multiTagSelectDestBtn');
+    const selectBtnText = document.getElementById('multiTagSelectBtnText');
+    const thumbsRail = document.getElementById('multiTagMatchingThumbs');
+    const container = document.getElementById('moveCopyMultiTagContainer');
+
+    if (!card) return;
+
+    const validTags = (state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0);
+
+    if (validTags.length < 2) {
+      card.style.display = 'none';
+      if (container) container.classList.remove('highlighted-dest');
+      return;
+    }
+
+    card.style.display = 'block';
+
+    // Dot stack
+    if (dotStack) {
+      const allTags = state.tags || [];
+      dotStack.innerHTML = validTags.map(t => {
+        const tagObj = allTags.find(tag => tag.name.toLowerCase() === t.toLowerCase());
+        const color = tagObj ? tagObj.color : '#fbbf24';
+        return `<span class="multitag-stack-dot" style="background: ${color};" title="${escapeHtml(t)}"></span>`;
+      }).join('');
+    }
+
+    // Label: "Photos with both tags:" vs "Photos with all tags:"
+    if (label) {
+      label.textContent = validTags.length === 2
+        ? (window.t ? window.t('organize_multitag_match_both') : 'Photos with both tags:')
+        : (window.t ? window.t('organize_multitag_match_all') : `Photos with all ${validTags.length} tags:`);
+    }
+
+    // Calculate intersection
+    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+    const matchingPhotos = validPhotos.filter(p =>
+      validTags.every(vt => p.tags && p.tags.some(pt => pt.toLowerCase() === vt.toLowerCase()))
+    );
+
+    if (countEl) {
+      if (matchingPhotos.length === 0) {
+        countEl.textContent = window.t ? window.t('organize_multitag_no_matches') : 'No photos currently match all tags';
+      } else {
+        const countNoun = matchingPhotos.length === 1
+          ? (window.t ? window.t('organize_photo_singular') : 'photo')
+          : (window.t ? window.t('organize_photos_plural') : 'photos');
+        countEl.textContent = `${matchingPhotos.length} ${countNoun} match`;
+      }
+    }
+
+    // Thumbnails
+    if (thumbsRail) {
+      if (matchingPhotos.length > 0) {
+        thumbsRail.style.display = 'flex';
+        const maxThumbs = 6;
+        const displayThumbs = matchingPhotos.slice(0, maxThumbs);
+        const extraCount = matchingPhotos.length - displayThumbs.length;
+
+        let thumbsHtml = displayThumbs.map(p => `
+          <img src="${p.dataUrl}" alt="${escapeHtml(p.displayName || 'Photo')}" class="multitag-match-thumb" title="${escapeHtml(p.displayName || '')}">
+        `).join('');
+
+        if (extraCount > 0) {
+          thumbsHtml += `<div class="multitag-match-more">+${extraCount}</div>`;
+        }
+        thumbsRail.innerHTML = thumbsHtml;
+      } else {
+        thumbsRail.style.display = 'none';
+        thumbsRail.innerHTML = '';
+      }
+    }
+
+    // Destination button state
+    const isSelectedDest = !!state.moveCopyIsMultiTagDest;
+    if (card) card.classList.toggle('active-destination', isSelectedDest);
+    if (container) container.classList.toggle('highlighted-dest', isSelectedDest);
+    if (selectDestBtn) selectDestBtn.classList.toggle('selected', isSelectedDest);
+    if (selectBtnText) {
+      selectBtnText.textContent = isSelectedDest
+        ? (window.t ? window.t('organize_multitag_selected') : 'Destination Selected')
+        : (window.t ? window.t('organize_multitag_select_dest') : 'Select Combined Destination');
+    }
+  };
+
+  window.selectMultiTagAsDestination = function() {
+    const validTags = (state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0);
+    if (validTags.length < 2) {
+      showToast('Select at least 2 tags to create a combined destination!');
+      return;
+    }
+
+    state.moveCopyIsMultiTagDest = true;
+    state.moveCopyDestinationTags = [...validTags];
+    state.moveCopyDestinationAlbum = validTags.join(' + ');
+
+    window.updateMultiTagIntersection();
+    updateMoveCopyConfirmButton();
+    window.renderMoveCopyAlbumsList();
+
+    showToast(`✨ Selected combined destination: '${state.moveCopyDestinationAlbum}'`);
+  };
+
   window.executeMoveCopyAction = function() {
     const dest = state.moveCopyDestinationAlbum;
     const ids = state.moveCopyTargetIds || [];
     if (!dest || !ids.length) return;
+
+    // Multi-tag Destination Execution
+    if (state.moveCopyIsMultiTagDest && state.moveCopyDestinationTags && state.moveCopyDestinationTags.length > 0) {
+      const destTags = state.moveCopyDestinationTags;
+      
+      // Ensure all destination tags exist in state.tags
+      destTags.forEach(destTagName => {
+        if (!state.tags.some(t => t.name.toLowerCase() === destTagName.toLowerCase())) {
+          const now = Date.now();
+          state.tags.push({
+            name: destTagName,
+            color: PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
+            createdAt: now,
+            lastModifiedAt: now,
+            lastViewedAt: now,
+            isFavorite: false
+          });
+        }
+      });
+
+      const mode = state.moveCopyMode || 'copy';
+      const isAlbumMode = !!state.moveCopyIsAlbumMode;
+      const sourceAlbum = state.moveCopySourceAlbum;
+      const deleteSourceChecked = isAlbumMode && mode === 'move' && !!document.getElementById('moveCopyDeleteSourceCheck')?.checked;
+
+      // Save previous snapshot for undo
+      const previousSnapshots = ids.map(id => {
+        const p = state.photos.find(item => item.id === id);
+        return p ? { id, tags: [...p.tags], category: p.category } : null;
+      }).filter(Boolean);
+      const previousTags = state.tags.map(t => ({ ...t }));
+
+      let affectedCount = 0;
+      ids.forEach(id => {
+        const photo = state.photos.find(p => p.id === id);
+        if (!photo) return;
+        affectedCount++;
+
+        if (mode === 'copy') {
+          destTags.forEach(destTagName => {
+            if (!photo.tags.includes(destTagName)) {
+              photo.tags.push(destTagName);
+            }
+          });
+          if (!photo.category || photo.category === 'Import') {
+            photo.category = destTags[0];
+          }
+        } else if (mode === 'move') {
+          if (sourceAlbum) {
+            photo.tags = photo.tags.filter(t => t.toLowerCase() !== sourceAlbum.toLowerCase());
+          }
+          destTags.forEach(destTagName => {
+            if (!photo.tags.includes(destTagName)) {
+              photo.tags.push(destTagName);
+            }
+          });
+          photo.category = destTags[0];
+        }
+      });
+
+      let sourceAlbumRemoved = false;
+      if (deleteSourceChecked && sourceAlbum) {
+        const remainingInSource = state.photos.filter(p => !p.isPending && !p.deletedAt && p.tags && p.tags.includes(sourceAlbum)).length;
+        if (remainingInSource === 0) {
+          state.tags = state.tags.filter(t => t.name.toLowerCase() !== sourceAlbum.toLowerCase());
+          sourceAlbumRemoved = true;
+        }
+      }
+
+      destTags.forEach(destTagName => recordAlbumActivity(destTagName, 'modified'));
+      if (sourceAlbum) {
+        recordAlbumActivity(sourceAlbum, 'modified');
+      }
+
+      saveState();
+
+      const combinedLabel = destTags.join(' + ');
+      const targetToHighlight = (isAlbumMode && sourceAlbum)
+        ? (sourceAlbumRemoved ? destTags[0] : sourceAlbum)
+        : null;
+
+      window.closeMoveCopyModal(targetToHighlight);
+      state.selectedGalleryPhotoIds.clear();
+      renderAll();
+
+      if (targetToHighlight && window.highlightReturnedAlbumCard) {
+        window.highlightReturnedAlbumCard(targetToHighlight);
+      }
+
+      window._lastMoveCopyUndo = {
+        snapshots: previousSnapshots,
+        tags: previousTags,
+        mode,
+        sourceAlbum,
+        dest: combinedLabel,
+        isAlbumMode
+      };
+
+      const actionText = mode === 'copy' ? 'Copied' : 'Moved';
+      if (isAlbumMode) {
+        const cleanupNote = sourceAlbumRemoved ? ' (Source album cleaned up)' : '';
+        showToast(`✨ ${actionText} complete album '${sourceAlbum}' (${affectedCount} photo${affectedCount === 1 ? '' : 's'}) to multi-tag destination '${combinedLabel}'!${cleanupNote}`);
+      } else {
+        showToast(`✨ ${actionText} ${affectedCount} photo${affectedCount === 1 ? '' : 's'} to multi-tag destination '${combinedLabel}'!`);
+      }
+      return;
+    }
 
     // Ensure tag exists
     if (!state.tags.some(t => t.name.toLowerCase() === dest.toLowerCase())) {
@@ -10899,6 +11462,13 @@ document.addEventListener('DOMContentLoaded', () => {
   window.permanentlyEraseAlbumFromTrash = permanentlyEraseAlbumFromTrash;
 
   // VIP Move & Copy Complete Album Exports
+  window.toggleMultiTagBuilder = toggleMultiTagBuilder;
+  window.renderMultiTagChain = renderMultiTagChain;
+  window.addMultiTagChainItem = addMultiTagChainItem;
+  window.removeMultiTagChainItem = removeMultiTagChainItem;
+  window.handleMultiTagChainChange = handleMultiTagChainChange;
+  window.updateMultiTagIntersection = updateMultiTagIntersection;
+  window.selectMultiTagAsDestination = selectMultiTagAsDestination;
   window.openMoveCopyAlbumModal = openMoveCopyAlbumModal;
   window.openMoveCopyModal = openMoveCopyModal;
   window.closeMoveCopyModal = closeMoveCopyModal;

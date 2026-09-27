@@ -917,9 +917,7 @@
 
               <!-- App Lock Sub-Controls -->
               <div class="app-lock-sub-controls" id="appLockSubControls" style="display: none; padding: 6px 16px 14px 48px; gap: 8px; flex-wrap: wrap;">
-                <button type="button" class="btn btn-xs btn-outline" onclick="lockAppNow()" style="font-size:11px; border-radius:18px; padding: 4px 10px;">
-                  <i class="fa-solid fa-lock" style="margin-right:4px;"></i> Lock App Now (Test)
-                </button>
+                
                 <button type="button" class="btn btn-xs btn-outline" onclick="openChangePinModal()" style="font-size:11px; border-radius:18px; padding: 4px 10px;">
                   <i class="fa-solid fa-key" style="margin-right:4px;"></i> Change 4-Digit PIN
                 </button>
@@ -1283,11 +1281,11 @@
               </span>
               <span class="dock-btn-label" data-i18n="albums_tagline">Organize</span>
             </button>
-            <button type="button" class="detail-dock-btn action-share" id="detailShareBtn" title="Share Photo" aria-label="Share Photo">
+            <button type="button" class="detail-dock-btn action-share" id="detailShareBtn" onclick="if (state.activePhotoId) shareSinglePhoto(state.activePhotoId);" title="Share Photo" aria-label="Share Photo">
               <span class="dock-btn-icon"><i class="fa-solid fa-arrow-up-from-bracket"></i></span>
               <span class="dock-btn-label" data-i18n="detail_share">Share</span>
             </button>
-            <button type="button" class="detail-dock-btn action-download" id="detailDownloadBtn" title="Download High-Res" aria-label="Download Photo">
+            <button type="button" class="detail-dock-btn action-download" id="detailDownloadBtn" onclick="if (state.activePhotoId) downloadSinglePhoto(state.activePhotoId);" title="Download High-Res" aria-label="Download Photo">
               <span class="dock-btn-icon"><i class="fa-solid fa-download"></i></span>
               <span class="dock-btn-label" data-i18n="detail_download">Download</span>
             </button>
@@ -2371,6 +2369,51 @@
             </button>
           </div>
 
+          <!-- Multi-Tag Album Intersection Builder (Collapsible VIP Feature) -->
+          <div class="move-copy-multitag-container" id="moveCopyMultiTagContainer">
+            <button type="button" class="multitag-toggle-btn" id="multiTagToggleBtn" onclick="toggleMultiTagBuilder()" aria-expanded="false">
+              <div class="multitag-toggle-left">
+                <span class="multitag-icon-badge">
+                  <i class="fa-solid fa-layer-group"></i>
+                </span>
+                <div class="multitag-title-wrap">
+                  <span class="multitag-title" data-i18n="organize_multitag_title">Find Album with Multiple Tags</span>
+                  <span class="multitag-badge" id="multiTagActiveBadge" style="display: none;">0 tags</span>
+                </div>
+              </div>
+              <div class="multitag-toggle-right">
+                <span class="multitag-hint-text" id="multiTagHintText" data-i18n="organize_multitag_subtitle">Combine 2+ tags</span>
+                <i class="fa-solid fa-chevron-down multitag-chevron" id="multiTagChevron"></i>
+              </div>
+            </button>
+
+            <!-- Collapsible Body -->
+            <div class="multitag-builder-body" id="multiTagBuilderBody" style="display: none;">
+              <!-- Horizontal Chain of Dropdowns & Plus Button -->
+              <div class="multitag-chain-row" id="multiTagChainRow">
+                <!-- Rendered by JS -->
+              </div>
+
+              <!-- Live Intersection Summary Card -->
+              <div class="multitag-result-card" id="multiTagResultCard" style="display: none;">
+                <div class="multitag-result-header">
+                  <div class="multitag-result-info">
+                    <span class="multitag-result-dot-stack" id="multiTagDotStack"></span>
+                    <div>
+                      <div class="multitag-result-label" id="multiTagResultLabel">Both tags match:</div>
+                      <div class="multitag-result-count" id="multiTagResultCount">0 photos match</div>
+                    </div>
+                  </div>
+                  <button type="button" class="multitag-select-btn" id="multiTagSelectDestBtn" onclick="selectMultiTagAsDestination()">
+                    <i class="fa-solid fa-check"></i> <span id="multiTagSelectBtnText" data-i18n="organize_multitag_select_dest">Select Combined Destination</span>
+                  </button>
+                </div>
+                <!-- Thumbnail Rail of Matching Intersection Photos -->
+                <div class="multitag-matching-thumbs" id="multiTagMatchingThumbs" style="display: none;"></div>
+              </div>
+            </div>
+          </div>
+
           <!-- Destination Album Selection List -->
           <div class="move-copy-albums-list" id="moveCopyAlbumsList">
             <!-- Rendered by JS: Album rows with radio indicators -->
@@ -2812,7 +2855,7 @@
             <button class="close-dialog-btn" onclick="closeForgotPasscodeModal()"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <p class="dialog-desc" style="margin-bottom: 18px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.75);">
-            Verify your biometric identity (Fingerprint / FaceID) to unlock and set a new passcode, or try entering your passcode again.
+            Verify your biometric identity (Fingerprint / FaceID) to unlock and set a new passcode, or reset your vault lock to choose a new passcode.
           </p>
           <div style="display: flex; flex-direction: column; gap: 11px;">
             <button type="button" class="btn btn-primary" onclick="recoverPasscodeWithBiometrics()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; font-weight: 600;">
@@ -2822,7 +2865,7 @@
               <i class="fa-solid fa-rotate-left"></i> <span>Try Entering Passcode Again</span>
             </button>
             <button type="button" class="btn btn-outline danger" onclick="resetPasscodeSecurityVault()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; opacity: 0.9; padding: 9px 14px;">
-              <i class="fa-solid fa-shield-halved"></i> <span>Reset Vault Lock</span>
+              <i class="fa-solid fa-shield-halved"></i> <span>Reset Passcode (Set New Passcode)</span>
             </button>
           </div>
         </div>
