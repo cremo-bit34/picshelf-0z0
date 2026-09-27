@@ -1,0 +1,64 @@
+
+
+
+
+
+
+
+16. Add a profile icon at the top left to display the user's name/picture (optional) and their VIP status.
+
+18. Conduct thorough testing of the cloud backup functionality.
+
+19. Include a feature in the settings/profile section for users to submit feedback or report bugs.
+
+20. Develop an optimal method for sending push notifications regarding future updates and versions.
+
+21. Store basic user account information, including a unique user ID and VIP status. Name and email address may be optional (but they may be essential to restore an account!).
+
+22. Implement robust security measures to prevent app tampering, including unauthorized modification of content or access to premium features.
+
+
+
+24. Set a unique brand name for your apps.
+
+7.  Populate default albums (e.g., Birthday, Wedding, Job Offer) with pre-included images within the app's initial download package to provide visual examples.
+
+#Imaplemnted 
+26. [DONE] Native iOS App for iPhone & iPad (Created full Swift/Xcode project in ios/ with WKWebView, multi-photo PHPicker, Camera capture, LocalAuthentication Face ID/Touch ID, 60fps CoreMotion gyroscope 3D tilt & shake physics with Apple Taptic Engine feedback, UIActivityViewController AirDrop/Share Sheet, PhotoKit save to Camera Roll, LaunchScreen storyboard, 1024px AppIcon, safe-area notch/Dynamic Island optimization, PWA Web Clip support, and GitHub Actions CI workflow to compile .ipa from Windows without a Mac).
+
+2.  [DONE] Implement a double-confirmation process for album deletion, offering options to either save, recycle (30-day recovery), or permanently discard images within the album before deletion, with 100% atomic localization across all 10 supported regional languages.
+
+3.  **[Premium/VIP Feature]:** Allow users to import images directly from the phone gallery into an album. This could be facilitated by adding a "+" button that supports the selection and import of multiple images at once.
+
+4.  Expand the crop tool capabilities to include rotation options, such as horizontal/vertical flips and 90°, 180°, and 270° rotations.
+
+5.  Improve the smoothness of the cropping function for more precise corner adjustments.
+
+6.  **[Premium Feature]:** Enable users to move or copy multiple images from one album to another.
+
+8.  [DONE] Implement and position the back button when viewing images within an album (and Favorites album) with comfortable vertical positioning, accessible 44px touch target, smooth state resumption, exact album card highlight, and 100% regional localization across all 10 languages.
+
+12. Adjust the vertical position (`y`-coordinate) of the toolbar (containing edit, crop, download, delete options) when accessing a photo within an album, positioning it slightly below its current top-aligned location.
+
+15. [DONE] **[Premium Feature]:** Consider introducing premium 3D album cards (for VIP accounts) that offer an option to display personal images on the card's surface (VIP 3D Card Studio with 12 handcrafted optical material finishes, personal/studio surface selector, real-time gyro/cursor parallax tilt engine, and 100% full localization across all 10 supported languages).
+9.  [DONE] Enable a swiping feature to browse through all images within an album when a picture is open, allowing for easy navigation to the next or previous image (including touch swiping, desktop pointer dragging, keyboard arrow keys, next/prev chevron buttons, and album counter indicator).
+
+11. [DONE] Implement a default album sorting logic based on recent activity. For example, display favorites first, followed by recently added, viewed, or modified albums in the Albums tab (Favorites card pinned at Priority #1, custom favorited albums ranked next, then sorted by most recent viewed/modified/added activity with dynamic relative time tags and sort filter controls).
+
+
+10. [DONE] In the Gallery tab, consider hiding the "Featured" album and making it accessible via a three-dot icon menu. This icon menu should show all albums but not the imported images directly, as they are currently shown without a three-dot icon, to create a cleaner app interface.
+
+13. [DONE] Refine the style and size of the content within the "Dock" tab to be more visually appealing, and incorporate high-quality icons for camera and upload functions (Figma/Apple-inspired luxury staging studio aesthetic with custom Leica-grade Camera vector and Cloud-Intake Upload SVG buttons, glowing pulse indicators, dynamic-island selection toolbar, 1-tap bulk-tag chip bar, refined card actions, and high-fidelity empty state).
+
+23. [DONE] Remove Google anti-gravity description from settings tab (Replaced with "100% Private On-Device AI · All Data Stored Locally").
+
+17. [DONE] Address the current malfunction of the sharing option and make it fully functional (Fixed Android 11+ package visibility by adding Intent.ACTION_SEND and ACTION_SEND_MULTIPLE queries to AndroidManifest.xml, moved FileProvider base64 caching to background threads in MainActivity.kt to prevent UI freezing, added explicit URI read permission grants for all resolved target apps, dynamic MIME detection for JPEG/PNG/WebP, and robust Web Share API / clipboard fallback in app.js).
+
+14. [DONE] Ensure the filter feature supports multiple languages (Comprehensive Indian Regional & English multilingual architecture targeting India first: English, Hindi, Bengali, Telugu, Tamil, Marathi, Gujarati, Kannada, Malayalam, and Punjabi. Integrated interactive Language & Region selector in Settings with native scripts, country badges, real-time reactive DOM and component updates on selection without reload, localized filter chips, date range presets and calendar dialog, sort options, empty states, and system prompts, while strictly preserving user-generated album tags and photo names intact).
+
+1.  [DONE] Redesign the app icon to be more visually appealing, modern, and symmetrical (Leveraged 2026 design principles via Perplexity MCP to craft a 3D ray-traced optical aperture icon with floating champagne/rose-gold concentric rims, dark obsidian matte chassis, and radiant faceted crystal aura core; generated all Android mipmap densities mdpi through xxxhdpi + 512px Play Store + web favicon/icon assets).
+
+24. [DONE] Resolve dialog button text clipping and overflow across all 10 supported languages (Step 2 album deletion confirmation buttons upgraded to full-width stacked layout, dialog card max-width expanded to 420px, dynamic padding increased to 10px-16px, rigid height constraints replaced with min-height and multi-line wrapping guarantees, zero-overflow verified across English, Hindi, Bengali, Telugu, Tamil, Marathi, Gujarati, Kannada, Malayalam, and Punjabi).
+
+25. [DONE] Implement Push Update Notifications & In-Place OTA Self-Updating Architecture with Firebase (Consulted Perplexity MCP reasoning model on Android package manager in-place upgrade invariants; added "Push Update Notifications" toggle & "Check for Updates" in Settings; added luxury In-Place Update modal with release notes, data-safety guarantee, and download progress bar; added dummy/configurable google-services.json for seamless drop-in project replacement; updated AndroidManifest.xml with REQUEST_INSTALL_PACKAGES and POST_NOTIFICATIONS permissions; configured FileProvider file_paths.xml with updates cache-path; implemented native Kotlin bridge with FCM topic subscription, background APK streaming, and PackageInstaller intent launching; complete 10-language localization verified across en, hi, bn, te, ta, mr, gu, kn, ml, and pa).
+

@@ -1,0 +1,6 @@
+{
+  "name": "PhotoOrganizer",
+  "description": "Production-ready modern photo organization and management application.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

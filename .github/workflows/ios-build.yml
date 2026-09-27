@@ -1,0 +1,59 @@
+name: Build iOS App (.IPA)
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'ios/**'
+      - 'web/**'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: Build Aura Photo Organizer for iPhone
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer || sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Verify Xcode Version
+        run: xcodebuild -version
+
+      - name: Sync Web Assets to iOS Bundle
+        run: |
+          mkdir -p ios/web
+          rsync -av --exclude="*.apk" web/ ios/web/
+          ls -la ios/web
+
+      - name: Build Xcode Archive
+        run: |
+          xcodebuild clean archive \
+            -project ios/AuraPhotoOrganizer.xcodeproj \
+            -scheme AuraPhotoOrganizer \
+            -configuration Release \
+            -archivePath build/AuraPhotoOrganizer.xcarchive \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package App into Sideloadable IPA
+        run: |
+          mkdir -p build/Payload
+          cp -r build/AuraPhotoOrganizer.xcarchive/Products/Applications/AuraPhotoOrganizer.app build/Payload/
+          cd build
+          zip -qr9 AuraPhotoOrganizer.ipa Payload
+          ls -lh AuraPhotoOrganizer.ipa
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuraPhotoOrganizer-iOS-IPA
+          path: build/AuraPhotoOrganizer.ipa
+          retention-days: 14
+          if-no-files-found: error

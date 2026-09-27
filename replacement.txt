@@ -1,0 +1,122 @@
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(viewModel: PhotoViewModel, onPhotoClick: (PhotoWithTags) -> Unit = {}) {
+    val context = LocalContext.current
+    var currentPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success) {
+            currentPhotoUri?.let { uri ->
+                viewModel.addPhotoToPending(uri.toString(), "Camera_${System.currentTimeMillis()}.jpg")
+            }
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
+        uris.forEach { uri ->
+            viewModel.addPhotoToPending(uri.toString(), "Imported_${System.currentTimeMillis()}.jpg")
+        }
+    }
+
+    fun launchCamera() {
+        val imagesDir = File(context.cacheDir, "camera_images").apply { mkdirs() }
+        val photoFile = File(imagesDir, "camera_${System.currentTimeMillis()}.jpg")
+        val uri = androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            photoFile
+        )
+        currentPhotoUri = uri
+        cameraLauncher.launch(uri)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            launchCamera()
+        } else {
+            android.widget.Toast.makeText(context, "Camera permission is required", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    val galleryPhotos by viewModel.galleryPhotos.collectAsState()
+    val pendingPhotos by viewModel.pendingPhotos.collectAsState()
+    val allTags by viewModel.allTags.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    
+    val untaggedPhotos = galleryPhotos.filter { it.tags.isEmpty() } + pendingPhotos
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = viewModel::updateSearchQuery,
+                onSearch = {},
+                active = false,
+                onActiveChange = {},
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("Search tags or names...") }
+            ) {}
+            IconButton(onClick = { permissionLauncher.launch(android.Manifest.permission.CAMERA) }) {
+                Icon(Icons.Default.CameraAlt, contentDescription = "Camera")
+            }
+            IconButton(onClick = { galleryLauncher.launch("image/*") }) {
+                Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Import")
+            }
+        }
+        
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 80.dp)
+        ) {
+            if (untaggedPhotos.isNotEmpty()) {
+                item {
+                    AlbumRow(title = "Under Tagging", photos = untaggedPhotos, onPhotoClick = onPhotoClick)
+                }
+            }
+            
+            items(allTags) { tag ->
+                val tagPhotos = galleryPhotos.filter { it.tags.any { t -> t.name == tag.name } }
+                if (tagPhotos.isNotEmpty()) {
+                    AlbumRow(title = tag.name, photos = tagPhotos, onPhotoClick = onPhotoClick)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AlbumRow(title: String, photos: List<PhotoWithTags>, onPhotoClick: (PhotoWithTags) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+        androidx.compose.foundation.lazy.LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(photos) { photo ->
+                Box(modifier = Modifier.size(120.dp)) {
+                    PhotoThumbnail(
+                        uri = photo.photo.localUri,
+                        onClick = { onPhotoClick(photo) }
+                    )
+                    if (photo.photo.isFavorite) {
+                        Icon(
+                            Icons.Default.Favorite,
+                            contentDescription = "Favorite",
+                            tint = Color.Red,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(4.dp)
+                                .size(20.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}

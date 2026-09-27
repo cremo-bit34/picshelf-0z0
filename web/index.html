@@ -1,0 +1,2901 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Aura Photos">
+  <title>Photo Organizer - Luxury Edition</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    if (window.AndroidApp || navigator.userAgent.includes('wv') || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 850) {
+      document.documentElement.classList.add('native-app-mode');
+    }
+  </script>
+</head>
+
+<body class="dark-mode">
+
+  <!-- Desktop Header Controls -->
+  <header class="preview-header">
+    <div class="brand">
+      <div class="brand-badge-icon" style="padding: 0; overflow: hidden; background: transparent; border: 1px solid rgba(255, 215, 0, 0.3);">
+        <img src="icon.png" alt="Aura Photos" style="width: 100%; height: 100%; object-fit: cover; border-radius: 13px;">
+      </div>
+      <div>
+        <h1 class="brand-title">Aura Photos</h1>
+        <p class="brand-subtitle">Smart Photo Organizer · Luxury Mobile Preview</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggleBtn" class="action-btn" title="Toggle Light/Dark Theme">
+        <i class="fa-solid fa-moon"></i>
+        <span>Theme</span>
+      </button>
+      <button id="deviceFrameToggleBtn" class="action-btn" title="Toggle Device Frame">
+        <i class="fa-solid fa-mobile-screen"></i>
+        <span>Frame Mode</span>
+      </button>
+      <button id="addDemoPhotoBtn" class="action-btn primary" title="Snap New Photo to Loading Dock">
+        <i class="fa-solid fa-sparkles"></i>
+        <span>Snap Photo</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="preview-container">
+    <div class="device-frame" id="deviceFrame">
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <span class="time" id="statusTime">9:41</span>
+        <div class="notch">
+          <div class="camera-lens"></div>
+        </div>
+        <div class="status-icons">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full"></i>
+        </div>
+      </div>
+
+      <!-- App Screen Content -->
+      <div class="app-viewport">
+        <!-- Ambient Liquid Light Glows (2026 Luxury Aesthetic) -->
+        <div class="ambient-glow-orb glow-rose"></div>
+        <div class="ambient-glow-orb glow-violet"></div>
+        <div class="ambient-glow-orb glow-amber"></div>
+
+        <!-- TAB 0: LOADING DOCK SCREEN -->
+        <section id="dockScreen" class="app-screen active">
+          <div class="screen-header dock-screen-header">
+            <div>
+              <span class="screen-tagline" data-i18n="dock_tagline">STAGING AREA</span>
+              <h2 class="screen-title" data-i18n="dock_title">Loading Dock</h2>
+              <p class="screen-subtitle" id="dockSubtitle">3 photos pending review</p>
+            </div>
+            <div class="dock-hero-actions">
+              <button class="dock-hero-btn btn-camera-snap" id="cameraSnapBtn" title="Capture photo with camera" onclick="triggerCameraCapture()">
+                <svg class="dock-hero-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                  <circle cx="12" cy="13" r="1.5" fill="currentColor"/>
+                </svg>
+                <span data-i18n="dock_camera">Camera</span>
+              </button>
+              <button class="dock-hero-btn btn-photo-upload" id="importPhotosBtn" title="Upload photos from device" onclick="triggerGalleryImport()">
+                <svg class="dock-hero-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+                  <path d="M12 12v9"/>
+                  <path d="m16 16-4-4-4 4"/>
+                </svg>
+                <span data-i18n="dock_upload">Upload</span>
+              </button>
+              <input type="file" id="cameraFileInput" accept="image/*" capture="environment"
+                style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+              <input type="file" id="imageFileInput" accept="image/*" multiple
+                style="position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;">
+            </div>
+          </div>
+
+          <!-- Ultra-Smart Fast-Tag Bar for Bulk Organization (Imagine 1000 Photos) -->
+          <div class="dock-quick-tag-bar" id="dockQuickTagBar">
+            <div class="dock-quick-tag-header">
+              <div class="dock-quick-tag-title">
+                <svg class="dock-title-sparkle" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                </svg>
+                <span data-i18n="dock_bulk_tag_title">1-Tap Bulk Tag to Album</span>
+              </div>
+              <span class="dock-quick-tag-hint" id="dockQuickTagHint" data-i18n="dock_hint_default">Tap photos, then tap album</span>
+            </div>
+            <div class="dock-quick-tag-strip" id="dockQuickTagStrip">
+              <!-- Rendered dynamically by JS -->
+            </div>
+          </div>
+
+          <!-- Dock Selection Toolbar (Glassmorphic) -->
+          <div class="dock-toolbar-card" id="dockActionStrip">
+            <div class="dock-select-group">
+              <button class="btn btn-xs btn-glass" id="dockSelectAllToggleBtn" onclick="toggleSelectAllDock()">
+                <i class="fa-solid fa-check-double"></i>
+                <span id="dockSelectAllBtnText" data-i18n="dock_select_all">Select All</span>
+              </button>
+              <span class="dock-selection-badge" id="dockSelectedCountBadge">0 Selected</span>
+            </div>
+            <div class="dock-batch-actions" id="dockBatchActions">
+              <button class="btn btn-xs btn-primary" id="dockBatchTagBtn" onclick="openBatchTagModalFromDock()">
+                <i class="fa-solid fa-tags"></i> <span data-i18n="dock_tag_and_save">Tag & Save</span>
+              </button>
+              <button class="btn btn-xs btn-glass" id="dockBatchMoveBtn" onclick="moveSelectedDockDirect()">
+                <span data-i18n="dock_save_direct">Save Direct</span>
+              </button>
+              <button class="btn btn-xs btn-danger-glass" id="dockBatchDeleteBtn" onclick="deleteSelectedDockPhotos()"
+                title="Move selected to Trash">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty Dock State (High-Aesthetic Studio) -->
+          <div class="empty-state dock-empty-state-luxury" id="dockEmptyState" style="display: none;">
+            <div class="dock-empty-visual">
+              <div class="dock-empty-orb">
+                <svg class="dock-empty-hero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                  <circle cx="12" cy="13" r="1.5" fill="currentColor"/>
+                </svg>
+              </div>
+              <div class="dock-empty-glow"></div>
+            </div>
+            <h3 class="dock-empty-title" data-i18n="dock_empty_title">Loading Dock is All Clear</h3>
+            <p class="dock-empty-desc" data-i18n="dock_empty_desc">
+              Your staging dock is ready for fresh memories. Snap directly with the camera or upload from device storage to review, tag, and sort into albums.
+            </p>
+            <div class="empty-actions dock-empty-actions">
+              <button class="btn btn-primary btn-dock-empty-cta" onclick="triggerCameraCapture()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                  <circle cx="12" cy="13" r="1.5" fill="currentColor"/>
+                </svg>
+                <span data-i18n="dock_camera">Capture Moment</span>
+              </button>
+              <button class="btn btn-glass btn-dock-empty-cta" onclick="triggerGalleryImport()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/>
+                  <path d="M12 12v9"/>
+                  <path d="m16 16-4-4-4 4"/>
+                </svg>
+                <span data-i18n="dock_upload_photos">Upload Photos</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Dock Grid -->
+          <div class="photo-grid dock-grid" id="dockPhotoGrid">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+
+        <!-- TAB 1: GALLERY SCREEN -->
+        <section id="galleryScreen" class="app-screen">
+          <!-- Search Box & In-App Settings Access -->
+          <div class="search-container">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="gallerySearchInput" placeholder="Search photos, tags, or albums..."
+                data-i18n-placeholder="gallery_search_placeholder"
+                oninput="handleGallerySearch(this.value)" onkeydown="if(event.key==='Escape'){clearGallerySearch();}"
+                autocomplete="off">
+              <button type="button" id="clearSearchBtn" class="clear-btn" style="display: none;"
+                onclick="clearGallerySearch()" title="Clear search">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+            <!-- Three-dot Menu Button for Albums Access (Item 10) -->
+            <button class="phone-header-gear-btn" id="galleryAlbumsMenuBtn" onclick="toggleGalleryAlbumsMenu(event)"
+              title="Browse Albums Menu" data-i18n-title="gallery_albums_menu_title" aria-label="Albums Menu" style="position: relative;">
+              <i class="fa-solid fa-ellipsis-vertical"></i>
+              <span class="albums-menu-active-dot" id="albumsMenuActiveDot" style="display: none;"></span>
+            </button>
+            <button class="phone-header-gear-btn" onclick="navigateToSettings()"
+              title="In-App Settings & Theme Switcher">
+              <i class="fa-solid fa-gear"></i>
+            </button>
+
+            <!-- Albums Dropdown Menu Popover -->
+            <div class="gallery-albums-dropdown" id="galleryAlbumsDropdown" style="display: none;">
+              <div class="dropdown-header">
+                <span class="dropdown-title"><i class="fa-solid fa-images" style="color: #f43f5e; margin-right: 6px;"></i> <span data-i18n="gallery_albums_menu_title">Browse Albums</span></span>
+                <span class="dropdown-badge" id="dropdownAlbumsBadge">0 Albums</span>
+              </div>
+              <!-- VIP 3D Effects Toggle Option (Item 11) -->
+              <div class="dropdown-vip-3d-section" id="dropdown3DSection">
+                <button type="button" class="dropdown-vip-3d-card" id="dropdown3DEffectsBtn" onclick="toggle3DEffectsFromMenu(event)" title="Toggle 3D Holographic Parallax & Depth (Aura Pro VIP)">
+                  <div class="dropdown-vip-3d-left">
+                    <div class="dropdown-vip-3d-icon-box" id="dropdown3DIconBox">
+                      <i class="fa-solid fa-cube"></i>
+                    </div>
+                    <div class="dropdown-vip-3d-info">
+                      <div class="dropdown-vip-3d-title-row">
+                        <span class="dropdown-vip-3d-title" data-i18n="gallery_3d_effects_title">3D Effects</span>
+                        <span class="dropdown-vip-crown-badge"><i class="fa-solid fa-crown"></i> VIP</span>
+                      </div>
+                      <div class="dropdown-vip-3d-desc" id="dropdown3DDesc" data-i18n="gallery_3d_effects_desc">Holographic Tilt & Depth</div>
+                    </div>
+                  </div>
+                  <div class="dropdown-vip-3d-switch-container">
+                    <span class="dropdown-switch-pill" id="dropdown3DSwitchPill">
+                      <span class="dropdown-switch-handle"></span>
+                    </span>
+                  </div>
+                </button>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-items-list" id="dropdownAlbumsList">
+                <!-- Rendered dynamically by JS -->
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-footer">
+                <button type="button" class="dropdown-footer-action" onclick="toggleFeaturedCarouselVisibility()">
+                  <i class="fa-solid fa-sliders" style="margin-right: 5px;"></i>
+                  <span id="carouselToggleLabel" data-i18n="gallery_carousel_show">Show Carousel</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Albums Carousel Section (Hidden by default for cleaner UI; toggled via 3-dot menu) -->
+          <div class="albums-section" id="galleryAlbumsSection" style="display: none;">
+            <div class="section-header-row">
+              <h3 class="section-heading" data-i18n="gallery_featured_albums">Featured Albums</h3>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="section-subtext" id="albumCountSummary">5 Albums</span>
+                <button type="button" class="btn-hide-featured" onclick="hideFeaturedAlbumsCarousel()" title="Hide Featured Carousel" aria-label="Hide carousel">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+            <div class="albums-carousel" id="albumsCarouselContainer">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Selection Bar (Active when selecting photos) -->
+          <div class="selection-bar" id="gallerySelectionBar" style="display: none;">
+            <button class="icon-btn" id="closeSelectionBtn">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <span class="selection-count" id="selectionCountText" data-i18n="dock_selected_zero">0 Selected</span>
+            <div class="selection-actions">
+              <button class="icon-btn" id="renameSelectedBtn" onclick="renameSelectedGalleryPhoto()"
+                title="Rename Photo" data-i18n-title="detail_rename" style="display: none;">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button class="icon-btn" id="cropSelectedBtn" onclick="cropSelectedGalleryPhoto()" title="Crop Image"
+                data-i18n-title="detail_crop" style="display: none;">
+                <i class="fa-solid fa-crop-simple"></i>
+              </button>
+              <button class="icon-btn vip-action-btn" id="moveCopySelectedBtn" onclick="openMoveCopyModal()" title="Move or Copy to Another Album (VIP)" aria-label="Move or Copy to Album">
+                <i class="fa-solid fa-folder-tree"></i>
+                <span class="btn-vip-dot" title="Aura VIP Feature"><svg class="aura-luxury-crown" width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg></span>
+              </button>
+              <button class="icon-btn" id="exportZipBtn" title="Export to ZIP" data-i18n-title="gallery_download_zip">
+                <i class="fa-solid fa-file-zipper"></i>
+              </button>
+              <button class="icon-btn" id="shareSelectedBtn" title="Share Native" data-i18n-title="detail_share">
+                <i class="fa-solid fa-share-nodes"></i>
+              </button>
+              <button class="icon-btn" id="downloadSelectedBtn" title="Download Collection" data-i18n-title="detail_download">
+                <i class="fa-solid fa-download"></i>
+              </button>
+              <button class="icon-btn danger" id="trashSelectedBtn" title="Move to Trash" data-i18n-title="detail_trash">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Scroll Row -->
+          <div class="filter-strip">
+            <!-- Date Range Filter Pill -->
+            <button class="filter-chip" id="dateFilterChip">
+              <i class="fa-regular fa-calendar-days"></i>
+              <span id="dateFilterText" data-i18n="gallery_date_range">Date Range</span>
+              <i class="fa-solid fa-xmark chip-remove" id="clearDateBtn" style="display: none;"></i>
+            </button>
+
+            <!-- "All" Chip with count -->
+            <button class="filter-chip active" id="allTagsFilterChip">
+              <span data-i18n="gallery_all_moments">All Moments</span>
+              <span class="chip-count" id="allMomentsCount">0</span>
+            </button>
+
+            <!-- Favorites Filter Chip with live count -->
+            <button class="filter-chip fav-filter-chip" id="favFilterChip" onclick="toggleFavoriteFilter()">
+              <i class="fa-solid fa-heart" style="color: #f43f5e; font-size: 11px;"></i>
+              <span data-i18n="gallery_favorites">Favorites</span>
+              <span class="chip-count" id="favMomentsCount">0</span>
+            </button>
+
+            <!-- Dynamic Tag Chips Container -->
+            <div id="dynamicTagFilterContainer" class="tag-chips-wrapper">
+              <!-- Rendered by JS -->
+            </div>
+
+            <button class="reset-filter-btn" id="resetFiltersBtn" style="display: none;">
+              <i class="fa-solid fa-rotate-left"></i> <span data-i18n="gallery_reset_filters">Reset</span>
+            </button>
+          </div>
+
+          <!-- Gallery Subheader with Actions -->
+          <div class="gallery-info-bar">
+            <div class="gallery-info-left" style="display: flex; align-items: center; gap: 8px;">
+              <span id="galleryCountText" class="photos-count-label">0 photos found</span>
+            </div>
+
+            <div class="gallery-toolbar-right">
+              <!-- Smart Sort Dropdown -->
+              <div class="sort-dropdown-wrapper" id="sortDropdownWrapper">
+                <button type="button" class="gallery-sort-trigger-btn" id="sortTriggerBtn"
+                  onclick="toggleSortMenu(event)" title="Sort gallery photos">
+                  <i class="fa-solid fa-arrow-down-short-wide" id="sortTriggerIcon"></i>
+                  <span id="sortTriggerText">Newest</span>
+                  <i class="fa-solid fa-chevron-down sort-chevron"></i>
+                </button>
+
+                <div class="sort-menu-popover" id="sortMenuPopover">
+                  <div class="sort-menu-header">
+                    <span data-i18n="gallery_sort_photos">Sort Photos</span>
+                  </div>
+                  <div class="sort-options-list">
+                    <button type="button" class="sort-option-btn active" data-sort="date-desc"
+                      onclick="setGallerySort('date-desc')">
+                      <span class="sort-opt-icon"><i class="fa-regular fa-clock"></i></span>
+                      <div class="sort-opt-text">
+                        <span class="sort-opt-title" data-i18n="gallery_sort_newest">Newest First</span>
+                        <span class="sort-opt-desc" data-i18n="gallery_sort_newest_desc">Date created: newest to oldest</span>
+                      </div>
+                      <i class="fa-solid fa-check sort-check-icon"></i>
+                    </button>
+                    <button type="button" class="sort-option-btn" data-sort="date-asc"
+                      onclick="setGallerySort('date-asc')">
+                      <span class="sort-opt-icon"><i class="fa-solid fa-arrow-up-wide-short"></i></span>
+                      <div class="sort-opt-text">
+                        <span class="sort-opt-title" data-i18n="gallery_sort_oldest">Oldest First</span>
+                        <span class="sort-opt-desc" data-i18n="gallery_sort_oldest_desc">Date created: oldest to newest</span>
+                      </div>
+                      <i class="fa-solid fa-check sort-check-icon"></i>
+                    </button>
+                    <div class="sort-menu-separator"></div>
+                    <button type="button" class="sort-option-btn" data-sort="name-asc"
+                      onclick="setGallerySort('name-asc')">
+                      <span class="sort-opt-icon"><i class="fa-solid fa-arrow-down-a-z"></i></span>
+                      <div class="sort-opt-text">
+                        <span class="sort-opt-title" data-i18n="gallery_sort_name_asc">Name: A to Z</span>
+                        <span class="sort-opt-desc" data-i18n="gallery_sort_name_asc_desc">Alphabetical by image title</span>
+                      </div>
+                      <i class="fa-solid fa-check sort-check-icon"></i>
+                    </button>
+                    <button type="button" class="sort-option-btn" data-sort="name-desc"
+                      onclick="setGallerySort('name-desc')">
+                      <span class="sort-opt-icon"><i class="fa-solid fa-arrow-down-z-a"></i></span>
+                      <div class="sort-opt-text">
+                        <span class="sort-opt-title" data-i18n="gallery_sort_name_desc">Name: Z to A</span>
+                        <span class="sort-opt-desc" data-i18n="gallery_sort_name_desc_desc">Reverse alphabetical (Z to A)</span>
+                      </div>
+                      <i class="fa-solid fa-check sort-check-icon"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="gallery-quick-actions">
+                <button class="text-link-btn primary" id="exportFilteredZipBtn"
+                  title="Download filtered collection as ZIP">
+                  <i class="fa-solid fa-file-zipper"></i> <span data-i18n="gallery_download_zip">Download ZIP</span>
+                </button>
+                <button class="text-link-btn" id="shareFilteredBtn" title="Share filtered photos">
+                  <i class="fa-solid fa-arrow-up-from-bracket"></i> <span data-i18n="detail_share">Share</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Album Active View Banner & Direct Import Bar (VIP Item 3) -->
+          <div class="album-active-banner" id="albumActiveBanner" style="display: none;">
+            <div class="album-banner-left">
+              <button type="button" class="album-banner-back-btn" id="albumBannerBackBtn" onclick="exitAlbumView()" title="Back to Albums" aria-label="Back to Albums" data-i18n-title="album_back_to_albums">
+                <span class="album-back-icon-pill"><i class="fa-solid fa-arrow-left"></i></span>
+                <span class="album-back-label" data-i18n="album_back_btn">Albums</span>
+              </button>
+              <div class="album-banner-info">
+                <span class="album-banner-dot" id="albumBannerDot"></span>
+                <div class="album-banner-text">
+                  <div class="album-banner-title" id="albumBannerTitle">Album Name</div>
+                  <div class="album-banner-subtitle" id="albumBannerSubtitle">0 Photos</div>
+                </div>
+              </div>
+            </div>
+            <div class="album-banner-actions" style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" class="btn btn-sm album-banner-3d-toggle-btn" id="albumView3DToggleBtn" onclick="toggleAlbumPhoto3DEffects()" title="Toggle VIP 3D Card Effects on Album Photos">
+                <i class="fa-solid fa-cube"></i>
+                <span class="toggle-3d-label">3D FX</span>
+              </button>
+              <button type="button" class="btn btn-sm btn-primary album-banner-add-btn" id="albumBannerAddBtn" onclick="triggerAlbumDirectImport(getActiveAlbumName())" title="Import photos directly from gallery into this album (VIP)" data-i18n-title="album_banner_import_title">
+                <i class="fa-solid fa-plus"></i>
+                <span data-i18n="album_banner_add_photos">Add Photos</span>
+                <span class="badge-vip-tiny"><svg class="aura-luxury-crown" width="9" height="9" viewBox="0 0 20 20" fill="currentColor"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> VIP</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty Gallery State -->
+          <div class="empty-state" id="galleryEmptyState" style="display: none;">
+            <div class="empty-icon-circle">
+              <i class="fa-solid fa-images"></i>
+            </div>
+            <h3 id="galleryEmptyTitle" data-i18n="gallery_empty_title">No Moments Match</h3>
+            <p id="galleryEmptyDesc" data-i18n="gallery_empty_desc">Try switching tags, clearing date ranges, or moving new photos from the Loading Dock.</p>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+              <button class="btn btn-primary" id="albumEmptyImportBtn" style="display: none;" onclick="triggerAlbumDirectImport(getActiveAlbumName())">
+                <i class="fa-solid fa-plus"></i> <span id="albumEmptyImportBtnText" data-i18n="album_banner_import_btn">Import Photos from Gallery (VIP)</span>
+              </button>
+              <button class="btn btn-outline" id="clearAllFiltersBtn" data-i18n="gallery_reset_filters">Reset All Filters</button>
+            </div>
+          </div>
+
+          <!-- Gallery Grid (2-column elegant layout) -->
+          <div class="photo-grid gallery-grid-elegant" id="galleryPhotoGrid">
+            <!-- Rendered by JS -->
+          </div>
+
+          <input type="file" id="albumDirectFileInput" accept="image/*" multiple style="display: none;" onchange="handleAlbumDirectFileInput(event)">
+        </section>
+
+        <!-- TAB 2: ALBUMS & TAGS SCREEN (Separated Views) -->
+        <section id="albumsScreen" class="app-screen">
+          <div class="screen-header">
+            <div>
+              <span class="screen-tagline" data-i18n="albums_tagline">COLLECTIONS</span>
+              <h2 class="screen-title" id="albumsHeaderTitle" data-i18n="albums_my_albums">My Albums</h2>
+              <p class="screen-subtitle" id="albumsSubtitle">5 photo albums organized by tag</p>
+            </div>
+            <div class="header-btn-group">
+              <button class="btn btn-sm btn-glass" id="openCreateTagModalBtn" title="Create New Album" data-i18n-title="albums_btn_create_title"
+                onclick="openNewAlbumModal()">
+                <i class="fa-solid fa-plus"></i> <span data-i18n="albums_new_btn">New Album</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Segmented View Switcher: Albums vs Tag Manager -->
+          <div class="segmented-control-wrapper">
+            <div class="segmented-control">
+              <button class="seg-btn active" id="segAlbumsBtn" onclick="switchAlbumsView('albums')">
+                <i class="fa-solid fa-images"></i>
+                <span data-i18n="albums_title">Album Cards</span>
+              </button>
+              <button class="seg-btn" id="segTagsBtn" onclick="switchAlbumsView('tags')">
+                <i class="fa-solid fa-tags"></i>
+                <span data-i18n="albums_tag_manager_tab">Tag Manager</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SUB-VIEW A: Rich Album Cards -->
+          <div id="albumsCardView" class="albums-subview">
+            <!-- Search & Filter Controls -->
+            <div class="album-search-filter-section">
+              <div class="album-search-bar">
+                <i class="fa-solid fa-magnifying-glass album-search-icon"></i>
+                <input type="text" id="albumSearchInput" class="album-search-input"
+                  placeholder="Search albums by name..." data-i18n-placeholder="albums_search_placeholder" autocomplete="off" />
+                <button class="album-search-clear-btn" id="clearAlbumSearchBtn" style="display: none;"
+                  title="Clear search" data-i18n-title="albums_search_clear_title">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+
+              <div class="album-filter-chips-strip">
+                <button class="filter-chip active" id="albumFilterAllBtn" onclick="setAlbumFilter('all')">
+                  <span><span data-i18n="albums_filter_all">All Albums</span> (<span id="totalAlbumsCount">0</span>)</span>
+                </button>
+                <button class="filter-chip" id="albumFilterFavBtn" onclick="setAlbumFilter('favorites')">
+                  <i class="fa-solid fa-heart" style="color:var(--accent-rose)"></i>
+                  <span><span data-i18n="favorites_title">Favorites</span> (<span id="favAlbumsCount">0</span>)</span>
+                </button>
+                <button class="filter-chip" id="albumFilterWithPhotosBtn" onclick="setAlbumFilter('with_photos')">
+                  <span><span data-i18n="albums_filter_with_photos">With Photos</span> (<span id="withPhotosAlbumsCount">0</span>)</span>
+                </button>
+                <button class="filter-chip active" id="album3DToggleBtn" onclick="toggleGlobal3DMode()" title="Toggle VIP 3D Holographic Parallax" data-i18n-title="albums_btn_3d_title">
+                  <i class="fa-solid fa-cube" style="color: #f59e0b"></i>
+                  <span data-i18n="albums_filter_3d">3D Cards</span>
+                </button>
+                <button class="filter-chip" id="album3DStudioChipBtn" onclick="openAlbum3DSurfaceModal(state.tags[0]?.name || 'favorites')" title="Open 3D Album Surface Studio">
+                  <i class="fa-solid fa-wand-magic-sparkles" style="color: #a855f7;"></i>
+                  <span>3D Studio</span>
+                </button>
+                <button class="filter-chip" id="albumSortRecentBtn" onclick="toggleAlbumSort('recent')" title="Sort by Recent Activity" data-i18n-title="albums_sort_recent_title">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                  <span data-i18n="albums_sort_activity">Recent Activity</span>
+                </button>
+                <button class="filter-chip" id="albumSortMostBtn" onclick="toggleAlbumSort('count')" title="Sort by most photos" data-i18n-title="albums_sort_most_title">
+                  <i class="fa-solid fa-arrow-down-wide-short"></i>
+                  <span data-i18n="albums_sort_count">Most Photos</span>
+                </button>
+                <button class="filter-chip" id="albumSortAlphaBtn" onclick="toggleAlbumSort('alpha')" title="Sort alphabetically (A-Z)" data-i18n-title="albums_sort_alpha_title">
+                  <i class="fa-solid fa-arrow-down-a-z"></i>
+                  <span data-i18n="albums_sort_alpha">A-Z</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Empty Albums State -->
+            <div class="empty-state" id="albumsEmptyState" style="display: none;">
+              <div class="empty-icon-circle">
+                <i class="fa-solid fa-folder-open"></i>
+              </div>
+              <h3 data-i18n="albums_empty_title">No Albums Found</h3>
+              <p data-i18n="albums_empty_desc">No albums matched your search or filter. You can create a new album category at any time.</p>
+              <button class="btn btn-primary" onclick="openNewAlbumModal()" data-i18n="albums_new_btn">Create New Album</button>
+            </div>
+
+            <!-- Album Cards Grid -->
+            <div class="albums-card-grid" id="albumsCardGrid">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- VIEW 2: DEDICATED TAGS MANAGER VIEW -->
+          <div id="tagsManagerView" style="display: none;">
+            <!-- Create Tag Card -->
+            <div class="card create-tag-card" style="margin: 0 18px 16px;">
+              <h4 data-i18n="tags_create_title">Create New Album Tag</h4>
+              <div class="input-action-row">
+                <input type="text" id="newTagNameInput" placeholder="e.g. Wedding, Birthday, Girls Trip" data-i18n-placeholder="tags_input_placeholder">
+                <button class="btn btn-primary" id="createTagBtn" data-i18n="tags_create_btn">Create Tag</button>
+              </div>
+              <div class="color-picker-row">
+                <span class="color-label" data-i18n="tags_palette_color">Palette Color:</span>
+                <div class="color-palette" id="colorPaletteContainer">
+                  <!-- Rendered by JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Tags List -->
+            <div class="tags-list-container" style="padding: 0 18px 24px;">
+              <div class="section-header-row" style="margin-bottom: 12px; padding: 0;">
+                <h3 class="section-heading" id="tagsListHeading">All Categories (5)</h3>
+                <span class="section-subtext" data-i18n="tags_rename_or_delete">Rename or Delete</span>
+              </div>
+              <div class="tags-list" id="tagsList">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: FAVORITES SCREEN -->
+        <section id="favoritesScreen" class="app-screen">
+          <div class="screen-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <button type="button" class="album-banner-back-btn" id="favoritesBackBtn" onclick="exitFavoritesToAlbums()" style="display: none;" title="Back to Albums" aria-label="Back to Albums" data-i18n-title="album_back_to_albums">
+                <span class="album-back-icon-pill"><i class="fa-solid fa-arrow-left"></i></span>
+                <span class="album-back-label" data-i18n="album_back_btn">Albums</span>
+              </button>
+              <div>
+                <span class="screen-tagline" data-i18n="favorites_tagline">LOVED MOMENTS</span>
+                <h2 class="screen-title" data-i18n="favorites_title">Favorites</h2>
+                <p class="screen-subtitle" id="favoritesSubtitle" data-i18n="favorites_subtitle">Your most cherished photos</p>
+              </div>
+            </div>
+            <div class="header-actions" id="favoritesHeaderActions">
+              <button class="btn btn-sm btn-glass favorites-3d-studio-btn" onclick="openAlbum3DSurfaceModal('favorites')"
+                title="Customize 3D Surface & Artwork for Favorites (VIP)" data-i18n-title="album_btn_surface_pro">
+                <i class="fa-solid fa-wand-magic-sparkles" style="color: #c084fc;"></i> <span data-i18n="surface_3d_btn">3D Studio</span>
+              </button>
+              <button class="btn btn-sm btn-glass" onclick="downloadFavoritesAlbumZip()"
+                title="Download all favorites as ZIP" data-i18n-title="gallery_download_zip">
+                <i class="fa-solid fa-file-zipper"></i> <span data-i18n="gallery_download_zip">Export ZIP</span>
+              </button>
+              <button class="btn btn-sm btn-glass" onclick="shareFavoritesAlbum()" title="Share favorites album" data-i18n-title="detail_share">
+                <i class="fa-solid fa-arrow-up-from-bracket"></i> <span data-i18n="detail_share">Share</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty Favorites State -->
+          <div class="empty-state" id="favoritesEmptyState" style="display: none;">
+            <div class="empty-icon-circle heart">
+              <i class="fa-regular fa-heart"></i>
+            </div>
+            <h3 data-i18n="favorites_empty_title">No Favorites Yet</h3>
+            <p data-i18n="favorites_empty_desc">Tap the heart on any photo to save your favorite memories here in one place.</p>
+          </div>
+
+          <div class="photo-grid gallery-grid-elegant" id="favoritesPhotoGrid">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+
+        <!-- TAB 4: TRASH SCREEN -->
+        <section id="trashScreen" class="app-screen">
+          <div class="screen-header">
+            <div>
+              <span class="screen-tagline" data-i18n="trash_tagline">RECYCLE BIN</span>
+              <h2 class="screen-title" data-i18n="trash_title">Trash</h2>
+              <p class="screen-subtitle" data-i18n="trash_subtitle">Items deleted permanently after 30 days</p>
+            </div>
+            <button class="btn btn-sm btn-danger-outline" id="emptyTrashBtn" style="display: none;">
+              <i class="fa-solid fa-trash-arrow-up"></i> <span data-i18n="trash_empty_btn">Empty Trash</span>
+            </button>
+          </div>
+
+          <!-- Empty Trash State -->
+          <div class="empty-state" id="trashEmptyState" style="display: none;">
+            <div class="empty-icon-circle">
+              <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <h3 data-i18n="trash_empty_title">Trash is Empty</h3>
+            <p data-i18n="trash_empty_desc">Deleted albums and photos stay safely here for 30 days so you can restore them anytime.</p>
+          </div>
+
+          <!-- Trashed Albums Section -->
+          <div id="trashAlbumsSection" class="trash-albums-container" style="display: none;">
+            <div class="trash-section-title">
+              <i class="fa-solid fa-folder-closed"></i> Trashed Albums (<span id="trashAlbumsCount">0</span>)
+            </div>
+            <div class="trash-albums-grid" id="trashAlbumsGrid"></div>
+          </div>
+
+          <!-- Trashed Photos Title Header (When albums also exist) -->
+          <div id="trashPhotosTitle" class="trash-section-title" style="display: none;">
+            <i class="fa-solid fa-images"></i> Trashed Photos (<span id="trashPhotosSectionCount">0</span>)
+          </div>
+
+          <div class="photo-grid gallery-grid-elegant" id="trashPhotoGrid">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+
+        <!-- TAB 5: SETTINGS & PREFERENCES SCREEN -->
+        <section id="settingsScreen" class="app-screen">
+          <div class="screen-header">
+            <div>
+              <span class="screen-tagline" data-i18n="settings_tagline">PREFERENCES</span>
+              <h2 class="screen-title" data-i18n="settings_title">Settings</h2>
+              <p class="screen-subtitle" data-i18n="settings_subtitle">Personalize your luxury experience</p>
+            </div>
+            <div class="header-actions">
+              <span class="pro-chip-pill" id="settingsProStatusBadge" data-i18n="settings_free_tier">FREE TIER</span>
+            </div>
+          </div>
+
+          <!-- Quick Navigation Category Chips Strip -->
+          <div class="settings-quick-nav-strip" id="settingsQuickNavStrip">
+            <button type="button" class="settings-quick-chip active" onclick="scrollToSettingsSection('sectionVipDev')"><i class="fa-solid fa-crown" style="color: #f59e0b;"></i> <span>VIP Bypass</span></button>
+            <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionTheme')"><i class="fa-solid fa-palette" style="color: #f43f5e;"></i> <span>Theme</span></button>
+            <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionLang')"><i class="fa-solid fa-language" style="color: #38bdf8;"></i> <span>Languages</span></button>
+            <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionSubscription')"><i class="fa-solid fa-gem" style="color: #a855f7;"></i> <span>Pro Perks</span></button>
+            <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionPrivacy')"><i class="fa-solid fa-shield-halved" style="color: #10b981;"></i> <span>Privacy &amp; Vault</span></button>
+            <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionLocation')"><i class="fa-solid fa-location-dot" style="color: #38bdf8;"></i> <span>GPS &amp; Tags</span></button>
+            <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionStorage')"><i class="fa-solid fa-hard-drive" style="color: #ec4899;"></i> <span>Storage</span></button>
+            <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionUpdates')"><i class="fa-solid fa-cloud-arrow-down" style="color: #06b6d4;"></i> <span>Updates</span></button>
+            <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionFeedback')"><i class="fa-solid fa-comment-dots" style="color: #f97316;"></i> <span>Feedback</span></button>
+          </div>
+
+          <!-- User VIP & Membership Card (Secret 5-Tap Gesture to Toggle Developer VIP Mode) -->
+          <div class="settings-profile-card" id="sectionProfile" onclick="handleDevModeSecretTap()" title="Tap 5 times to toggle Developer VIP Mode anytime" style="cursor: pointer;">
+            <div class="profile-avatar-box">
+              <i class="fa-solid fa-user-astronaut"></i>
+            </div>
+            <div class="profile-meta">
+              <div class="profile-name-row">
+                <h3 class="profile-name" data-i18n="settings_member_name">Aura Member</h3>
+                <span class="vip-sparkle-tag" id="profileVipTag" data-i18n="settings_starter">STARTER</span>
+              </div>
+              <p class="profile-status-desc" id="profileStatusDesc" data-i18n="settings_storage_private">Standard local storage · 100% private</p>
+            </div>
+          </div>
+
+          <!-- MASTER VIP DEVELOPER BYPASS & TESTER ACCESS CARD -->
+          <div class="vip-developer-master-card" id="sectionVipDev">
+            <div class="vip-dev-header">
+              <div class="vip-dev-badge">
+                <i class="fa-solid fa-flask-vial"></i> DEVELOPER &amp; VIP TESTER MODE
+              </div>
+              <span class="vip-dev-status-pill" id="vipBypassStatusPill">👑 VIP ACTIVE</span>
+            </div>
+            
+            <p class="vip-dev-subtitle">Instant subscription bypass for testing all 3D albums, personal surfaces, RAW exports &amp; vault on native APK.</p>
+            
+            <div class="vip-dev-actions-grid">
+              <button type="button" class="btn btn-vip-bypass active" id="vipBypassMasterBtn" onclick="toggleVip()">
+                <i class="fa-solid fa-bolt"></i> <span id="vipBypassBtnLabel">👑 VIP Access Active · Tap to Test Starter</span>
+              </button>
+              
+              <div class="vip-dev-switch-row">
+                <span class="vip-dev-switch-text"><i class="fa-solid fa-sliders"></i> Master VIP Switch</span>
+                <label class="switch-toggle" title="Toggle VIP Access for Testing">
+                  <input type="checkbox" id="vipDeveloperToggle" onchange="toggleVipFromSettings(event.target.checked)">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Perks Unlocked Summary -->
+            <div class="vip-unlocked-pills-row">
+              <span class="vip-micro-pill"><i class="fa-solid fa-cube"></i> 3D Holographic Parallax</span>
+              <span class="vip-micro-pill"><i class="fa-solid fa-wand-magic-sparkles"></i> 3D Surface Studio</span>
+              <span class="vip-micro-pill"><i class="fa-solid fa-shield-halved"></i> Biometric Vault</span>
+              <span class="vip-micro-pill"><i class="fa-solid fa-file-export"></i> 4K RAW Export</span>
+              <span class="vip-micro-pill"><i class="fa-solid fa-tags"></i> Unlimited Albums</span>
+            </div>
+
+            <!-- Quick 3D Test & Diagnostic Tools -->
+            <div class="vip-dev-tools-row">
+              <button type="button" class="btn-dev-tool" onclick="openAlbum3DSurfaceModal(state.tags[0]?.name || 'favorites')" title="Open 3D Album Surface Studio">
+                <i class="fa-solid fa-palette"></i> <span>3D Surface Studio</span>
+              </button>
+              <button type="button" class="btn-dev-tool" onclick="Aura3DMotionPhysics.triggerShakeWave()" title="Trigger Kinetic Resonance Wave">
+                <i class="fa-solid fa-wave-square"></i> <span>Test 3D Wave</span>
+              </button>
+              <button type="button" class="btn-dev-tool" onclick="open3DAlbumAuditModal()" title="Run 3D Physics Integrity Audit">
+                <i class="fa-solid fa-microchip"></i> <span>3D Audit</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- SECTION 1: LANGUAGE & REGION (भारतीय भाषाएं / Indian Languages) -->
+          <div class="settings-group" id="sectionLang">
+            <div class="settings-group-header">
+              <i class="fa-solid fa-language"></i>
+              <span data-i18n="settings_language_section">LANGUAGE & REGION</span>
+            </div>
+            <div class="settings-subgroup" style="padding-top: 2px;">
+              <div class="settings-subgroup-header">
+                <span class="settings-subgroup-label"><i class="fa-solid fa-globe" style="margin-right: 5px; color: var(--primary);"></i> <span data-i18n="settings_language_label">App Language</span></span>
+                <span class="settings-subgroup-hint" id="currentLangHintBadge">English</span>
+              </div>
+              <p class="settings-subgroup-desc" data-i18n="settings_language_desc" style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px 2px;">
+                Select your preferred language (Indian Regional & Global)
+              </p>
+              <div class="language-selector-grid" id="languageSelectorGrid">
+                <!-- Rendered dynamically by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: APPEARANCE / IN-APP THEME SWITCHER -->
+          <div class="settings-group" id="sectionTheme">
+            <div class="settings-group-header">
+              <i class="fa-solid fa-palette"></i>
+              <span data-i18n="settings_appearance_section">APPEARANCE & THEME</span>
+            </div>
+            <div class="theme-selector-grid">
+              <button class="theme-option-card active" id="themeOptDark" onclick="setAppTheme('dark')">
+                <div class="theme-preview-box dark-preview">
+                  <div class="mini-bar"></div>
+                  <div class="mini-grid"><span></span><span></span></div>
+                </div>
+                <div class="theme-card-info">
+                  <span class="theme-name" data-i18n="settings_theme_dark">Midnight Dark</span>
+                  <span class="theme-sub" data-i18n="settings_theme_dark_sub">Obsidian Aura</span>
+                </div>
+                <i class="fa-solid fa-circle-check theme-check-icon"></i>
+              </button>
+
+              <button class="theme-option-card" id="themeOptLight" onclick="setAppTheme('light')">
+                <div class="theme-preview-box light-preview">
+                  <div class="mini-bar"></div>
+                  <div class="mini-grid"><span></span><span></span></div>
+                </div>
+                <div class="theme-card-info">
+                  <span class="theme-name" data-i18n="settings_theme_light">Luminous Light</span>
+                  <span class="theme-sub" data-i18n="settings_theme_light_sub">Editorial Clean</span>
+                </div>
+                <i class="fa-solid fa-circle-check theme-check-icon"></i>
+              </button>
+
+              <button class="theme-option-card" id="themeOptSystem" onclick="setAppTheme('system')">
+                <div class="theme-preview-box system-preview">
+                  <div class="mini-half dark-half"></div>
+                  <div class="mini-half light-half"></div>
+                </div>
+                <div class="theme-card-info">
+                  <span class="theme-name" data-i18n="settings_theme_system">System Auto</span>
+                  <span class="theme-sub" data-i18n="settings_theme_system_sub">Sync with OS</span>
+                </div>
+                <i class="fa-solid fa-circle-check theme-check-icon"></i>
+              </button>
+            </div>
+
+            <!-- Custom Theme Accent Color Palette -->
+            <div class="settings-subgroup">
+              <div class="settings-subgroup-header">
+                <span class="settings-subgroup-label"><i class="fa-solid fa-paintbrush"
+                    style="margin-right: 5px; color: var(--primary);"></i> <span data-i18n="settings_accent_label">Theme Accent Palette</span></span>
+                <span class="settings-subgroup-hint" data-i18n="settings_accent_hint">Custom color choices</span>
+              </div>
+              <div class="color-palette luxury-palette" id="themeAccentPaletteContainer">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 3: PRO MEMBERSHIP & RAZORPAY SUBSCRIPTION -->
+          <div class="settings-group" id="sectionSubscription">
+            <div class="settings-group-header">
+              <i class="fa-solid fa-crown"></i>
+              <span data-i18n="settings_subscription_section">SUBSCRIPTION & MEMBERSHIP</span>
+            </div>
+            <div class="pro-membership-showcase" id="proMembershipCard">
+              <div class="pro-card-header">
+                <div class="pro-badge-glow" data-i18n="settings_pro_vip"><i class="fa-solid fa-gem"></i> AURA PRO VIP</div>
+                <span class="pro-pricing-tag">₹299 <span>/ month</span></span>
+              </div>
+              <p class="pro-tagline" data-i18n="settings_pro_tagline">Unlock the ultimate AI organizer with unlimited albums, 100% private on-device storage & biometric vault.</p>
+
+              <div class="pro-features-list">
+                <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_1">Unlimited Smart Albums & Custom Tags</span>
+                </div>
+                <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_2">Original Ultra-HD RAW & 4K Export</span>
+                </div>
+                <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_3">Encrypted Biometric Secret Vault</span>
+                </div>
+                <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_4">100% On-Device Privacy & Fast Local Backup</span></div>
+                <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_5">VIP 3D Holographic Album Cards &amp; Custom Surface Artwork</span>
+                </div>
+                <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_6">Zero Watermark & Priority AI Tagging</span>
+                </div>
+              </div>
+
+              <div class="pro-action-box">
+                <button class="btn-pro-razorpay" id="startRazorpayBtn" onclick="initiateRazorpayPayment()">
+                  <i class="fa-solid fa-bolt"></i> <span data-i18n="settings_upgrade_btn">Upgrade with Razorpay (₹299)</span>
+                </button>
+                <div class="pro-support-links">
+                  <button class="text-link-btn" onclick="restoreProPurchases()" data-i18n="settings_restore_btn">Restore Purchases</button>
+                  <span>·</span>
+                  <button class="text-link-btn" onclick="openPaymentFaq()" data-i18n="settings_billing_faq">Billing FAQ</button>
+                  <span>·</span>
+                  <button class="text-link-btn" onclick="toggleVip()" style="color: #f59e0b; font-weight: 700;">⚡ Developer Bypass</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 4: PRIVACY & SECURITY -->
+          <div class="settings-group" id="sectionPrivacy">
+            <div class="settings-group-header">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span data-i18n="settings_privacy_section">PRIVACY & SECURITY</span>
+            </div>
+
+            <div class="settings-list-card">
+              <div class="settings-row">
+                <div class="settings-row-icon safe">
+                  <i class="fa-solid fa-microchip"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_on_device_ai">100% On-Device AI</span>
+                  <span class="settings-row-desc" data-i18n="settings_on_device_ai_desc">All photo tagging runs locally. Photos never leave your phone.</span>
+                </div>
+                <span class="badge-status-green"><i class="fa-solid fa-lock"></i> <span data-i18n="settings_secured">Secured</span></span>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-icon">
+                  <i class="fa-solid fa-fingerprint"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_biometric_lock">Biometric App Lock</span>
+                  <span class="settings-row-desc" data-i18n="settings_biometric_lock_desc">Require FaceID / Fingerprint on launch</span>
+                </div>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="biometricLockToggle" onchange="toggleBiometricLock(this.checked)">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <!-- App Lock Sub-Controls -->
+              <div class="app-lock-sub-controls" id="appLockSubControls" style="display: none; padding: 6px 16px 14px 48px; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-xs btn-outline" onclick="lockAppNow()" style="font-size:11px; border-radius:18px; padding: 4px 10px;">
+                  <i class="fa-solid fa-lock" style="margin-right:4px;"></i> Lock App Now (Test)
+                </button>
+                <button type="button" class="btn btn-xs btn-outline" onclick="openChangePinModal()" style="font-size:11px; border-radius:18px; padding: 4px 10px;">
+                  <i class="fa-solid fa-key" style="margin-right:4px;"></i> Change 4-Digit PIN
+                </button>
+              </div>
+
+              <div class="settings-row clickable" onclick="openPrivacyPolicyModal()">
+                <div class="settings-row-icon">
+                  <i class="fa-solid fa-file-shield"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_privacy_policy">Privacy Policy & Terms</span>
+                  <span class="settings-row-desc" data-i18n="settings_privacy_policy_desc">Read our zero-tracking data pledge</span>
+                </div>
+                <i class="fa-solid fa-chevron-right row-arrow"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 5: LOCATION & GPS TAGS -->
+          <div class="settings-group" id="sectionLocation">
+            <div class="settings-group-header">
+              <i class="fa-solid fa-location-dot" style="color: #38bdf8;"></i>
+              <span data-i18n="settings_location_section">LOCATION & GPS TAGS</span>
+            </div>
+
+            <div class="settings-list-card">
+              <!-- Master Toggle 1: Extract GPS Metadata -->
+              <div class="settings-row">
+                <div class="settings-row-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                  <i class="fa-solid fa-satellite-dish"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_gps_extraction">Extract Photo GPS Metadata</span>
+                  <span class="settings-row-desc" data-i18n="settings_gps_extraction_desc">Save GPS coordinates & metadata when capturing or importing photos</span>
+                </div>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="gpsMetadataToggle" onchange="toggleGpsMetadataSetting(this.checked)">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <!-- Master Toggle 2: Suggest Location Tags -->
+              <div class="settings-row">
+                <div class="settings-row-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                  <i class="fa-solid fa-tags"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_location_tags">Suggest Location Tags</span>
+                  <span class="settings-row-desc" data-i18n="settings_location_tags_desc">Show smart Place, City, and Country tags on photo cards & tag dialog</span>
+                </div>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="locationTagsToggle" onchange="toggleLocationTagsSetting(this.checked)">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <!-- Toggle 3: Show Location on Gallery Cards (Default: OFF) -->
+              <div class="settings-row" style="border-top: 1px solid var(--border-subtle);">
+                <div class="settings-row-icon" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9;">
+                  <i class="fa-solid fa-map-pin"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_gallery_location_badges">Show Location on Cards</span>
+                  <span class="settings-row-desc" data-i18n="settings_gallery_location_badges_desc">Display location badge on photo cards in gallery (Disabled by default)</span>
+                </div>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="galleryLocationBadgeToggle" onchange="toggleGalleryLocationBadgeSetting(this.checked)">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <!-- Sub-toggles Container: Place, City, Country -->
+              <div class="settings-subgroup-nested" id="locationSubTogglesContainer" style="border-top: 1px solid var(--border-subtle); padding-left: 8px;">
+                <!-- Sub-toggle 1: Place / Landmark -->
+                <div class="settings-row sub-row" style="padding-left: 6px;">
+                  <div class="settings-row-icon sub" style="background: rgba(244, 63, 94, 0.12); color: #f43f5e; font-size: 13px; width: 32px; height: 32px; border-radius: 10px;">
+                    <i class="fa-solid fa-landmark"></i>
+                  </div>
+                  <div class="settings-row-text">
+                    <span class="settings-row-title" data-i18n="settings_loc_place">Place & Landmark</span>
+                    <span class="settings-row-desc" data-i18n="settings_loc_place_desc">e.g. Gateway of India, Central Park</span>
+                  </div>
+                  <label class="switch-toggle sm">
+                    <input type="checkbox" id="locationTagPlaceToggle" onchange="toggleLocationTagSubSetting('place', this.checked)">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <!-- Sub-toggle 2: City / Town -->
+                <div class="settings-row sub-row" style="padding-left: 6px;">
+                  <div class="settings-row-icon sub" style="background: rgba(139, 92, 246, 0.12); color: #8b5cf6; font-size: 13px; width: 32px; height: 32px; border-radius: 10px;">
+                    <i class="fa-solid fa-city"></i>
+                  </div>
+                  <div class="settings-row-text">
+                    <span class="settings-row-title" data-i18n="settings_loc_city">City & Town</span>
+                    <span class="settings-row-desc" data-i18n="settings_loc_city_desc">e.g. Mumbai, New York, Paris, Tokyo</span>
+                  </div>
+                  <label class="switch-toggle sm">
+                    <input type="checkbox" id="locationTagCityToggle" onchange="toggleLocationTagSubSetting('city', this.checked)">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <!-- Sub-toggle 3: Country -->
+                <div class="settings-row sub-row" style="padding-left: 6px;">
+                  <div class="settings-row-icon sub" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; font-size: 13px; width: 32px; height: 32px; border-radius: 10px;">
+                    <i class="fa-solid fa-earth-americas"></i>
+                  </div>
+                  <div class="settings-row-text">
+                    <span class="settings-row-title" data-i18n="settings_loc_country">Country</span>
+                    <span class="settings-row-desc" data-i18n="settings_loc_country_desc">e.g. India, United States, France, Japan</span>
+                  </div>
+                  <label class="switch-toggle sm">
+                    <input type="checkbox" id="locationTagCountryToggle" onchange="toggleLocationTagSubSetting('country', this.checked)">
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Action: Load Sample GPS Photos -->
+              <div class="settings-row" style="cursor: pointer; border-top: 1px solid var(--border-subtle);" onclick="loadSampleGpsPhotos(3)">
+                <div class="settings-row-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_load_gps_sample">Load Sample GPS Photos</span>
+                  <span class="settings-row-desc" data-i18n="settings_load_gps_sample_desc">Add 3 sample photos with Mumbai, Paris & New York GPS tags</span>
+                </div>
+                <i class="fa-solid fa-arrow-down row-arrow" style="color: #38bdf8; opacity: 1;"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 6: STORAGE & DATA MANAGEMENT -->
+          <div class="settings-group" id="sectionStorage">
+            <div class="settings-group-header">
+              <i class="fa-solid fa-hard-drive"></i>
+              <span data-i18n="settings_storage_section">STORAGE & DATA MANAGEMENT</span>
+            </div>
+
+            <div class="settings-list-card">
+              <!-- Live Storage Breakdown -->
+              <div class="storage-meter-box">
+                <div class="storage-labels">
+                  <span class="storage-title" data-i18n="settings_local_storage">Local App Storage</span>
+                  <span class="storage-used" id="storageUsageText">Calculating...</span>
+                </div>
+                <div class="storage-progress-track">
+                  <div class="storage-progress-bar" id="storageProgressBar" style="width: 28%;"></div>
+                </div>
+                <div class="storage-legend">
+                  <span><i class="fa-solid fa-circle" style="color:#f43f5e"></i> <span data-i18n="settings_legend_photos">Photos</span> (<span
+                      id="storagePhotoCount">0</span>)</span>
+                  <span><i class="fa-solid fa-circle" style="color:#fbbf24"></i> <span data-i18n="settings_legend_trash">Trash</span> (<span
+                      id="storageTrashCount">0</span>)</span>
+                  <span><i class="fa-solid fa-circle" style="color:#10b981"></i> <span data-i18n="settings_legend_tags">Tags</span> (<span
+                      id="storageTagCount">0</span>)</span>
+                </div>
+              </div>
+
+              <!-- Storage Action Buttons -->
+              <div class="settings-action-row">
+                <button class="settings-action-btn" onclick="clearAppCache()">
+                  <i class="fa-solid fa-broom"></i>
+                  <span data-i18n="settings_clear_cache">Clear Cache</span>
+                </button>
+                <button class="settings-action-btn danger" onclick="emptyTrashFromSettings()">
+                  <i class="fa-solid fa-trash-arrow-up"></i>
+                  <span data-i18n="settings_empty_trash">Empty Trash</span>
+                </button>
+              </div>
+
+              <div class="settings-action-row" style="margin-top: 8px;">
+                <button class="settings-action-btn" onclick="exportFullDataBackup()">
+                  <i class="fa-solid fa-file-export"></i>
+                  <span data-i18n="settings_export_backup">Export Backup</span>
+                </button>
+                <label class="settings-action-btn" style="cursor: pointer;">
+                  <i class="fa-solid fa-file-import"></i>
+                  <span data-i18n="settings_import_backup">Import Backup</span>
+                  <input type="file" id="importBackupFileInput" accept=".json" onchange="importFullDataBackup(event)"
+                    style="display:none;">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 7: APP UPDATES & NOTIFICATIONS -->
+          <div class="settings-group" id="sectionUpdates">
+            <div class="settings-group-header">
+              <i class="fa-solid fa-cloud-arrow-down" style="color: #38bdf8;"></i>
+              <span data-i18n="settings_updates_section">APP UPDATES &amp; NOTIFICATIONS</span>
+            </div>
+
+            <div class="settings-list-card">
+              <!-- Push Update Notifications Toggle -->
+              <div class="settings-row">
+                <div class="settings-row-icon" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">
+                  <i class="fa-solid fa-bell"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_push_updates_title">Push Update Notifications</span>
+                  <span class="settings-row-desc" data-i18n="settings_push_updates_desc">Instant alerts when a new version is released. All photos, albums &amp; settings are preserved.</span>
+                </div>
+                <label class="switch-toggle">
+                  <input type="checkbox" id="pushUpdatesToggle" onchange="togglePushUpdatesSetting(this.checked)" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <!-- Check for Updates Action Row -->
+              <div class="settings-row clickable" onclick="checkAppUpdate(true)">
+                <div class="settings-row-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+                  <i class="fa-solid fa-rotate"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_check_update_title">Check for Updates</span>
+                  <span class="settings-row-desc" id="settingsUpdateStatusDesc" data-i18n="settings_check_update_desc">You are on the latest version · v2.4.0</span>
+                </div>
+                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; border-color: rgba(56,189,248,0.4); color: #38bdf8;">
+                  <i class="fa-solid fa-cloud-arrow-down"></i> <span data-i18n="settings_check_now_btn">Check Now</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 8: HELP & FEEDBACK -->
+          <div class="settings-group" id="sectionFeedback">
+            <div class="settings-group-header">
+              <i class="fa-solid fa-comment-dots" style="color: #a855f7;"></i>
+              <span data-i18n="settings_feedback_section">HELP &amp; COMMUNITY FEEDBACK</span>
+            </div>
+
+            <div class="settings-list-card">
+              <div class="settings-row clickable" onclick="openFeedbackModal()">
+                <div class="settings-row-icon" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">
+                  <i class="fa-solid fa-comments"></i>
+                </div>
+                <div class="settings-row-text">
+                  <span class="settings-row-title" data-i18n="settings_feedback_title">Feedback &amp; Suggestions</span>
+                  <span class="settings-row-desc" data-i18n="settings_feedback_desc">Share your thoughts, feature ideas, or suggestions to improve Aura</span>
+                </div>
+                <button type="button" class="btn btn-outline" id="openFeedbackBtn" onclick="event.stopPropagation(); openFeedbackModal();" style="padding: 6px 12px; font-size: 12px; border-color: rgba(168,85,247,0.4); color: #c084fc;">
+                  <i class="fa-solid fa-paper-plane"></i> <span data-i18n="settings_feedback_btn">Feedback</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 9: APP INFO -->
+          <div class="settings-footer-info" id="sectionAppInfo" onclick="handleDevModeSecretTap()" style="cursor: pointer;" title="Tap 5 times to toggle Developer VIP Mode">
+            <p class="app-version-text" data-i18n="settings_app_version">Aura Photo Organizer · v2.4.0 (Build 2026.09.15)</p>
+            <p class="app-credits-text" data-i18n="settings_app_credits">100% Private On-Device AI · All Data Stored Locally</p>
+            <p style="font-size: 10px; color: #f59e0b; margin-top: 4px; opacity: 0.85;"><i class="fa-solid fa-flask"></i> Developer VIP Bypass Active · Tap 5x to Toggle</p>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Bottom Navigation Bar -->
+      <nav class="bottom-nav">
+        <button class="nav-item active" data-tab="dockScreen">
+          <div class="nav-icon-wrapper">
+            <i class="fa-solid fa-inbox"></i>
+            <span class="nav-badge" id="dockNavBadge" style="display: none;">0</span>
+          </div>
+          <span class="nav-label" data-i18n="nav_dock">Dock</span>
+        </button>
+        <button class="nav-item" data-tab="galleryScreen">
+          <div class="nav-icon-wrapper">
+            <i class="fa-solid fa-images"></i>
+          </div>
+          <span class="nav-label" data-i18n="nav_gallery">Gallery</span>
+        </button>
+        <button class="nav-item" data-tab="albumsScreen">
+          <div class="nav-icon-wrapper">
+            <i class="fa-solid fa-folder-closed"></i>
+          </div>
+          <span class="nav-label" data-i18n="nav_albums">Albums</span>
+        </button>
+        <button class="nav-item" data-tab="favoritesScreen">
+          <div class="nav-icon-wrapper">
+            <i class="fa-solid fa-heart"></i>
+            <span class="nav-badge" id="favNavBadge" style="display: none; background: #f43f5e;">0</span>
+          </div>
+          <span class="nav-label" data-i18n="nav_favorites">Favorites</span>
+        </button>
+        <button class="nav-item" data-tab="trashScreen">
+          <div class="nav-icon-wrapper">
+            <i class="fa-solid fa-trash-can"></i>
+            <span class="nav-badge danger" id="trashNavBadge" style="display: none;">0</span>
+          </div>
+          <span class="nav-label" data-i18n="nav_trash">Trash</span>
+        </button>
+        <button class="nav-item" data-tab="settingsScreen" id="navSettingsBtn">
+          <div class="nav-icon-wrapper">
+            <i class="fa-solid fa-gear"></i>
+            <span class="nav-badge pro-sparkle-badge" id="proBadgeNav" style="display: none;">PRO</span>
+          </div>
+          <span class="nav-label" data-i18n="nav_settings">Settings</span>
+        </button>
+      </nav>
+
+      <!-- MODALS & OVERLAYS -->
+
+      <!-- Photo Detail Full-Screen Modal -->
+      <div class="modal-overlay" id="photoDetailModal" style="display: none;">
+        <!-- Ambient Stage Glow for Luxury Theater Presentation -->
+        <div class="detail-ambient-glow" id="detailAmbientGlow"></div>
+
+        <div class="detail-container">
+          <!-- Top Bar: Navigation, Title & Quick Heart / Rename -->
+          <div class="detail-top-bar">
+            <button class="icon-btn-round detail-back-btn" id="closeDetailBtn" title="Back to Gallery" aria-label="Back">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="detail-title-block">
+              <h3 id="detailPhotoTitle" onclick="openRenamePhotoModal(state.activePhotoId)"
+                title="Tap to rename photo" style="cursor: pointer;">
+                Photo Title
+              </h3>
+              <p id="detailPhotoDate">Date</p>
+            </div>
+            <div class="detail-counter-badge" id="detailPhotoCounter" title="Photo position in album" style="display: none;">1 / 1</div>
+            <div class="detail-top-actions">
+              <button class="icon-btn-round" id="detailRenameBtn" onclick="openRenamePhotoModal(state.activePhotoId)"
+                title="Rename Photo" aria-label="Rename Photo">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button class="icon-btn-round" id="detailFavoriteBtn" title="Favorite Photo" aria-label="Favorite Photo">
+                <i class="fa-regular fa-heart"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="detail-image-wrapper" id="detailImageWrapper">
+            <button type="button" class="detail-nav-btn detail-nav-prev" id="detailPrevBtn" title="Previous Image (Swipe Right or Left Arrow)" aria-label="Previous Image">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="detail-image-stage" id="detailImageStage">
+              <img id="detailImage" src="" alt="Photo Full View" draggable="false">
+            </div>
+            <button type="button" class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="Next Image (Swipe Left or Right Arrow)" aria-label="Next Image">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <div class="detail-swipe-hint" id="detailSwipeHint">
+              <i class="fa-solid fa-chevron-left"></i> Swipe to browse <i class="fa-solid fa-chevron-right"></i>
+            </div>
+          </div>
+
+          <!-- Bottom Floating Action Dock (Crop, Move/Copy, Share, Download, Trash) -->
+          <div class="detail-floating-dock" id="detailFloatingDock">
+            <button type="button" class="detail-dock-btn action-crop" id="detailCropBtn" onclick="openCropEditorModal(state.activePhotoId)" title="Crop & Orient Photo" aria-label="Crop Photo">
+              <span class="dock-btn-icon"><i class="fa-solid fa-crop-simple"></i></span>
+              <span class="dock-btn-label" data-i18n="detail_crop">Crop</span>
+            </button>
+            <button type="button" class="detail-dock-btn action-organize vip-action-btn" id="detailMoveCopyBtn" onclick="openMoveCopyModal([state.activePhotoId])" title="Move or Copy to Album (VIP)" aria-label="Move or Copy">
+              <span class="dock-btn-icon">
+                <i class="fa-solid fa-folder-tree"></i>
+                <span class="btn-vip-dot" title="Aura VIP Feature"><svg class="aura-luxury-crown" width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg></span>
+              </span>
+              <span class="dock-btn-label" data-i18n="albums_tagline">Organize</span>
+            </button>
+            <button type="button" class="detail-dock-btn action-share" id="detailShareBtn" title="Share Photo" aria-label="Share Photo">
+              <span class="dock-btn-icon"><i class="fa-solid fa-arrow-up-from-bracket"></i></span>
+              <span class="dock-btn-label" data-i18n="detail_share">Share</span>
+            </button>
+            <button type="button" class="detail-dock-btn action-download" id="detailDownloadBtn" title="Download High-Res" aria-label="Download Photo">
+              <span class="dock-btn-icon"><i class="fa-solid fa-download"></i></span>
+              <span class="dock-btn-label" data-i18n="detail_download">Download</span>
+            </button>
+            <button type="button" class="detail-dock-btn action-delete danger" id="detailDeleteBtn" onclick="deleteActivePhoto()" title="Move to Trash" aria-label="Move to Trash">
+              <span class="dock-btn-icon"><i class="fa-solid fa-trash-can"></i></span>
+              <span class="dock-btn-label" data-i18n="detail_trash">Trash</span>
+            </button>
+          </div>
+
+          <div class="detail-bottom-sheet collapsed" id="detailBottomSheet">
+            <div class="sheet-drag-handle-bar" onclick="toggleDetailBottomSheet()" title="Tap to expand / collapse tags">
+              <div class="sheet-drag-handle"></div>
+            </div>
+            <div class="sheet-header" onclick="toggleDetailBottomSheet()" style="cursor: pointer;">
+              <span class="sheet-title">
+                <i class="fa-solid fa-tags" style="color: #818cf8; font-size: 13px;"></i>
+                <span data-i18n="detail_assigned_albums">Albums & Tags</span>
+                <span class="detail-tag-count-badge" id="detailTagCountBadge" style="display: none;">0</span>
+              </span>
+              <div class="sheet-header-actions" onclick="event.stopPropagation()">
+                <button class="btn btn-sm btn-primary" id="openManageTagsForPhotoBtn">
+                  <i class="fa-solid fa-tag"></i> <span data-i18n="detail_edit_tags">Edit Tags</span>
+                </button>
+                <button class="sheet-toggle-btn" id="sheetToggleBtn" onclick="toggleDetailBottomSheet()" title="Expand / Collapse Tags" aria-label="Expand or Collapse">
+                  <i class="fa-solid fa-chevron-up"></i>
+                </button>
+              </div>
+            </div>
+            <div class="detail-tags-row-wrapper" id="detailTagsRowWrapper">
+              <div class="detail-tags-row" id="detailTagsRow">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+            <!-- Smart Suggested Location Tags (GPS Metadata) -->
+            <div class="detail-location-suggestions" id="detailLocationSuggestions" style="display: none;">
+              <div class="location-suggestions-header">
+                <div class="loc-suggestions-title-group">
+                  <i class="fa-solid fa-location-dot"></i>
+                  <span data-i18n="location_suggestions_title">Suggested Location Tags</span>
+                </div>
+                <button type="button" class="btn-edit-loc-header" id="btnEditLocHeader" onclick="openManualLocationModal(state.activePhotoId)" title="Edit Location / Tags">
+                  <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="detail_edit_location">Edit Location</span>
+                </button>
+              </div>
+              <div class="location-suggestions-chips" id="detailLocationChips">
+                <!-- Rendered by JS: [+ 📍 Place], [+ 📍 City], [+ 📍 Country] -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch Tag Assignment Dialog -->
+      <div class="modal-overlay dialog-mode" id="batchTagModal" style="display: none;">
+        <div class="dialog-card">
+          <div class="dialog-header">
+            <h3 data-i18n="dock_bulk_tag_title">Organize into Albums</h3>
+            <button class="close-dialog-btn" id="closeBatchTagBtn"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="dialog-desc" data-i18n="dock_hint_default">Select tags to apply to selected photos and move them to the Gallery.</p>
+          
+          <!-- Smart Location Suggestions Section (Chips) in Tag Card Modal -->
+          <div class="batch-location-container" id="batchLocationContainer" style="display: none;">
+            <div class="batch-location-header">
+              <div class="batch-loc-title-wrap">
+                <i class="fa-solid fa-location-dot" style="color: #38bdf8;"></i>
+                <span class="batch-loc-title" data-i18n="location_suggestions_title">Suggested Location Tags</span>
+              </div>
+              <span class="batch-loc-badge"><i class="fa-solid fa-satellite-dish"></i> GPS</span>
+            </div>
+            <div class="batch-location-chips" id="batchLocationChips">
+              <!-- Rendered dynamically by JS: Place, City, Country chips -->
+            </div>
+          </div>
+
+          <div class="batch-tags-section-header" id="batchAlbumsSectionHeader" style="display: none;">
+            <span data-i18n="albums_title">Albums & Custom Tags</span>
+          </div>
+          <div class="dialog-tag-chips" id="batchTagChipsList">
+            <!-- Rendered by JS -->
+          </div>
+          <div class="dialog-new-tag">
+            <input type="text" id="batchNewTagInput" placeholder="Create tag (e.g. Birthday)..." data-i18n-placeholder="tag_input_placeholder" autocomplete="off">
+            <button class="btn btn-sm btn-outline" id="batchCreateTagBtn" data-i18n="tag_btn_add">Add</button>
+          </div>
+          <div class="dialog-buttons">
+            <button class="btn btn-outline" id="cancelBatchTagBtn" data-i18n="crop_cancel">Cancel</button>
+            <button class="btn btn-primary" id="confirmBatchTagBtn" data-i18n="dock_tag_and_save">Save to Gallery</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create New Album Modal Dialog -->
+      <div class="modal-overlay dialog-mode" id="createAlbumModal" style="display: none;">
+        <div class="dialog-card luxury-dialog">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow" data-i18n="albums_tagline">COLLECTION CREATOR</span>
+              <h3 class="dialog-title" data-i18n="albums_new_btn">Create New Album</h3>
+            </div>
+            <button class="close-dialog-btn" id="closeCreateAlbumBtn" title="Close"><i
+                class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="dialog-desc" data-i18n="create_album_desc">Give your album an editorial title and signature accent hue.</p>
+
+          <div class="dialog-field-group">
+            <label class="dialog-field-label" data-i18n="create_album_title_label">Album Title</label>
+            <div class="dialog-input-wrapper">
+              <i class="fa-solid fa-folder-plus field-icon"></i>
+              <input type="text" id="modalNewAlbumNameInput" class="dialog-text-input"
+                placeholder="e.g. Summer in Paris, Golden Hour, Editorial..." data-i18n-placeholder="create_album_placeholder" autocomplete="off" />
+            </div>
+          </div>
+
+          <div class="dialog-field-group" style="margin-top: 18px;">
+            <label class="dialog-field-label" data-i18n="create_album_palette_label">Signature Accent Palette</label>
+            <div class="color-palette luxury-palette" id="modalAlbumColorPalette"></div>
+          </div>
+
+          <div class="create-album-dialog-actions" style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;">
+              <button class="btn btn-outline" id="cancelCreateAlbumBtn" data-i18n="crop_cancel" style="flex: 1; min-width: 0; height: 46px; border-radius: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px;">Cancel</button>
+              <button class="btn btn-primary" id="confirmCreateAlbumBtn" style="flex: 1.3; min-width: 0; height: 46px; border-radius: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 8px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="fa-solid fa-check" style="flex-shrink: 0;"></i> <span data-i18n="create_album_create_empty" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">Create Album</span>
+              </button>
+            </div>
+            <button class="btn btn-outline" id="createAndImportAlbumBtn" onclick="createAlbumAndPickPhotos()" style="width: 100%; max-width: 100%; min-height: 44px; height: auto; padding: 10px 14px; border-radius: 14px; border-color: rgba(244, 63, 94, 0.45); color: #ff7a90; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; overflow: hidden; text-align: center;" title="Create album and immediately import photos from phone gallery (VIP)">
+              <svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="flex-shrink: 0;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg>
+              <span data-i18n="create_album_import_vip" style="display: block; max-width: 100%; white-space: normal; line-height: 1.25; overflow: hidden; text-overflow: ellipsis;">Create & Import Photos (VIP)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Double-Confirmation Album Deletion Modal -->
+      <div class="modal-overlay dialog-mode" id="deleteAlbumModal" style="display: none;">
+        <div class="dialog-card luxury-dialog delete-album-dialog">
+          <!-- Step 1: Album Options (Save vs Discard images) -->
+          <div id="deleteAlbumStep1" class="delete-album-step">
+            <div class="dialog-header">
+              <div>
+                <span class="dialog-eyebrow" data-i18n="albums_delete_step1_eyebrow">STEP 1 OF 2 · ALBUM DELETION</span>
+                <h3 class="dialog-title" id="deleteAlbumTitle" data-i18n="albums_delete_title">Delete Album</h3>
+              </div>
+              <button class="close-dialog-btn" onclick="closeDeleteAlbumModal()" title="Close"><i
+                  class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Album Info Summary Badge -->
+            <div class="delete-album-info-card">
+              <div class="album-tag-color-indicator" id="deleteAlbumColorIndicator"></div>
+              <div class="delete-album-meta">
+                <h4 id="deleteAlbumTargetName">Album Name</h4>
+                <p id="deleteAlbumPhotoCountSummary">Loading details...</p>
+              </div>
+            </div>
+
+            <p class="dialog-desc" id="deleteAlbumPromptDesc" data-i18n="albums_delete_prompt" style="margin-top: 14px; margin-bottom: 12px;">
+              Choose what to do with the images in this album before deleting it:
+            </p>
+
+            <!-- Option Selection Cards -->
+            <div class="delete-options-grid" id="deleteOptionsGrid">
+              <!-- Option A: Save / Keep Images -->
+              <div class="delete-option-card active" id="deleteOptionSaveCard" onclick="selectDeleteAlbumOption('save')">
+                <div class="delete-option-radio">
+                  <i class="fa-solid fa-circle-check radio-icon"></i>
+                </div>
+                <div class="delete-option-content">
+                  <div class="delete-option-header">
+                    <span class="delete-option-title"><i class="fa-solid fa-shield-heart" style="color: #10b981; margin-right: 6px;"></i> <span data-i18n="albums_delete_opt_keep">Save Images in Gallery</span></span>
+                    <span class="delete-option-badge safe" data-i18n="albums_delete_badge_safe">Keep Photos</span>
+                  </div>
+                  <p class="delete-option-desc" data-i18n="albums_delete_opt_keep_desc">Keep all images safely in your library. Only the album categorization will be deleted.</p>
+                </div>
+              </div>
+
+              <!-- Option B: Move to Recycle Bin / Trash -->
+              <div class="delete-option-card" id="deleteOptionTrashCard" onclick="selectDeleteAlbumOption('trash')">
+                <div class="delete-option-radio">
+                  <i class="fa-regular fa-circle radio-icon"></i>
+                </div>
+                <div class="delete-option-content">
+                  <div class="delete-option-header">
+                    <span class="delete-option-title"><i class="fa-solid fa-trash-arrow-up" style="color: #f59e0b; margin-right: 6px;"></i> <span data-i18n="albums_delete_opt_trash">Move to Recycle Bin / Trash</span></span>
+                    <span class="delete-option-badge warning" data-i18n="albums_delete_badge_recovery">30-Day Recovery</span>
+                  </div>
+                  <p class="delete-option-desc" data-i18n="albums_delete_opt_trash_desc">Move album & images to the Recycle Bin. Restore them anytime within 30 days before permanent deletion.</p>
+                </div>
+              </div>
+
+              <!-- Option C: Permanently Discard Images -->
+              <div class="delete-option-card" id="deleteOptionDiscardCard" onclick="selectDeleteAlbumOption('discard')">
+                <div class="delete-option-radio">
+                  <i class="fa-regular fa-circle radio-icon"></i>
+                </div>
+                <div class="delete-option-content">
+                  <div class="delete-option-header">
+                    <span class="delete-option-title"><i class="fa-solid fa-trash-can" style="color: #f43f5e; margin-right: 6px;"></i> <span data-i18n="albums_delete_opt_perm">Permanently Discard Images</span></span>
+                    <span class="delete-option-badge danger" data-i18n="albums_delete_badge_danger">Destructive</span>
+                  </div>
+                  <p class="delete-option-desc" data-i18n="albums_delete_opt_perm_desc">Permanently erase all images belonging to this album from your library and device storage.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="dialog-buttons" style="margin-top: 24px;">
+              <button class="btn btn-outline" onclick="closeDeleteAlbumModal()" data-i18n="crop_cancel">Cancel</button>
+              <button class="btn btn-primary" id="continueDeleteAlbumBtn" onclick="goToDeleteAlbumStep2()">
+                <span data-i18n="albums_delete_continue">Continue</span> <i class="fa-solid fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2: Verification / Double-Confirmation Gate -->
+          <div id="deleteAlbumStep2" class="delete-album-step" style="display: none;">
+            <div class="dialog-header">
+              <div>
+                <span class="dialog-eyebrow" id="deleteAlbumStep2Eyebrow" data-i18n="albums_delete_step2_eyebrow">STEP 2 OF 2 · DOUBLE CONFIRMATION</span>
+                <h3 class="dialog-title" id="deleteAlbumStep2Title" data-i18n="albums_delete_step2_title">Confirm Album Removal</h3>
+              </div>
+              <button class="close-dialog-btn" onclick="closeDeleteAlbumModal()" title="Close"><i
+                  class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Dynamic Verification Content -->
+            <div id="deleteAlbumStep2Content"></div>
+
+            <div class="dialog-buttons delete-step2-buttons" style="margin-top: 24px;">
+              <button class="btn btn-primary" id="finalDeleteAlbumConfirmBtn" onclick="executeFinalAlbumDeletion()" data-i18n="albums_delete_confirm_btn">
+                Confirm & Delete
+              </button>
+              <button class="btn btn-outline" onclick="goToDeleteAlbumStep1()">
+                <i class="fa-solid fa-arrow-left"></i> <span data-i18n="albums_delete_back_btn">Back to Gallery</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Date Range Picker Dialog (Luxury Redesign) -->
+      <div class="modal-overlay dialog-mode" id="datePickerModal" style="display: none;">
+        <div class="dialog-card luxury-dialog">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow" data-i18n="date_dialog_eyebrow">TIME CAPSULE</span>
+              <h3 class="dialog-title" data-i18n="date_dialog_title">Filter by Date</h3>
+            </div>
+            <button class="close-dialog-btn" id="closeDatePickerBtn" title="Close"><i
+                class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="dialog-desc" data-i18n="date_dialog_desc">Filter your gallery to moments captured within a specific timeframe.</p>
+
+          <!-- Quick Date Presets -->
+          <div class="date-presets-strip">
+            <button class="preset-pill" onclick="applyQuickDatePreset('today')" data-i18n="date_preset_today">Today</button>
+            <button class="preset-pill" onclick="applyQuickDatePreset('week')" data-i18n="date_preset_week">Last 7 Days</button>
+            <button class="preset-pill" onclick="applyQuickDatePreset('month')" data-i18n="date_preset_month">Last 30 Days</button>
+            <button class="preset-pill" onclick="applyQuickDatePreset('year')" data-i18n="date_preset_year">This Year</button>
+            <button class="preset-pill" onclick="applyQuickDatePreset('all')" data-i18n="date_preset_all">All Time</button>
+          </div>
+
+          <div class="dialog-field-group" style="margin-top: 14px;">
+            <label class="dialog-field-label" data-i18n="date_field_from">From Date</label>
+            <div class="dialog-input-wrapper">
+              <i class="fa-solid fa-calendar-day field-icon"></i>
+              <input type="date" id="fromDatePicker" class="dialog-date-input"
+                onclick="this.showPicker && this.showPicker()" />
+            </div>
+          </div>
+
+          <div class="dialog-field-group" style="margin-top: 14px;">
+            <label class="dialog-field-label" data-i18n="date_field_to">To Date</label>
+            <div class="dialog-input-wrapper">
+              <i class="fa-solid fa-calendar-check field-icon"></i>
+              <input type="date" id="toDatePicker" class="dialog-date-input"
+                onclick="this.showPicker && this.showPicker()" />
+            </div>
+          </div>
+
+          <div class="dialog-buttons" style="margin-top: 24px;">
+            <button class="btn btn-outline" id="clearDatePickerBtn" data-i18n="date_btn_reset">Reset Filter</button>
+            <button class="btn btn-primary" id="applyDatePickerBtn">
+              <i class="fa-solid fa-check"></i> <span data-i18n="date_btn_apply">Apply Dates</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rename Tag Dialog -->
+      <div class="modal-overlay dialog-mode" id="renameTagModal" style="display: none;">
+        <div class="dialog-card luxury-dialog">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow" data-i18n="tags_edit_eyebrow">EDIT ALBUM</span>
+              <h3 class="dialog-title" data-i18n="tags_edit_title">Edit Category</h3>
+            </div>
+            <button class="close-dialog-btn" id="closeRenameTagBtn" title="Close"><i
+                class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="dialog-field-group">
+            <label class="dialog-field-label" data-i18n="tags_edit_name_label">Category Name</label>
+            <div class="dialog-input-wrapper">
+              <i class="fa-solid fa-tag field-icon"></i>
+              <input type="text" id="renameTagInput" class="dialog-text-input" autocomplete="off" />
+            </div>
+          </div>
+          <div class="dialog-field-group" style="margin-top: 18px;">
+            <label class="dialog-field-label" data-i18n="tags_edit_palette_label">Theme Gradient Palette</label>
+            <div class="color-palette luxury-palette" id="renameColorPalette"></div>
+          </div>
+          <div class="dialog-buttons" style="margin-top: 24px;">
+            <button class="btn btn-outline" id="cancelRenameTagBtn" data-i18n="crop_cancel">Cancel</button>
+            <button class="btn btn-primary" id="saveRenameTagBtn" data-i18n="tags_edit_save_btn">Save Changes</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Color Studio Modal with Functional OK and Cancel Buttons -->
+      <div class="modal-overlay dialog-mode" id="customColorPickerModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 380px;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow" data-i18n="color_modal_eyebrow">PALETTE STUDIO</span>
+              <h3 class="dialog-title" data-i18n="color_modal_title">Custom Color</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="closeCustomColorPickerModal()" title="Close"><i
+                class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="dialog-desc" data-i18n="color_modal_desc">Craft your signature hue with precision live preview.</p>
+
+          <!-- Large Live Color Preview Card -->
+          <div class="color-studio-preview-card">
+            <div class="color-preview-surface" id="modalPickerColorPreview">
+              <span class="color-hex-badge" id="modalPickerHexBadge">#F43F5E</span>
+            </div>
+            <div class="color-compare-strip">
+              <span class="compare-title" data-i18n="color_modal_compare">Current Color vs Original</span>
+              <div class="original-color-indicator" id="modalPickerOriginalColor" title="Original Color"></div>
+            </div>
+          </div>
+
+          <!-- Color Spectrum & Picker Control -->
+          <div class="color-studio-controls">
+            <div class="dialog-field-group" style="margin-top: 14px;">
+              <label class="dialog-field-label" data-i18n="color_modal_spectrum_label">Interactive Spectrum & Eyedropper</label>
+              <div class="spectrum-interactive-card" id="modalPickerSpectrumCard">
+                <input type="color" id="modalPickerNativeInput" class="spectrum-native-input" value="#f43f5e"
+                  oninput="handleModalPickerInput(this.value)" onchange="handleModalPickerInput(this.value)">
+                <div class="spectrum-visual-display" id="modalPickerSpectrumDisplay">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span data-i18n="color_modal_spectrum_hint">Tap Spectrum to Fine-Tune Hue</span>
+                  <i class="fa-solid fa-eye-dropper"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- HEX Code Field -->
+            <div class="dialog-field-group" style="margin-top: 14px;">
+              <label class="dialog-field-label" data-i18n="color_modal_hex_label">HEX Code</label>
+              <div class="dialog-input-wrapper">
+                <span class="hex-hash-prefix">#</span>
+                <input type="text" id="modalPickerHexInput" class="dialog-text-input hex-code-input" maxlength="7"
+                  placeholder="F43F5E" oninput="handleModalPickerHexInput(this.value)" autocomplete="off" />
+              </div>
+            </div>
+
+            <!-- Quick Tone Presets -->
+            <div class="dialog-field-group" style="margin-top: 14px;">
+              <label class="dialog-field-label" data-i18n="color_modal_tones_label">Quick Tone Inspirations</label>
+              <div class="quick-tones-strip">
+                <button type="button" class="tone-dot" style="background:#ff2a6d"
+                  onclick="setModalPickerLiveColor('#ff2a6d')" title="Neon Rose"></button>
+                <button type="button" class="tone-dot" style="background:#ff7b00"
+                  onclick="setModalPickerLiveColor('#ff7b00')" title="Vivid Amber"></button>
+                <button type="button" class="tone-dot" style="background:#ffc700"
+                  onclick="setModalPickerLiveColor('#ffc700')" title="Golden Sun"></button>
+                <button type="button" class="tone-dot" style="background:#00e599"
+                  onclick="setModalPickerLiveColor('#00e599')" title="Emerald"></button>
+                <button type="button" class="tone-dot" style="background:#00d2ff"
+                  onclick="setModalPickerLiveColor('#00d2ff')" title="Sky Cyan"></button>
+                <button type="button" class="tone-dot" style="background:#7928ca"
+                  onclick="setModalPickerLiveColor('#7928ca')" title="Royal Violet"></button>
+                <button type="button" class="tone-dot" style="background:#ff0080"
+                  onclick="setModalPickerLiveColor('#ff0080')" title="Fuchsia"></button>
+                <button type="button" class="tone-dot" style="background:#3b82f6"
+                  onclick="setModalPickerLiveColor('#3b82f6')" title="Electric Blue"></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Functional OK and Cancel Buttons -->
+          <div class="dialog-buttons" style="margin-top: 24px;">
+            <button type="button" class="btn btn-outline" onclick="closeCustomColorPickerModal()">
+              <i class="fa-solid fa-xmark"></i> <span data-i18n="crop_cancel">Cancel</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="modalPickerApplyBtn"
+              onclick="applyCustomColorFromModal()">
+              <i class="fa-solid fa-check"></i> <span data-i18n="color_modal_apply">Apply Color</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy Policy Modal Dialog -->
+      <div class="modal-overlay dialog-mode" id="privacyPolicyModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-height: 80vh; overflow-y: auto;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow">EDITORIAL PLEDGE</span>
+              <h3 class="dialog-title">Privacy Policy</h3>
+            </div>
+            <button class="close-dialog-btn" id="closePrivacyModalBtn" onclick="closePrivacyPolicyModal()"><i
+                class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="privacy-content-pane">
+            <div class="privacy-section">
+              <h4><i class="fa-solid fa-microchip" style="color:#10b981;margin-right:6px;"></i> 1. Complete On-Device
+                Autonomy</h4>
+              <p>Aura Photos was architected with a fundamental privacy premise: your personal memories belong strictly
+                to you. All tagging, indexing, search embeddings, and photo metadata generation occur directly within
+                your device's browser memory and sandboxed local cache.</p>
+            </div>
+
+            <div class="privacy-section">
+              <h4><i class="fa-solid fa-shield-halved" style="color:#f43f5e;margin-right:6px;"></i> 2. Zero Third-Party
+                Tracking</h4>
+              <p>We do not track, profile, monetize, or transmit your photo contents to any external servers, machine
+                learning training clusters, or advertising networks.</p>
+            </div>
+
+            <div class="privacy-section">
+              <h4><i class="fa-solid fa-credit-card" style="color:#0284c7;margin-right:6px;"></i> 3. Secure Payments
+                Powered by Razorpay</h4>
+              <p>When you subscribe to Aura Pro, payment processing is encrypted with bank-grade 256-bit SSL encryption
+                via Razorpay. We do not store credit card credentials, CVV codes, or UPI pins.</p>
+            </div>
+
+            <div class="privacy-section">
+              <h4><i class="fa-solid fa-file-export" style="color:#f59e0b;margin-right:6px;"></i> 4. Data Portability &
+                Sovereignty</h4>
+              <p>You maintain 100% sovereignty over your data. At any time, you can export a complete JSON archive of
+                all your albums, tags, and organized memories via the Storage & Data Management panel.</p>
+            </div>
+          </div>
+
+          <div class="dialog-buttons" style="margin-top: 20px;">
+            <button class="btn btn-primary" onclick="closePrivacyPolicyModal()">I Understand & Accept</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Razorpay Payment Dialog (Simulation & Live Gateway) -->
+      <div class="modal-overlay dialog-mode" id="razorpayModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 420px;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow">RAZORPAY CHECKOUT</span>
+              <h3 class="dialog-title">Aura Pro Upgrade</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="closeRazorpayModal()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div class="razorpay-sheet-body">
+            <div class="razorpay-merchant-row">
+              <div class="rzp-brand-badge">
+                <i class="fa-solid fa-gem"></i>
+              </div>
+              <div class="rzp-merchant-info">
+                <span class="rzp-title">Aura Photos Inc.</span>
+                <span class="rzp-subtitle">Verified Razorpay Business</span>
+              </div>
+              <div class="rzp-amount-badge">₹299.00</div>
+            </div>
+
+            <div class="rzp-plan-highlight">
+              <span class="plan-badge">Aura Pro Unlimited · Monthly Plan</span>
+              <ul class="rzp-perks-mini">
+                <li><i class="fa-solid fa-check"></i> Unlimited Smart Albums & Custom Tags</li>
+                <li><i class="fa-solid fa-check"></i> Ultra-HD RAW Export & Secret Vault</li>
+                <li><i class="fa-solid fa-check"></i> 100% Money-Back Guarantee</li>
+              </ul>
+            </div>
+
+            <div class="rzp-payment-modes">
+              <div class="rzp-mode active"><i class="fa-solid fa-bolt"></i> UPI / QR</div>
+              <div class="rzp-mode"><i class="fa-solid fa-credit-card"></i> Cards</div>
+              <div class="rzp-mode"><i class="fa-solid fa-building-columns"></i> Netbanking</div>
+            </div>
+
+            <div class="dialog-buttons" style="margin-top: 18px;">
+              <button class="btn btn-outline" onclick="closeRazorpayModal()">Cancel</button>
+              <button class="btn btn-primary" id="confirmPaymentBtn"
+                onclick="processSuccessfulPayment('rzp_sim_' + Date.now())">
+                <i class="fa-solid fa-lock"></i> Pay ₹299.00 Securely
+              </button>
+            </div>
+
+            <!-- Free Developer / Tester Mode Bypass Option -->
+            <div style="margin-top: 14px; padding: 12px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 14px; text-align: center;">
+              <div style="font-size: 11px; font-weight: 700; color: #f59e0b; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="fa-solid fa-flask-vial"></i> DEVELOPER &amp; TESTER MODE
+              </div>
+              <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px 0;">Bypass payment to test 100% of all VIP 3D albums, RAW export, personal surface art, and vault features.</p>
+              <button type="button" class="btn" onclick="enableVip(); closeRazorpayModal();" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-weight: 700; font-size: 12px; padding: 10px 14px; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
+                <i class="fa-solid fa-bolt"></i> ⚡ Free Developer Bypass (Instant VIP Unlock)
+              </button>
+            </div>
+
+            <p class="rzp-security-note"><i class="fa-solid fa-shield-check"></i> Secured by Razorpay 256-Bit SSL
+              Encryption</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rename Photo Modal Dialog -->
+      <div class="modal-overlay dialog-mode" id="renamePhotoModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 390px;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow" data-i18n="rename_modal_eyebrow">PHOTO DETAILS</span>
+              <h3 class="dialog-title" data-i18n="detail_rename">Rename Photo</h3>
+            </div>
+            <button class="close-dialog-btn" id="closeRenameModalBtn" onclick="closeRenamePhotoModal()" title="Close">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <p class="dialog-desc" data-i18n="rename_modal_desc">Give your moment a clean, descriptive title.</p>
+          
+          <div class="rename-preview-box">
+            <img id="renamePhotoThumbnail" src="" alt="Thumbnail" class="rename-thumb-img">
+            <div class="rename-meta-box">
+              <span class="rename-curr-name" id="renameCurrentDisplay">Original Name</span>
+              <span class="rename-date-sub" id="renameDateSub">Captured Date</span>
+            </div>
+          </div>
+
+          <div class="dialog-field-group" style="margin-top: 14px;">
+            <label class="dialog-field-label" for="renamePhotoInput" data-i18n="rename_modal_input_label">New Photo Title</label>
+            <div class="rename-input-group">
+              <i class="fa-solid fa-pen-to-square field-icon"></i>
+              <input 
+                type="text" 
+                id="renamePhotoInput" 
+                class="dialog-text-input rename-text-input" 
+                maxlength="60" 
+                placeholder="Enter descriptive title..." 
+                data-i18n-placeholder="rename_modal_placeholder" 
+                oninput="handleRenameInput(this.value)" 
+                onkeydown="if(event.key==='Enter') savePhotoRename();"
+                autocomplete="off"
+              />
+              <span class="rename-ext-badge" id="renameExtensionBadge">.jpg</span>
+            </div>
+            <div class="rename-counter-row">
+              <span class="rename-hint-text" id="renameHintText" data-i18n="rename_modal_max_chars">Max 60 characters</span>
+              <span class="rename-char-counter" id="renameCharCounter">0 / 60</span>
+            </div>
+          </div>
+
+          <div class="dialog-buttons" style="margin-top: 20px;">
+            <button class="btn btn-outline" onclick="closeRenamePhotoModal()" data-i18n="crop_cancel">Cancel</button>
+            <button class="btn btn-primary" id="saveRenameBtn" onclick="savePhotoRename()">
+              <i class="fa-solid fa-check"></i> <span data-i18n="dock_card_save">Save Name</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIP 3D Album Surface Customizer Modal -->
+      <div class="modal-overlay dialog-mode" id="album3DSurfaceModal" style="display: none;" onclick="if(event.target === this) closeAlbum3DSurfaceModal()">
+        <div class="dialog-card luxury-dialog surface-3d-dialog">
+          <!-- Fixed Header -->
+          <div class="surface-3d-dialog-header">
+            <div>
+              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> <span data-i18n="surface_3d_eyebrow">VIP EXCLUSIVE · 3D CARD STUDIO</span></span>
+              <h3 class="dialog-title" id="album3DModalTitle" data-i18n="surface_3d_title">3D Card Surface Studio</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="closeAlbum3DSurfaceModal()" title="Close">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <!-- Scrollable Body with Clean Luxury Scrollbar -->
+          <div class="surface-3d-dialog-body">
+            <!-- VIP Status / Promo Banner -->
+            <div class="vip-surface-status-bar" id="vipSurfaceStatusBar">
+              <!-- Dynamic JS: VIP active pill or starter test-drive notice -->
+            </div>
+
+            <!-- Live 3D Interactive Tilt Preview Stage -->
+            <div class="stage-3d-preview-wrapper" id="stage3DPreviewWrapper">
+              <div class="card-3d-preview" id="album3DPreviewCard">
+                <div class="card-3d-preview-inner" id="album3DPreviewInner">
+                  <div class="card-3d-preview-cover" id="album3DPreviewCover">
+                    <img id="album3DPreviewImg" src="" alt="Album Cover" />
+                    <div class="album-3d-shine" id="album3DPreviewShine"></div>
+                    <div class="card-3d-overlay-top">
+                      <span class="album-tag-dot-pill" id="album3DPreviewTagPill">
+                        <span class="tag-dot" id="album3DPreviewDot"></span>
+                        <span id="album3DPreviewTagText" data-i18n="surface_3d_tag_album">Album</span>
+                      </span>
+                      <span class="album-3d-vip-pill">
+                        <i class="fa-solid fa-cube"></i> 3D VIP
+                      </span>
+                    </div>
+                    <div class="card-3d-overlay-bottom">
+                      <div class="card-3d-preview-title" id="album3DPreviewName">Album Title</div>
+                      <div class="card-3d-preview-sub" id="album3DPreviewCount">0 Moments Captured</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="stage-3d-hint">
+                <i class="fa-solid fa-hand-pointer"></i> <span data-i18n="surface_3d_hint">Move cursor or tilt screen to experience 3D depth</span>
+                <button type="button" class="test-shake-btn browser-only" onclick="Aura3DMotionPhysics.triggerShakeWave()" title="Test Phone Shake & Resonance Wave (Browser Preview Only)" style="margin-left: auto; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #ff7a90; border-radius: 6px; padding: 2px 8px; font-size: 10px; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                  <i class="fa-solid fa-bolt"></i> Test Shake Wave (Press S)
+                </button>
+              </div>
+            </div>
+
+            <!-- Section 1: Choose Personal Image or Studio Texture on Card Surface -->
+            <div class="surface-section">
+              <div class="surface-section-header">
+                <span class="surface-section-title"><i class="fa-solid fa-image"></i> <span data-i18n="surface_3d_sec1_title">Personal & VIP Studio Surfaces</span></span>
+                <button type="button" class="surface-reset-btn" id="surfaceResetImgBtn" onclick="removeAlbumCustomSurface()" title="Revert to dynamic album photo" data-i18n-title="surface_3d_default_cover_title">
+                  <i class="fa-solid fa-rotate-left"></i> <span data-i18n="surface_3d_default_cover">Default Cover</span>
+                </button>
+              </div>
+              <p class="surface-section-desc" data-i18n="surface_3d_sec1_desc">Select a personal photo or one of 12 handcrafted <strong>VIP Studio Artworks</strong>. Tap again to deselect.</p>
+
+              <!-- Personal Image & Studio Texture Selection Strip -->
+              <div class="surface-photo-picker-strip" id="surfacePhotoPickerStrip">
+                <!-- Rendered by JS: upload button + personal photos + 12 VIP studio textures -->
+              </div>
+              <input type="file" id="albumSurfaceUploadInput" accept="image/*" style="display: none;" onchange="handleSurfaceImageUpload(event)" />
+            </div>
+
+            <!-- Section 2: Choose 3D Surface Finish / Aesthetic Finish -->
+            <div class="surface-section">
+              <div class="surface-section-header">
+                <span class="surface-section-title"><i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="surface_3d_sec2_title">3D Surface Material Finishes (32 Styles)</span></span>
+              </div>
+              <p class="surface-section-desc" data-i18n="surface_3d_sec2_desc">Choose from 32 physical optical materials & holographic sheens. <strong>Tap selected style to deselect</strong> (Standard 3D).</p>
+
+              <div class="surface-styles-grid">
+                <div class="surface-style-chip" data-style="holo" onclick="select3DSurfaceStyle('holo')">
+                  <div class="style-swatch swatch-holo"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_holo_title">Holo Prism</span>
+                    <span class="style-sub" data-i18n="mat_holo_sub">Prismatic rainbow sheen</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="glass" onclick="select3DSurfaceStyle('glass')">
+                  <div class="style-swatch swatch-glass"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_glass_title">Liquid Glass</span>
+                    <span class="style-sub" data-i18n="mat_glass_sub">Deep obsidian reflection</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="gold" onclick="select3DSurfaceStyle('gold')">
+                  <div class="style-swatch swatch-gold"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_gold_title">24K Luxury Gold</span>
+                    <span class="style-sub" data-i18n="mat_gold_sub">Metallic foil glint</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="aurora" onclick="select3DSurfaceStyle('aurora')">
+                  <div class="style-swatch swatch-aurora"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_aurora_title">Cyber Aurora</span>
+                    <span class="style-sub" data-i18n="mat_aurora_sub">Chromatic dual-glow</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="carbon" onclick="select3DSurfaceStyle('carbon')">
+                  <div class="style-swatch swatch-carbon"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_carbon_title">Obsidian Carbon</span>
+                    <span class="style-sub" data-i18n="mat_carbon_sub">Stealth hypercar weave</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="titanium" onclick="select3DSurfaceStyle('titanium')">
+                  <div class="style-swatch swatch-titanium"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_titanium_title">Midnight Titanium</span>
+                    <span class="style-sub" data-i18n="mat_titanium_sub">Aerospace matte metallic</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="nebula" onclick="select3DSurfaceStyle('nebula')">
+                  <div class="style-swatch swatch-nebula"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_nebula_title">Cosmic Nebula</span>
+                    <span class="style-sub" data-i18n="mat_nebula_sub">Stardust violet shimmer</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="emerald" onclick="select3DSurfaceStyle('emerald')">
+                  <div class="style-swatch swatch-emerald"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_emerald_title">Imperial Emerald</span>
+                    <span class="style-sub" data-i18n="mat_emerald_sub">Luminescent jade glow</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="pearl" onclick="select3DSurfaceStyle('pearl')">
+                  <div class="style-swatch swatch-pearl"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_pearl_title">Opal Pearl</span>
+                    <span class="style-sub" data-i18n="mat_pearl_sub">Iridescent nacre sheen</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="rose" onclick="select3DSurfaceStyle('rose')">
+                  <div class="style-swatch swatch-rose"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_rose_title">Rose Diamond</span>
+                    <span class="style-sub" data-i18n="mat_rose_sub">Faceted champagne pink</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="solar" onclick="select3DSurfaceStyle('solar')">
+                  <div class="style-swatch swatch-solar"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_solar_title">Solar Flare</span>
+                    <span class="style-sub" data-i18n="mat_solar_sub">Incandescent plasma ember</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <div class="surface-style-chip" data-style="matrix" onclick="select3DSurfaceStyle('matrix')">
+                  <div class="style-swatch swatch-matrix"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title" data-i18n="mat_matrix_title">Cyber Matrix</span>
+                    <span class="style-sub" data-i18n="mat_matrix_sub">Electroluminescent pulse</span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 13. Royal Amethyst -->
+                <div class="surface-style-chip" data-style="amethyst" onclick="select3DSurfaceStyle('amethyst')">
+                  <div class="style-swatch swatch-amethyst"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_amethyst_title">Royal Amethyst</span></span>
+                    <span class="style-sub"><span data-i18n="mat_amethyst_sub">Deep violet crystal prism</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 14. Midnight Sapphire -->
+                <div class="surface-style-chip" data-style="sapphire" onclick="select3DSurfaceStyle('sapphire')">
+                  <div class="style-swatch swatch-sapphire"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_sapphire_title">Midnight Sapphire</span></span>
+                    <span class="style-sub"><span data-i18n="mat_sapphire_sub">Deep royal blue crystalline</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 15. Blood Ruby -->
+                <div class="surface-style-chip" data-style="ruby" onclick="select3DSurfaceStyle('ruby')">
+                  <div class="style-swatch swatch-ruby"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_ruby_title">Blood Ruby</span></span>
+                    <span class="style-sub"><span data-i18n="mat_ruby_sub">Fiery crimson radiance</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 16. Quantum Chromatic -->
+                <div class="surface-style-chip" data-style="quantum" onclick="select3DSurfaceStyle('quantum')">
+                  <div class="style-swatch swatch-quantum"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_quantum_title">Quantum Chromatic</span></span>
+                    <span class="style-sub"><span data-i18n="mat_quantum_sub">Hyperspace refraction</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 17. Damascus Steel -->
+                <div class="surface-style-chip" data-style="damascus" onclick="select3DSurfaceStyle('damascus')">
+                  <div class="style-swatch swatch-damascus"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_damascus_title">Damascus Steel</span></span>
+                    <span class="style-sub"><span data-i18n="mat_damascus_sub">Hypnotic folded wave</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 18. Neon Synth -->
+                <div class="surface-style-chip" data-style="cyberpunk" onclick="select3DSurfaceStyle('cyberpunk')">
+                  <div class="style-swatch swatch-cyberpunk"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_cyberpunk_title">Neon Synth</span></span>
+                    <span class="style-sub"><span data-i18n="mat_cyberpunk_sub">Hot fuchsia & cyan glow</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 19. Liquid Platinum -->
+                <div class="surface-style-chip" data-style="platina" onclick="select3DSurfaceStyle('platina')">
+                  <div class="style-swatch swatch-platina"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_platina_title">Liquid Platinum</span></span>
+                    <span class="style-sub"><span data-i18n="mat_platina_sub">Mirror chrome gloss</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 20. Magma Volcanic -->
+                <div class="surface-style-chip" data-style="volcanic" onclick="select3DSurfaceStyle('volcanic')">
+                  <div class="style-swatch swatch-volcanic"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_volcanic_title">Magma Volcanic</span></span>
+                    <span class="style-sub"><span data-i18n="mat_volcanic_sub">Molten basalt fissure glow</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 21. Supernova Gold -->
+                <div class="surface-style-chip" data-style="supernova" onclick="select3DSurfaceStyle('supernova')">
+                  <div class="style-swatch swatch-supernova"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_supernova_title">Supernova Gold</span></span>
+                    <span class="style-sub"><span data-i18n="mat_supernova_sub">Blinding stellar flare burst</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 22. Glacial Ice -->
+                <div class="surface-style-chip" data-style="aquamarine" onclick="select3DSurfaceStyle('aquamarine')">
+                  <div class="style-swatch swatch-aquamarine"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_aquamarine_title">Glacial Ice</span></span>
+                    <span class="style-sub"><span data-i18n="mat_aquamarine_sub">Arctic frozen diamond</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 23. Brushed Copper -->
+                <div class="surface-style-chip" data-style="copper" onclick="select3DSurfaceStyle('copper')">
+                  <div class="style-swatch swatch-copper"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_copper_title">Brushed Copper</span></span>
+                    <span class="style-sub"><span data-i18n="mat_copper_sub">Warm satin metallic luster</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 24. Mystic Chameleon -->
+                <div class="surface-style-chip" data-style="chameleon" onclick="select3DSurfaceStyle('chameleon')">
+                  <div class="style-swatch swatch-chameleon"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_chameleon_title">Mystic Chameleon</span></span>
+                    <span class="style-sub"><span data-i18n="mat_chameleon_sub">Color-shift pearlescence</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 25. Celestial Moondust -->
+                <div class="surface-style-chip" data-style="celestial" onclick="select3DSurfaceStyle('celestial')">
+                  <div class="style-swatch swatch-celestial"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_celestial_title">Celestial Moondust</span></span>
+                    <span class="style-sub"><span data-i18n="mat_celestial_sub">Silver-lunar starfield</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 26. Black Onyx -->
+                <div class="surface-style-chip" data-style="onyx" onclick="select3DSurfaceStyle('onyx')">
+                  <div class="style-swatch swatch-onyx"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_onyx_title">Black Onyx</span></span>
+                    <span class="style-sub"><span data-i18n="mat_onyx_sub">Ultra-dark mirror obsidian</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 27. Malibu Sunset -->
+                <div class="surface-style-chip" data-style="sunset" onclick="select3DSurfaceStyle('sunset')">
+                  <div class="style-swatch swatch-sunset"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_sunset_title">Malibu Sunset</span></span>
+                    <span class="style-sub"><span data-i18n="mat_sunset_sub">Warm violet-orange horizon</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 28. Dark Prism Noir -->
+                <div class="surface-style-chip" data-style="prism_noir" onclick="select3DSurfaceStyle('prism_noir')">
+                  <div class="style-swatch swatch-prism_noir"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_prism_noir_title">Dark Prism Noir</span></span>
+                    <span class="style-sub"><span data-i18n="mat_prism_noir_sub">Smoky chromatic dispersion</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 29. Bio Emerald -->
+                <div class="surface-style-chip" data-style="biolum" onclick="select3DSurfaceStyle('biolum')">
+                  <div class="style-swatch swatch-biolum"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_biolum_title">Bio Emerald</span></span>
+                    <span class="style-sub"><span data-i18n="mat_biolum_sub">Bioluminescent jungle glow</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 30. Warp Hyperdrive -->
+                <div class="surface-style-chip" data-style="hyperdrive" onclick="select3DSurfaceStyle('hyperdrive')">
+                  <div class="style-swatch swatch-hyperdrive"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_hyperdrive_title">Warp Hyperdrive</span></span>
+                    <span class="style-sub"><span data-i18n="mat_hyperdrive_sub">Relativistic light streaks</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 31. Cosmic Meteorite -->
+                <div class="surface-style-chip" data-style="meteorite" onclick="select3DSurfaceStyle('meteorite')">
+                  <div class="style-swatch swatch-meteorite"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_meteorite_title">Cosmic Meteorite</span></span>
+                    <span class="style-sub"><span data-i18n="mat_meteorite_sub">Widmanstätten crystal lattice</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+
+                <!-- 32. Retro Vaporwave -->
+                <div class="surface-style-chip" data-style="vaporwave" onclick="select3DSurfaceStyle('vaporwave')">
+                  <div class="style-swatch swatch-vaporwave"></div>
+                  <div class="style-chip-text">
+                    <span class="style-title"><span data-i18n="mat_vaporwave_title">Retro Vaporwave</span></span>
+                    <span class="style-sub"><span data-i18n="mat_vaporwave_sub">Pastel dreamwave aesthetic</span></span>
+                  </div>
+                  <i class="fa-solid fa-circle-check style-check-icon"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fixed Footer with Action Buttons -->
+          <div class="surface-3d-dialog-footer" id="album3DModalActionButtons">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 3D Album Integrity Audit Modal -->
+      <div class="modal-overlay dialog-mode" id="album3DAuditModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 500px; max-height: 88vh; overflow-y: auto;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow"><i class="fa-solid fa-shield-halved" style="color: #0ea5e9; margin-right: 4px;"></i> SYSTEM AUDIT</span>
+              <h3 class="dialog-title">3D Album Integrity</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="close3DAlbumAuditModal()" title="Close">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <div id="album3DAuditContent" style="margin-top: 14px;">
+            <!-- Rendered dynamically by run3DAlbumAudit() -->
+          </div>
+
+          <div class="dialog-buttons" style="margin-top: 20px;">
+            <button class="btn btn-outline" onclick="close3DAlbumAuditModal()">Close</button>
+            <button class="btn btn-primary" onclick="run3DAlbumAudit(true)">
+              <i class="fa-solid fa-rotate"></i> Re-Run Diagnostics
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIP Direct Album Import Modal (Item 3) -->
+      <div class="modal-overlay dialog-mode" id="vipDirectImportModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 440px;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> AURA PRO VIP FEATURE</span>
+              <h3 class="dialog-title">Direct Gallery Import</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="closeVipAlbumImportModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div style="margin: 16px 0; text-align: center;">
+            <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.05)); border: 1.5px solid #fbbf24; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; color: #fbbf24; margin-bottom: 12px; box-shadow: 0 0 20px rgba(245,158,11,0.3);">
+              <i class="fa-solid fa-images"></i>
+            </div>
+            <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">Import Multiple Photos Directly</h4>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 10px;">
+              Skip the staging dock! Import photos directly from your phone gallery straight into <strong id="vipImportModalAlbumName" style="color: #fbbf24;">this album</strong> with multi-selection support.
+            </p>
+          </div>
+          <div class="dialog-buttons" style="flex-direction: column; gap: 8px;">
+            <button class="btn btn-primary" onclick="initiateRazorpayPayment()" style="width: 100%; justify-content: center;">
+              <i class="fa-solid fa-bolt"></i> Upgrade to Aura Pro VIP (₹299)
+            </button>
+            <button class="btn btn-outline" id="vipTesterImportUnlockBtn" onclick="enableVip(); closeVipAlbumImportModal(); triggerAlbumDirectImport(window._pendingVipImportAlbum);" style="border-color: #f59e0b; color: #f59e0b; width: 100%; justify-content: center;">
+              <i class="fa-solid fa-flask"></i> Instant VIP Tester Unlock
+            </button>
+            <button class="btn btn-outline" onclick="closeVipAlbumImportModal()" style="width: 100%; justify-content: center;">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIP Move / Copy Photos to Album Modal (Item 6) -->
+      <div class="modal-overlay dialog-mode" id="moveCopyModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 480px; max-height: 90vh; display: flex; flex-direction: column;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> <span data-i18n="organize_vip_eyebrow">AURA PRO VIP FEATURE</span></span>
+              <h3 class="dialog-title" id="moveCopyModalTitle" data-i18n="organize_photos_title">Organize Photos</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="closeMoveCopyModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <!-- Source Album Badge (for Full Album Move/Copy) -->
+          <div class="move-copy-source-badge" id="moveCopySourceBadge" style="display: none;">
+            <div class="source-badge-left">
+              <span class="source-badge-dot" id="sourceBadgeDot"></span>
+              <div>
+                <span class="source-badge-sub" data-i18n="organize_source_album">SOURCE ALBUM</span>
+                <span class="source-badge-title" id="sourceBadgeName">Album Name</span>
+              </div>
+            </div>
+            <span class="source-badge-count-pill" id="sourceBadgeCount">0 Photos</span>
+          </div>
+
+          <!-- Selected Photos Preview Rail -->
+          <div class="move-copy-preview-section">
+            <div class="move-copy-preview-rail" id="moveCopyPreviewRail">
+              <!-- Rendered by JS -->
+            </div>
+            <div class="move-copy-preview-summary" id="moveCopyPreviewSummary">3 photos selected</div>
+          </div>
+
+          <!-- Mode Segmented Control (Copy vs Move) -->
+          <div class="move-copy-mode-selector">
+            <button type="button" class="mode-segment-btn active" id="modeCopyBtn" onclick="setMoveCopyMode('copy')">
+              <i class="fa-solid fa-copy"></i>
+              <span data-i18n="organize_copy_photos">Copy Photos</span>
+            </button>
+            <button type="button" class="mode-segment-btn" id="modeMoveBtn" onclick="setMoveCopyMode('move')">
+              <i class="fa-solid fa-arrow-right-arrow-left"></i>
+              <span data-i18n="organize_move_photos">Move Photos</span>
+            </button>
+          </div>
+          <div class="move-copy-mode-hint" id="moveCopyModeHint">
+            Adds photos to the destination album. They will also remain in their current album(s).
+          </div>
+          <div class="move-copy-option-row" id="moveCopyOptionRow" style="display: none;">
+            <label class="move-copy-checkbox-label">
+              <input type="checkbox" id="moveCopyDeleteSourceCheck">
+              <span id="moveCopyDeleteSourceText" data-i18n="organize_remove_source_check">Also remove empty source album after moving</span>
+            </label>
+          </div>
+
+          <!-- Search & Create New Album Bar -->
+          <div class="move-copy-search-bar">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="moveCopyAlbumSearchInput" placeholder="Search albums or type new name..." data-i18n-placeholder="organize_search_placeholder" oninput="handleMoveCopySearch(this.value)">
+            <button type="button" class="btn btn-xs btn-primary" id="moveCopyQuickCreateBtn" onclick="quickCreateMoveCopyAlbum()" style="display: none;">
+              <i class="fa-solid fa-plus"></i> Create & Pick
+            </button>
+          </div>
+
+          <!-- Destination Album Selection List -->
+          <div class="move-copy-albums-list" id="moveCopyAlbumsList">
+            <!-- Rendered by JS: Album rows with radio indicators -->
+          </div>
+
+          <!-- Footer Action Buttons -->
+          <div class="dialog-buttons" style="margin-top: 14px; gap: 10px;">
+            <button class="btn btn-outline" onclick="closeMoveCopyModal()" data-i18n="crop_cancel" style="flex: 0 0 auto; min-width: 90px; min-height: 48px;">Cancel</button>
+            <button class="btn btn-primary" id="confirmMoveCopyBtn" onclick="executeMoveCopyAction()" disabled style="flex: 1 1 140px; min-width: 0; min-height: 48px; justify-content: center;">
+              <i class="fa-solid fa-copy" id="confirmMoveCopyIcon"></i>
+              <span id="confirmMoveCopyText" data-i18n="organize_select_dest">Select Destination</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIP Move / Copy Feature Gate Modal -->
+      <div class="modal-overlay dialog-mode" id="vipMoveCopyModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 440px;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> AURA PRO VIP FEATURE</span>
+              <h3 class="dialog-title">Move & Copy Photos</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="closeVipMoveCopyGateModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div style="margin: 16px 0; text-align: center;">
+            <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.05)); border: 1.5px solid #fbbf24; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; color: #fbbf24; margin-bottom: 12px; box-shadow: 0 0 20px rgba(245,158,11,0.3);">
+              <i class="fa-solid fa-folder-tree"></i>
+            </div>
+            <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">Relocate & Reorganize Collections</h4>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 10px;">
+              Easily move or copy multiple photos between albums in one tap. Keep originals or relocate them seamlessly.
+            </p>
+          </div>
+          <div class="dialog-buttons" style="flex-direction: column; gap: 8px;">
+            <button class="btn btn-primary" onclick="initiateRazorpayPayment()" style="width: 100%; justify-content: center;">
+              <i class="fa-solid fa-bolt"></i> Upgrade to Aura Pro VIP (₹299)
+            </button>
+            <button class="btn btn-outline" onclick="enableVip(); closeVipMoveCopyGateModal(); openMoveCopyModal();" style="border-color: #f59e0b; color: #f59e0b; width: 100%; justify-content: center;">
+              <i class="fa-solid fa-flask"></i> Instant VIP Tester Unlock
+            </button>
+            <button class="btn btn-outline" onclick="closeVipMoveCopyGateModal()" style="width: 100%; justify-content: center;">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Crop & Orient Full-Screen Modal -->
+      <div class="modal-overlay crop-modal-overlay" id="cropEditorModal" style="display: none;">
+        <div class="crop-container">
+          <!-- Crop Top Bar -->
+          <div class="crop-top-bar">
+            <button class="icon-btn-round" onclick="closeCropEditorModal()" title="Cancel">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="crop-title-block">
+              <h3 data-i18n="crop_title">Crop & Orient</h3>
+              <p id="cropPhotoNameSub">Photo Title</p>
+            </div>
+            <div class="crop-top-actions">
+              <button class="icon-btn-round" id="cropAngleToggleBtn" onclick="toggleCropAngleDrawer()" title="Custom Angle / Straighten (±1°, ±5°)" aria-label="Custom Rotation Angle">
+                <i class="fa-solid fa-compass-drafting"></i>
+              </button>
+              <button class="icon-btn-round" onclick="resetCrop()" title="Reset All Transforms & Crop">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Rotation Angle & Straighten Drawer (e.g. ±1°, ±5°, continuous slider) -->
+          <div class="crop-angle-drawer" id="cropCustomAngleDrawer" style="display: none;">
+            <div class="angle-drawer-inner">
+              <div class="angle-drawer-header">
+                <span class="angle-drawer-title"><i class="fa-solid fa-compass-drafting"></i> <span data-i18n="crop_fine_rotation">Fine Rotation & Straighten</span></span>
+                <span class="angle-value-badge" id="cropAngleReadout">0.0°</span>
+              </div>
+              <div class="angle-drawer-controls">
+                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(-5)" title="Rotate -5° Counter-Clockwise">-5°</button>
+                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(-1)" title="Fine Rotate -1°">-1°</button>
+                <div class="angle-slider-wrap">
+                  <input type="range" class="crop-angle-slider" id="cropAngleSlider" min="-45" max="45" value="0" step="0.5" oninput="onCustomAngleSlider(this.value)" title="Slide to adjust angle">
+                  <div class="angle-slider-ticks">
+                    <span>-45°</span>
+                    <span>-20°</span>
+                    <span class="tick-center">0°</span>
+                    <span>+20°</span>
+                    <span>+45°</span>
+                  </div>
+                </div>
+                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(1)" title="Fine Rotate +1°">+1°</button>
+                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(5)" title="Rotate +5° Clockwise">+5°</button>
+                <button type="button" class="angle-reset-chip" onclick="resetCustomAngle()" title="Reset Angle to 0°">
+                  <i class="fa-solid fa-arrows-rotate"></i> 0°
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rotation & Orientation Controls (90°, 180°, 270°, Flip H, Flip V) -->
+          <div class="crop-transform-bar" id="cropTransformBar">
+            <div class="crop-transform-group" role="group" aria-label="Rotation Controls">
+              <button class="transform-chip transform-icon-btn" id="cropRotate90Btn" onclick="setCropRotation(90)" title="Rotate 90° Clockwise" aria-label="Rotate 90° Clockwise">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+              <button class="transform-chip transform-icon-btn" id="cropRotate180Btn" onclick="setCropRotation(180)" title="Rotate 180° (Half Turn)" aria-label="Rotate 180°">
+                <i class="fa-solid fa-arrows-rotate"></i>
+              </button>
+              <button class="transform-chip transform-icon-btn" id="cropRotate270Btn" onclick="setCropRotation(270)" title="Rotate 270° (90° Left)" aria-label="Rotate 270°">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+            </div>
+            <div class="transform-bar-divider"></div>
+            <div class="crop-transform-group" role="group" aria-label="Flip Controls">
+              <button class="transform-chip transform-icon-btn" id="cropFlipHBtn" onclick="toggleCropFlip('h')" title="Flip Horizontal (Mirror Across Y-Axis)" aria-label="Flip Horizontal">
+                <i class="fa-solid fa-arrows-left-right"></i>
+              </button>
+              <button class="transform-chip transform-icon-btn" id="cropFlipVBtn" onclick="toggleCropFlip('v')" title="Flip Vertical (Mirror Across X-Axis)" aria-label="Flip Vertical">
+                <i class="fa-solid fa-arrows-up-down"></i>
+              </button>
+            </div>
+            <div class="transform-bar-divider"></div>
+            <div class="crop-transform-group" role="group" aria-label="Reset Orientation">
+              <button class="transform-chip transform-icon-btn reset-chip" onclick="resetCropTransforms()" title="Reset Rotations & Flips" aria-label="Reset Rotations and Flips">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Aspect Ratio Chooser Bar -->
+          <div class="crop-aspect-bar" id="cropAspectBar">
+            <button class="aspect-chip active" data-aspect="free" onclick="setCropAspect('free')" title="Freeform Crop">
+              <i class="fa-solid fa-vector-square"></i> <span data-i18n="crop_free">Free</span>
+            </button>
+            <button class="aspect-chip" data-aspect="1:1" onclick="setCropAspect('1:1')" title="1:1 Square (Instagram / Profile)">
+              <i class="fa-regular fa-square"></i> 1:1
+            </button>
+            <button class="aspect-chip" data-aspect="4:5" onclick="setCropAspect('4:5')" title="4:5 Portrait (Stories / Feed)">
+              <i class="fa-solid fa-mobile-screen"></i> 4:5
+            </button>
+            <button class="aspect-chip" data-aspect="3:4" onclick="setCropAspect('3:4')" title="3:4 Standard (Photo Prints)">
+              <i class="fa-solid fa-image"></i> 3:4
+            </button>
+            <button class="aspect-chip" data-aspect="16:9" onclick="setCropAspect('16:9')" title="16:9 Widescreen (Cinema / Landscape)">
+              <i class="fa-solid fa-panorama"></i> 16:9
+            </button>
+          </div>
+
+          <!-- Interactive Crop Stage -->
+          <div class="crop-stage-wrapper" id="cropStageWrapper">
+            <div class="crop-canvas-container" id="cropCanvasContainer">
+              <img id="cropTargetImage" src="" alt="Target for cropping" draggable="false">
+              <div class="crop-overlay-dim" id="cropDimOverlay"></div>
+              <div class="crop-box" id="cropBox">
+                <!-- Live Output Dimension Pill -->
+                <div class="crop-dimension-pill" id="cropDimensionPill">0 × 0</div>
+
+                <!-- Rule-of-Thirds Grid -->
+                <div class="crop-grid-lines">
+                  <div class="grid-line-h h1"></div>
+                  <div class="grid-line-h h2"></div>
+                  <div class="grid-line-v v1"></div>
+                  <div class="grid-line-v v2"></div>
+                </div>
+
+                <!-- Pro Corner Brackets for Visual Pinpoint Precision -->
+                <div class="crop-corner-bracket bracket-tl"></div>
+                <div class="crop-corner-bracket bracket-tr"></div>
+                <div class="crop-corner-bracket bracket-bl"></div>
+                <div class="crop-corner-bracket bracket-br"></div>
+
+                <!-- 4 Corner Handles -->
+                <div class="crop-handle handle-tl" data-handle="tl" title="Drag Corner (Top-Left)"></div>
+                <div class="crop-handle handle-tr" data-handle="tr" title="Drag Corner (Top-Right)"></div>
+                <div class="crop-handle handle-bl" data-handle="bl" title="Drag Corner (Bottom-Left)"></div>
+                <div class="crop-handle handle-br" data-handle="br" title="Drag Corner (Bottom-Right)"></div>
+
+                <!-- 4 Edge Handles for Pinpoint Axis Control -->
+                <div class="crop-edge-handle edge-t" data-handle="t" title="Drag Top Edge"></div>
+                <div class="crop-edge-handle edge-b" data-handle="b" title="Drag Bottom Edge"></div>
+                <div class="crop-edge-handle edge-l" data-handle="l" title="Drag Left Edge"></div>
+                <div class="crop-edge-handle edge-r" data-handle="r" title="Drag Right Edge"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Crop Bottom Action Bar with Fine Precision Controls -->
+          <div class="crop-bottom-bar">
+            <div class="crop-precision-toolbar" id="cropPrecisionToolbar">
+              <div class="precision-btn-group" role="group" aria-label="Nudge Direction">
+                <button type="button" class="precision-btn" onclick="nudgeCrop('left')" title="Nudge Left 1px" aria-label="Nudge Left">
+                  <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button type="button" class="precision-btn" onclick="nudgeCrop('up')" title="Nudge Up 1px" aria-label="Nudge Up">
+                  <i class="fa-solid fa-chevron-up"></i>
+                </button>
+                <button type="button" class="precision-btn" onclick="nudgeCrop('down')" title="Nudge Down 1px" aria-label="Nudge Down">
+                  <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <button type="button" class="precision-btn" onclick="nudgeCrop('right')" title="Nudge Right 1px" aria-label="Nudge Right">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+              <div class="precision-divider"></div>
+              <div class="precision-btn-group" role="group" aria-label="Box Sizing and Alignment">
+                <button type="button" class="precision-btn" onclick="nudgeCrop('expand')" title="Expand Crop Box (+4px)" aria-label="Expand Crop Box">
+                  <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                </button>
+                <button type="button" class="precision-btn" onclick="nudgeCrop('shrink')" title="Shrink Crop Box (-4px)" aria-label="Shrink Crop Box">
+                  <i class="fa-solid fa-down-left-and-up-right-to-center"></i>
+                </button>
+                <button type="button" class="precision-btn" onclick="centerCropBox()" title="Center Crop Box" aria-label="Center Crop Box">
+                  <i class="fa-solid fa-crosshairs"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="crop-modal-action-btns">
+              <button class="btn btn-outline" onclick="closeCropEditorModal()" data-i18n="crop_cancel">Cancel</button>
+              <button class="btn btn-primary" onclick="applyAndSaveCrop()">
+                <i class="fa-solid fa-check"></i> <span data-i18n="crop_apply">Apply Crop</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- App In-Place OTA Update Modal -->
+      <div class="modal-overlay dialog-mode" id="appUpdateModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 440px;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow"><i class="fa-solid fa-sparkles" style="color: #38bdf8; margin-right: 4px;"></i> <span data-i18n="update_modal_eyebrow">UPDATE AVAILABLE</span></span>
+              <h3 class="dialog-title" id="updateModalTitle" data-i18n="update_modal_title">New Aura Update Ready</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="closeAppUpdateModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <div style="margin: 16px 0;">
+            <!-- Version & Safety Badge -->
+            <div class="update-version-card" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;" data-i18n="update_installed_vs_latest">INSTALLED &rarr; LATEST</span>
+                <span class="pro-chip-pill" id="updateLatestVersionBadge" style="background: rgba(56, 189, 248, 0.2); border-color: #38bdf8; color: #38bdf8;">v2.5.0</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #34d399; font-weight: 600;">
+                <i class="fa-solid fa-shield-check"></i>
+                <span data-i18n="update_data_safety_guarantee">100% In-Place Update · All Photos &amp; Settings Intact</span>
+              </div>
+            </div>
+
+            <!-- Release Notes -->
+            <div style="margin-bottom: 12px;">
+              <span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="update_whats_new_title">What's New:</span>
+              <div id="updateReleaseNotesList" style="margin-top: 6px; font-size: 13px; line-height: 1.5; color: var(--text-secondary); background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px 14px;">
+                <!-- Filled dynamically -->
+              </div>
+            </div>
+
+            <!-- Download Progress Bar (Hidden initially) -->
+            <div id="updateDownloadProgressBox" style="display: none; margin-top: 14px;">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+                <span style="color: var(--text-muted);" data-i18n="update_downloading">Downloading update...</span>
+                <span id="updateDownloadPercentText" style="color: #38bdf8; font-weight: 700;">0%</span>
+              </div>
+              <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                <div id="updateDownloadProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #38bdf8, #818cf8); transition: width 0.2s ease;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dialog-buttons" style="margin-top: 20px;">
+            <button class="btn btn-outline" onclick="closeAppUpdateModal()" data-i18n="update_btn_later">Remind Later</button>
+            <button class="btn btn-primary" id="startUpdateInstallBtn" onclick="triggerAppUpdateInstall()">
+              <i class="fa-solid fa-cloud-arrow-down"></i> <span data-i18n="update_btn_install">Download &amp; Install</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bug & Feedback Submission Modal -->
+      <div class="modal-overlay dialog-mode" id="feedbackModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 440px;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow"><i class="fa-solid fa-heart-pulse" style="color: #a855f7; margin-right: 4px;"></i> <span data-i18n="feedback_modal_eyebrow">COMMUNITY &amp; IMPROVEMENT</span></span>
+              <h3 class="dialog-title" data-i18n="feedback_modal_title">Feedback &amp; Suggestions</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="closeFeedbackModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <form id="feedbackForm" onsubmit="submitUserFeedback(event)" style="margin-top: 14px;">
+            <!-- Feedback Type Selector -->
+            <div style="margin-bottom: 14px;">
+              <label style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;" data-i18n="feedback_type_label">Category:</label>
+              <div class="feedback-type-pills" style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-sm feedback-type-btn active" id="feedbackTypeGeneralBtn" data-type="general" onclick="selectFeedbackType('general')">
+                  <i class="fa-solid fa-comment" style="color: #38bdf8;"></i> <span data-i18n="feedback_type_general">General</span>
+                </button>
+                <button type="button" class="btn btn-sm feedback-type-btn" id="feedbackTypeFeatureBtn" data-type="feature" onclick="selectFeedbackType('feature')">
+                  <i class="fa-solid fa-lightbulb" style="color: #fbbf24;"></i> <span data-i18n="feedback_type_feature">Feature Idea</span>
+                </button>
+                <button type="button" class="btn btn-sm feedback-type-btn" id="feedbackTypeBugBtn" data-type="bug" onclick="selectFeedbackType('bug')">
+                  <i class="fa-solid fa-bug" style="color: #f43f5e;"></i> <span data-i18n="feedback_type_bug">Bug Report</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Subject Input -->
+            <div style="margin-bottom: 12px;">
+              <label for="feedbackSubjectInput" style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;" data-i18n="feedback_subject_label">Summary / Topic:</label>
+              <input type="text" id="feedbackSubjectInput" class="styled-input feedback-input" required placeholder="Brief summary of your feedback or idea..." data-i18n-placeholder="feedback_subject_placeholder" style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 12px; font-size: 13.5px;">
+            </div>
+
+            <!-- Message Textarea -->
+            <div style="margin-bottom: 12px;">
+              <label for="feedbackMessageInput" style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;" data-i18n="feedback_desc_label">Details:</label>
+              <textarea id="feedbackMessageInput" class="styled-input feedback-input" required rows="4" placeholder="Share your feedback, suggestions, or ideas to improve Aura..." data-i18n-placeholder="feedback_desc_placeholder" style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 12px; font-size: 13px; resize: vertical; min-height: 80px;"></textarea>
+            </div>
+
+            <!-- Optional Contact (Email/Name) -->
+            <div style="margin-bottom: 14px;">
+              <label for="feedbackContactInput" style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;" data-i18n="feedback_contact_label">Your Email (Optional):</label>
+              <input type="email" id="feedbackContactInput" class="styled-input feedback-input" placeholder="For updates regarding your request..." data-i18n-placeholder="feedback_contact_placeholder" style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 12px; font-size: 13px;">
+            </div>
+
+            <!-- Diagnostics Pill -->
+            <div class="feedback-diagnostics-pill">
+              <i class="fa-solid fa-circle-info" style="color: #38bdf8;"></i>
+              <span id="feedbackDiagnosticsText">Aura v2.4.0 · Local Device Diagnostics Attached</span>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="dialog-buttons">
+              <button type="button" class="btn btn-outline" onclick="closeFeedbackModal()" data-i18n="crop_cancel">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="submitFeedbackBtn">
+                <i class="fa-solid fa-paper-plane"></i> <span data-i18n="feedback_submit_btn">Submit Feedback</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Manual Location Edit Modal -->
+      <div class="modal-overlay dialog-mode" id="manualLocationModal" style="display: none;">
+        <div class="dialog-card">
+          <div class="dialog-header">
+            <h3><i class="fa-solid fa-location-dot" style="color:#38bdf8; margin-right:8px;"></i>Set Photo Location</h3>
+            <button class="close-dialog-btn" onclick="closeManualLocationModal()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="dialog-desc">Customize place, city, and country tags for this photo.</p>
+          <div class="dialog-input-group" style="margin-bottom: 10px;">
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Place / Landmark</label>
+            <input type="text" id="manualPlaceInput" placeholder="e.g. Home, Living Room, Beach Resort" style="width:100%; padding:9px 12px; border-radius:8px; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-main);">
+          </div>
+          <div class="dialog-input-group" style="margin-bottom: 10px;">
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">City / Town</label>
+            <input type="text" id="manualCityInput" placeholder="e.g. Pune, Hyderabad, London" style="width:100%; padding:9px 12px; border-radius:8px; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-main);">
+          </div>
+          <div class="dialog-input-group" style="margin-bottom: 16px;">
+            <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:4px;">Country</label>
+            <input type="text" id="manualCountryInput" placeholder="e.g. India, United States" style="width:100%; padding:9px 12px; border-radius:8px; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-main);">
+          </div>
+          <div class="dialog-buttons">
+            <button type="button" class="btn btn-outline" onclick="closeManualLocationModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveManualLocation()">Save Location</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Change PIN Modal -->
+      <div class="modal-overlay dialog-mode" id="changePinModal" style="display: none;">
+        <div class="dialog-card">
+          <div class="dialog-header">
+            <h3><i class="fa-solid fa-key" style="color:var(--primary); margin-right:8px;"></i>Change Vault PIN</h3>
+            <button class="close-dialog-btn" onclick="closeChangePinModal()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="dialog-desc">Set a 4-digit PIN for your biometric app lock fallback.</p>
+          <div class="dialog-input-group" style="margin-bottom: 14px;">
+            <label style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:6px;">New 4-Digit PIN</label>
+            <input type="password" id="newPinInput" maxlength="4" placeholder="••••" style="width:100%; text-align:center; font-size:24px; letter-spacing:12px; padding:10px; border-radius:8px; background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-main);" inputmode="numeric">
+          </div>
+          <div class="dialog-buttons">
+            <button type="button" class="btn btn-outline" onclick="closeChangePinModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="saveNewPin()">Save PIN</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Professional Passcode Creation & Setup Screen Overlay -->
+      <div class="app-lock-overlay" id="passcodeSetupModal" style="display: none; position: fixed; inset: 0; z-index: 1000006;">
+        <div class="app-lock-backdrop"></div>
+        <div class="app-lock-card">
+          <div class="lock-brand-icon">
+            <div style="width: 58px; height: 58px; border-radius: 50%; background: rgba(56, 189, 248, 0.12); border: 1.5px solid rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);">
+              <i class="fa-solid fa-shield-halved" style="font-size: 26px; color: #38bdf8;"></i>
+            </div>
+            <div class="lock-aura-ring"></div>
+          </div>
+          <h2 class="lock-title" id="setupPasscodeTitle">Set Vault Passcode</h2>
+          <p class="lock-subtitle" id="setupPasscodeSubtitle">Choose a 4-digit passcode for your private vault</p>
+
+          <!-- 4-Dot Passcode Indicator -->
+          <div class="lock-pin-dots" id="setupPasscodeDots">
+            <span class="pin-dot" id="setupDot0"></span>
+            <span class="pin-dot" id="setupDot1"></span>
+            <span class="pin-dot" id="setupDot2"></span>
+            <span class="pin-dot" id="setupDot3"></span>
+          </div>
+          <div class="lock-error-msg" id="setupErrorMsg" style="display: none;"></div>
+
+          <!-- Keypad (0-9) -->
+          <div class="lock-keypad">
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('1')">1</button>
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('2')">2</button>
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('3')">3</button>
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('4')">4</button>
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('5')">5</button>
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('6')">6</button>
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('7')">7</button>
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('8')">8</button>
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('9')">9</button>
+            <button type="button" class="keypad-btn aux-btn" onclick="clearSetupPasscode()" title="Clear"><i class="fa-solid fa-rotate-left"></i></button>
+            <button type="button" class="keypad-btn" onclick="enterSetupPasscodeDigit('0')">0</button>
+            <button type="button" class="keypad-btn aux-btn" onclick="deleteSetupPasscodeDigit()" title="Delete"><i class="fa-solid fa-delete-left"></i></button>
+          </div>
+
+          <div style="margin-top: 18px;">
+            <button type="button" class="btn btn-outline" onclick="cancelPasscodeSetup()" style="font-size:12px; border-radius:20px; padding: 6px 20px;">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forgot Passcode Recovery Modal -->
+      <div class="modal-overlay dialog-mode" id="forgotPasscodeModal" style="display: none; position: fixed; inset: 0; z-index: 1000005;">
+        <div class="dialog-card" style="max-width: 350px;">
+          <div class="dialog-header">
+            <h3><i class="fa-solid fa-unlock-keyhole" style="color:#38bdf8; margin-right:8px;"></i>Forgot Passcode?</h3>
+            <button class="close-dialog-btn" onclick="closeForgotPasscodeModal()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="dialog-desc" style="margin-bottom: 18px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.75);">
+            Verify your biometric identity (Fingerprint / FaceID) to unlock and set a new passcode, or try entering your passcode again.
+          </p>
+          <div style="display: flex; flex-direction: column; gap: 11px;">
+            <button type="button" class="btn btn-primary" onclick="recoverPasscodeWithBiometrics()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; font-weight: 600;">
+              <i class="fa-solid fa-fingerprint"></i> <span>Unlock & Reset with Biometrics</span>
+            </button>
+            <button type="button" class="btn btn-outline" onclick="closeForgotPasscodeModal(); clearLockPin();" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px;">
+              <i class="fa-solid fa-rotate-left"></i> <span>Try Entering Passcode Again</span>
+            </button>
+            <button type="button" class="btn btn-outline danger" onclick="resetPasscodeSecurityVault()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; opacity: 0.9; padding: 9px 14px;">
+              <i class="fa-solid fa-shield-halved"></i> <span>Reset Vault Lock</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Luxury Biometric & PIN App Lock Screen Overlay -->
+      <div class="app-lock-overlay" id="appLockOverlay" style="display: none;">
+        <div class="app-lock-backdrop"></div>
+        <div class="app-lock-card">
+          <div class="lock-brand-icon">
+            <img src="icon.png" alt="Aura Photos">
+            <div class="lock-aura-ring"></div>
+          </div>
+          <h2 class="lock-title">Aura Photos Vault</h2>
+          <p class="lock-subtitle" id="appLockSubtitle">Vault is Locked</p>
+
+          <!-- Biometric FaceID / Fingerprint Trigger Button -->
+          <button type="button" class="btn-biometric-trigger" id="biometricPromptBtn" onclick="triggerBiometricAuth()">
+            <div class="biometric-icon-wrap">
+              <i class="fa-solid fa-fingerprint"></i>
+            </div>
+            <span id="biometricPromptBtnText">Unlock with Biometrics</span>
+          </button>
+
+          <div class="lock-divider">
+            <span>or enter Passcode</span>
+          </div>
+
+          <!-- 4-Dot PIN Indicator -->
+          <div class="lock-pin-dots" id="lockPinDots">
+            <span class="pin-dot" id="pinDot0"></span>
+            <span class="pin-dot" id="pinDot1"></span>
+            <span class="pin-dot" id="pinDot2"></span>
+            <span class="pin-dot" id="pinDot3"></span>
+          </div>
+          <div class="lock-error-msg" id="lockErrorMsg" style="display: none;">Incorrect Passcode. Try again.</div>
+
+          <!-- Keypad (0-9) -->
+          <div class="lock-keypad">
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('1')">1</button>
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('2')">2</button>
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('3')">3</button>
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('4')">4</button>
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('5')">5</button>
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('6')">6</button>
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('7')">7</button>
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('8')">8</button>
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('9')">9</button>
+            <button type="button" class="keypad-btn aux-btn" onclick="clearLockPin()" title="Clear"><i class="fa-solid fa-rotate-left"></i></button>
+            <button type="button" class="keypad-btn" onclick="enterLockPinDigit('0')">0</button>
+            <button type="button" class="keypad-btn aux-btn" onclick="deleteLockPinDigit()" title="Delete"><i class="fa-solid fa-delete-left"></i></button>
+          </div>
+
+          <!-- Recovery & Options Row -->
+          <div class="lock-options-row">
+            <button type="button" class="btn-lock-option forgot-btn" onclick="handleForgotPasscode()" title="Forgot Passcode? Reset or recover">
+              <i class="fa-solid fa-circle-question"></i> <span>Forgot Passcode?</span>
+            </button>
+            <button type="button" class="btn-lock-option retry-btn" onclick="clearLockPin()" title="Clear PIN and try again">
+              <i class="fa-solid fa-rotate-left"></i> <span>Try Again</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast Notification -->
+      <div class="toast" id="toastMessage"></div>
+
+    </div>
+  </main>
+
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
