@@ -2398,24 +2398,7 @@
                 </div>
               </div>
 
-              <!-- Available Tags to Combine (Directly Visible - No Hidden Sub-Drawers) -->
-              <div class="multitag-candidates-section" id="multiTagCandidatesSection">
-                <div class="multitag-candidates-header">
-                  <span class="multitag-candidates-title" id="multiTagCandidatesTitle">Select Tag to Combine:</span>
-                  <span class="multitag-hover-hint"><i class="fa-solid fa-arrow-pointer"></i> Hover to preview</span>
-                </div>
-                <!-- Search filter for tags -->
-                <div class="multitag-picker-search-wrap">
-                  <i class="fa-solid fa-magnifying-glass multitag-picker-search-icon"></i>
-                  <input type="text" class="multitag-picker-search-input" id="multiTagPickerSearchInput" placeholder="Filter available tags..." oninput="handleMultiTagPickerSearch(this.value)">
-                </div>
-                <!-- Scrollable Candidate Cards with Live Counts -->
-                <div class="multitag-candidate-list" id="multiTagCandidateList" onmouseleave="clearCandidateHoverPreview()">
-                  <!-- Rendered by JS: Candidates with photo counts & hover events -->
-                </div>
-              </div>
-
-              <!-- Live Preview / Destination Summary Card -->
+              <!-- Live Preview / Destination Summary Card (Positioned Above Candidates for Instant Visibility) -->
               <div class="multitag-result-card" id="multiTagResultCard" style="display: none;">
                 <div class="multitag-result-header">
                   <div class="multitag-result-info">
@@ -2431,6 +2414,23 @@
                 </div>
                 <!-- Thumbnail Rail of Matching Intersection Photos -->
                 <div class="multitag-matching-thumbs" id="multiTagMatchingThumbs" style="display: none;"></div>
+              </div>
+
+              <!-- Available Tags to Combine (Directly Visible - No Hidden Sub-Drawers) -->
+              <div class="multitag-candidates-section" id="multiTagCandidatesSection">
+                <div class="multitag-candidates-header">
+                  <span class="multitag-candidates-title" id="multiTagCandidatesTitle">Select Tag to Combine:</span>
+                  <span class="multitag-hover-hint" id="multiTagHoverHint"><i class="fa-solid fa-arrow-pointer"></i> Hover to preview</span>
+                </div>
+                <!-- Search filter for tags -->
+                <div class="multitag-picker-search-wrap">
+                  <i class="fa-solid fa-magnifying-glass multitag-picker-search-icon"></i>
+                  <input type="text" class="multitag-picker-search-input" id="multiTagPickerSearchInput" placeholder="Filter available tags..." oninput="handleMultiTagPickerSearch(this.value)">
+                </div>
+                <!-- Scrollable Candidate Cards with Live Counts -->
+                <div class="multitag-candidate-list" id="multiTagCandidateList" onmouseleave="clearCandidateHoverPreview()">
+                  <!-- Rendered by JS: Candidates with photo counts & hover events -->
+                </div>
               </div>
             </div>
           </div>

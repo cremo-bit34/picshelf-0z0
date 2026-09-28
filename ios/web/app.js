@@ -9610,6 +9610,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Update hint in candidates header
+    const hoverHint = document.getElementById('multiTagHoverHint');
+    if (hoverHint) {
+      const countText = matchingPhotos.length === 1 ? '1 photo' : `${matchingPhotos.length} photos`;
+      hoverHint.innerHTML = `<span style="color: #38bdf8; font-weight: 700;"><i class="fa-solid fa-eye"></i> ${escapeHtml(hypothetical.join(' + '))} (${countText})</span>`;
+    }
+
     // Thumbnails
     if (thumbsRail) {
       if (matchingPhotos.length > 0) {
@@ -9636,6 +9643,11 @@ document.addEventListener('DOMContentLoaded', () => {
   window.clearCandidateHoverPreview = function() {
     const card = document.getElementById('multiTagResultCard');
     if (card) card.classList.remove('hover-previewing');
+
+    const hoverHint = document.getElementById('multiTagHoverHint');
+    if (hoverHint) {
+      hoverHint.innerHTML = `<i class="fa-solid fa-arrow-pointer"></i> Hover to preview`;
+    }
 
     // Revert to active selected tags
     window.updateMultiTagIntersection();
