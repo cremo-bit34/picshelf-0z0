@@ -10661,14 +10661,15 @@ body.light-mode .album-cover-add-btn {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #fbbf24;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   color: #0f172a;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 8px rgba(251, 191, 36, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.6);
   transition: all 0.18s ease;
 }
 
@@ -10676,6 +10677,7 @@ body.light-mode .album-cover-add-btn {
   background: rgba(15, 23, 42, 0.85);
   color: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .move-copy-thumb-remove {
@@ -10685,24 +10687,30 @@ body.light-mode .album-cover-add-btn {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: rgba(255, 255, 255, 0.85);
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.92) 0%, rgba(190, 18, 60, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 8.5px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   z-index: 2;
+  box-shadow: 0 2px 7px rgba(0, 0, 0, 0.45), 0 0 8px rgba(244, 63, 94, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(4px);
 }
 
 .move-copy-thumb-remove:hover {
-  background: #f43f5e;
-  border-color: #f43f5e;
+  background: linear-gradient(135deg, #ff4d6d 0%, #e11d48 100%);
+  border-color: #ffffff;
   color: #ffffff;
-  transform: scale(1.15);
-  box-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
+  transform: scale(1.18);
+  box-shadow: 0 3px 12px rgba(244, 63, 94, 0.75), inset 0 1px 1.5px rgba(255, 255, 255, 0.85);
+}
+
+.move-copy-thumb-remove:active {
+  transform: scale(0.92);
 }
 
 .move-copy-thumb-card.deselected .move-copy-thumb-remove {
