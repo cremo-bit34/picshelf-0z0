@@ -9394,15 +9394,9 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleBtn.classList.add('expanded');
       toggleBtn.setAttribute('aria-expanded', 'true');
 
-      // Initialize with source album if in album mode, else with first available tag
-      if (!Array.isArray(state.moveCopyMultiTags) || state.moveCopyMultiTags.length === 0) {
-        if (state.moveCopySourceAlbum) {
-          state.moveCopyMultiTags = [state.moveCopySourceAlbum];
-        } else if (state.tags && state.tags.length > 0) {
-          state.moveCopyMultiTags = [state.tags[0].name];
-        } else {
-          state.moveCopyMultiTags = [];
-        }
+      // Do NOT default select source tag - allow user to combine ANY tags fresh
+      if (!Array.isArray(state.moveCopyMultiTags)) {
+        state.moveCopyMultiTags = [];
       }
 
       window.renderMultiTagStudio();
@@ -9434,7 +9428,8 @@ document.addEventListener('DOMContentLoaded', () => {
         badge.style.display = 'inline-block';
         badge.textContent = `${validTags.length} ${validTags.length === 1 ? 'tag active' : 'tags combined'}`;
       } else {
-        badge.style.display = 'none';
+        badge.style.display = 'inline-block';
+        badge.textContent = '0 tags chosen';
       }
     }
 
@@ -9459,7 +9454,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const unselectedRemaining = allTags.filter(t => !selectedSet.has(t.name.toLowerCase()));
 
     let extraSlotHtml = '';
-    if (validTags.length === 1 && unselectedRemaining.length > 0) {
+    if (validTags.length === 0) {
+      extraSlotHtml = `
+        <span class="multitag-waiting-slot empty-start">
+          <i class="fa-solid fa-hand-pointer" style="font-size: 11px; color: #fbbf24;"></i>
+          <span>Choose any tag below to start combination</span>
+        </span>
+      `;
+    } else if (validTags.length === 1 && unselectedRemaining.length > 0) {
       extraSlotHtml = `<span class="multitag-waiting-slot"><i class="fa-solid fa-arrow-down" style="font-size: 10px;"></i> Select second tag below</span>`;
     } else if (validTags.length >= 2 && unselectedRemaining.length > 0) {
       extraSlotHtml = `
@@ -9492,11 +9494,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Title explanation
     if (titleEl) {
       if (validTags.length === 0) {
-        titleEl.textContent = 'Select starting tag:';
+        titleEl.innerHTML = `<i class="fa-solid fa-layer-group" style="color: #fbbf24; margin-right: 5px;"></i> Select first tag to combine:`;
       } else if (validTags.length === 1) {
-        titleEl.textContent = `Select second tag to combine with '${validTags[0]}':`;
+        titleEl.innerHTML = `Select second tag to combine with '<strong>${escapeHtml(validTags[0])}</strong>':`;
       } else {
-        titleEl.textContent = `Combine with '${validTags.join(' + ')}':`;
+        titleEl.innerHTML = `Combine with '<strong>${escapeHtml(validTags.join(' + '))}</strong>':`;
       }
     }
 
@@ -9527,9 +9529,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const countNoun = matchCount === 1 ? 'photo' : 'photos';
 
-      const badgeHtml = matchCount > 0
-        ? `<span class="candidate-count-badge has-photos"><i class="fa-solid fa-sparkles"></i> ${matchCount} ${countNoun} in common</span>`
-        : `<span class="candidate-count-badge zero-photos">0 common photos</span>`;
+      let badgeHtml;
+      if (validTags.length === 0) {
+        badgeHtml = matchCount > 0
+          ? `<span class="candidate-count-badge has-photos"><i class="fa-solid fa-images"></i> ${matchCount} ${countNoun}</span>`
+          : `<span class="candidate-count-badge zero-photos">0 photos</span>`;
+      } else {
+        badgeHtml = matchCount > 0
+          ? `<span class="candidate-count-badge has-photos"><i class="fa-solid fa-sparkles"></i> ${matchCount} ${countNoun} in common</span>`
+          : `<span class="candidate-count-badge zero-photos">0 common photos</span>`;
+      }
 
       // Safe parameter passing using encodeURIComponent to avoid quote breakage in inline handlers
       const safeCandidateName = encodeURIComponent(candidate.name);
@@ -9577,7 +9586,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Label: Live Hover Preview
     if (label) {
-      label.innerHTML = `<i class="fa-solid fa-eye" style="color: #38bdf8; margin-right: 4px;"></i> Preview: <strong>${escapeHtml(hypothetical.join(' + '))}</strong>`;
+      if (validTags.length === 0) {
+        label.innerHTML = `<i class="fa-solid fa-eye" style="color: #38bdf8; margin-right: 4px;"></i> Preview starting tag: <strong>${escapeHtml(candidateTagName)}</strong>`;
+      } else {
+        label.innerHTML = `<i class="fa-solid fa-eye" style="color: #38bdf8; margin-right: 4px;"></i> Preview: <strong>${escapeHtml(hypothetical.join(' + '))}</strong>`;
+      }
     }
 
     // Matching photos calculation
@@ -9589,11 +9602,11 @@ document.addEventListener('DOMContentLoaded', () => {
     );
 
     if (countEl) {
+      const countNoun = matchingPhotos.length === 1 ? 'photo' : 'photos';
       if (matchingPhotos.length === 0) {
-        countEl.textContent = '0 photos currently match this combination';
+        countEl.textContent = validTags.length === 0 ? '0 photos currently in this tag' : '0 photos currently match this combination';
       } else {
-        const countNoun = matchingPhotos.length === 1 ? 'photo' : 'photos';
-        countEl.textContent = `${matchingPhotos.length} ${countNoun} match combination`;
+        countEl.textContent = validTags.length === 0 ? `${matchingPhotos.length} ${countNoun} in this tag` : `${matchingPhotos.length} ${countNoun} match combination`;
       }
     }
 
@@ -9645,6 +9658,11 @@ document.addEventListener('DOMContentLoaded', () => {
       state.moveCopyDestinationAlbum = validTags.join(' + ');
       updateMoveCopyConfirmButton();
       showToast(`✨ Combined '${state.moveCopyDestinationAlbum}' as destination!`);
+    } else {
+      state.moveCopyIsMultiTagDest = false;
+      state.moveCopyDestinationAlbum = null;
+      state.moveCopyDestinationTags = null;
+      updateMoveCopyConfirmButton();
     }
 
     window.renderMultiTagStudio();
