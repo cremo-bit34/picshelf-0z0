@@ -722,9 +722,8 @@ body {
 .albums-card-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: 20px 14px;
   padding: 4px 18px 110px;
-  perspective: 1000px;
 }
 
 .album-rich-card {
@@ -903,7 +902,8 @@ body {
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 0 auto;
+  min-height: max-content;
   justify-content: space-between;
   background: var(--bg-surface);
   border-bottom-left-radius: calc(var(--radius-lg, 18px) - 1.5px);
@@ -8309,7 +8309,6 @@ body.light-mode .trash-album-card {
   will-change: transform;
   transition: transform 0.12s ease-out, box-shadow 0.25s ease, border-color 0.25s ease;
   position: relative;
-  contain: layout;
   overflow: visible !important;
 }
 
@@ -8371,18 +8370,16 @@ body.light-mode .trash-album-card {
 }
 
 .album-rich-card.card-3d .album-body {
-  transform: translateZ(16px);
-  transform-style: preserve-3d;
   border-bottom-left-radius: calc(var(--radius-lg, 18px) - 1.5px);
   border-bottom-right-radius: calc(var(--radius-lg, 18px) - 1.5px);
 }
 
 .album-rich-card.card-3d .album-title-text {
-  transform: translateZ(6px);
+  transform: translateZ(4px);
 }
 
 .album-rich-card.card-3d .album-card-action-bar {
-  transform: translateZ(24px);
+  transform: translateZ(8px);
 }
 
 
