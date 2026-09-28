@@ -9586,11 +9586,13 @@ document.addEventListener('DOMContentLoaded', () => {
   window.initFusionStudioWithSource = function() {
     state.fusionAlbums = [];
     const sourceAlbum = state.moveCopySourceAlbum;
-    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+    const validPhotos = (state.photos || []).filter(p => !p.deletedAt);
+    const presets = (typeof PRESET_COLORS !== 'undefined' && Array.isArray(PRESET_COLORS)) ? PRESET_COLORS : ['#e11d48', '#d97706', '#059669', '#7c3aed', '#0284c7'];
+    let color = presets[0] || '#fbbf24';
 
     if (sourceAlbum) {
       const tagObj = (state.tags || []).find(t => t.name.toLowerCase() === sourceAlbum.toLowerCase());
-      const color = tagObj ? tagObj.color : '#fbbf24';
+      if (tagObj && tagObj.color) color = tagObj.color;
       const albumPhotos = validPhotos.filter(p => Array.isArray(p.tags) && p.tags.includes(sourceAlbum));
       const allPhotoIds = albumPhotos.map(p => p.id);
       const selectedPhotoIds = (state.moveCopyTargetIds && state.moveCopyTargetIds.length > 0)
@@ -9606,17 +9608,18 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       // Direct photo selection context
       const targetIds = state.moveCopyTargetIds || state.moveCopyAllSourcePhotoIds || [];
-      const selectedPhotoIds = [...targetIds];
-      state.fusionAlbums.push({
-        albumName: 'Selected Photos',
-        color: '#fbbf24',
-        allPhotoIds: [...targetIds],
-        selectedPhotoIds: selectedPhotoIds
-      });
+      if (targetIds.length > 0) {
+        state.fusionAlbums.push({
+          albumName: 'Selected Photos',
+          color: color,
+          allPhotoIds: [...targetIds],
+          selectedPhotoIds: [...targetIds]
+        });
+      }
     }
 
-    const matchingPreset = PRESET_COLORS.find(c => c.toLowerCase() === (color || '').toLowerCase());
-    state.fusionCollectionColor = matchingPreset || (state.savedCustomColors || []).find(c => c.toLowerCase() === (color || '').toLowerCase()) || PRESET_COLORS[0];
+    const matchingPreset = presets.find(c => c.toLowerCase() === (color || '').toLowerCase());
+    state.fusionCollectionColor = matchingPreset || (state.savedCustomColors || []).find(c => c.toLowerCase() === (color || '').toLowerCase()) || presets[0] || '#fbbf24';
     state.fusionUserEditedName = false;
     state.fusionNameVariation = 0;
     state.fusionCollectionName = window.generateSmartCollectionName(0);
@@ -9705,107 +9708,111 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Main Fusion Studio Renderer
   window.renderFusionStudio = function() {
-    const albums = state.fusionAlbums || [];
-    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+    try {
+      const albums = state.fusionAlbums || [];
+      const validPhotos = (state.photos || []).filter(p => !p.deletedAt);
 
-    // 1. Update Header Badge
-    const activeBadge = document.getElementById('fusionActiveBadge');
-    if (activeBadge) {
-      const totalSelected = albums.reduce((acc, a) => acc + (a.selectedPhotoIds ? a.selectedPhotoIds.length : 0), 0);
-      const albumCount = albums.length;
-      activeBadge.textContent = albumCount > 0
-        ? `${albumCount} ${albumCount === 1 ? 'Album' : 'Albums'} · ${totalSelected} Photos`
-        : 'Merge Albums';
-    }
+      // 1. Update Header Badge
+      const activeBadge = document.getElementById('fusionActiveBadge');
+      if (activeBadge) {
+        const totalSelected = albums.reduce((acc, a) => acc + (a.selectedPhotoIds ? a.selectedPhotoIds.length : 0), 0);
+        const albumCount = albums.length;
+        activeBadge.textContent = albumCount > 0
+          ? `${albumCount} ${albumCount === 1 ? 'Album' : 'Albums'} · ${totalSelected} Photos`
+          : 'Merge Albums';
+      }
 
-    // 2. Render Album Cards with Prominent Name and Exact Single Box Rail Parity
-    const albumsList = document.getElementById('fusionAlbumsList');
-    if (albumsList) {
-      if (!albums.length) {
-        albumsList.innerHTML = `
-          <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 12.5px;">
-            No albums added yet. Pick an album below to start merging!
-          </div>
-        `;
-      } else {
-        albumsList.innerHTML = albums.map((albumObj, albumIdx) => {
-          const { albumName, color, allPhotoIds = [], selectedPhotoIds = [] } = albumObj;
-          const selectedSet = new Set(selectedPhotoIds);
-          const albumPhotos = allPhotoIds.map(id => validPhotos.find(p => p.id === id)).filter(Boolean);
-          const allSelected = albumPhotos.length > 0 && selectedPhotoIds.length === albumPhotos.length;
+      // 2. Render Album Cards with Prominent Name and Exact Single Box Rail Parity
+      const albumsList = document.getElementById('fusionAlbumsList');
+      if (albumsList) {
+        if (!albums.length) {
+          albumsList.innerHTML = `
+            <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 12.5px;">
+              No albums added yet. Pick an album below to start merging!
+            </div>
+          `;
+        } else {
+          albumsList.innerHTML = albums.map((albumObj, albumIdx) => {
+            const { albumName, color, allPhotoIds = [], selectedPhotoIds = [] } = albumObj;
+            const selectedSet = new Set(selectedPhotoIds);
+            const albumPhotos = allPhotoIds.map(id => validPhotos.find(p => p.id === id)).filter(Boolean);
+            const allSelected = albumPhotos.length > 0 && selectedPhotoIds.length === albumPhotos.length;
 
-          // Header action buttons
-          const selectAllLabel = allSelected ? 'Deselect All' : 'Select All';
-          const selectAllIcon = allSelected ? 'fa-solid fa-square-minus' : 'fa-solid fa-check-double';
-          const canRemoveAlbum = albums.length > 1;
+            // Header action buttons
+            const selectAllLabel = allSelected ? 'Deselect All' : 'Select All';
+            const selectAllIcon = allSelected ? 'fa-solid fa-square-minus' : 'fa-solid fa-check-double';
+            const canRemoveAlbum = albums.length > 1;
 
-          // Render horizontal photo rail cards - 100% same image rail to display from single tag selection
-          const thumbsHtml = albumPhotos.length > 0 ? albumPhotos.map(p => {
-            const isSelected = selectedSet.has(p.id);
-            const cardClass = isSelected ? 'move-copy-thumb-card selected' : 'move-copy-thumb-card deselected';
-            const badgeIcon = isSelected ? '<i class="fa-solid fa-check"></i>' : '';
-            const photoTitle = escapeHtml(p.displayName || 'Photo');
+            // Render horizontal photo rail cards - 100% same image rail to display from single tag selection
+            const thumbsHtml = albumPhotos.length > 0 ? albumPhotos.map(p => {
+              const isSelected = selectedSet.has(p.id);
+              const cardClass = isSelected ? 'move-copy-thumb-card selected' : 'move-copy-thumb-card deselected';
+              const badgeIcon = isSelected ? '<i class="fa-solid fa-check"></i>' : '';
+              const photoTitle = escapeHtml(p.displayName || 'Photo');
+
+              return `
+                <div class="${cardClass}" onclick="window.toggleFusionPhotoSelection(${albumIdx}, '${p.id}')" title="${photoTitle} (${isSelected ? 'Selected' : 'Deselected - Click to include'})">
+                  <img src="${p.dataUrl}" alt="${photoTitle}" class="move-copy-thumb-img" loading="lazy">
+                  <div class="move-copy-thumb-badge">${badgeIcon}</div>
+                  <div class="move-copy-thumb-remove" onclick="event.stopPropagation(); window.removeFusionPhoto(${albumIdx}, '${p.id}')" title="Remove photo from collection">
+                    <i class="fa-solid fa-xmark"></i>
+                  </div>
+                </div>
+              `;
+            }).join('') : `<div style="padding: 10px; color: var(--text-muted); font-size: 11.5px;">No photos available in this album</div>`;
 
             return `
-              <div class="${cardClass}" onclick="window.toggleFusionPhotoSelection(${albumIdx}, '${p.id}')" title="${photoTitle} (${isSelected ? 'Selected' : 'Deselected - Click to include'})">
-                <img src="${p.dataUrl}" alt="${photoTitle}" class="move-copy-thumb-img" loading="lazy">
-                <div class="move-copy-thumb-badge">${badgeIcon}</div>
-                <div class="move-copy-thumb-remove" onclick="event.stopPropagation(); window.removeFusionPhoto(${albumIdx}, '${p.id}')" title="Remove photo from collection">
-                  <i class="fa-solid fa-xmark"></i>
+              <div class="fusion-album-card" id="fusionAlbumCard_${albumIdx}">
+                <div class="fusion-album-header">
+                  <div class="fusion-album-header-top">
+                    <div class="fusion-album-identity">
+                      <span class="fusion-album-num-badge">#${albumIdx + 1}</span>
+                      <span class="fusion-album-dot" style="background: ${color}; color: ${color};"></span>
+                      <span class="fusion-album-name" title="${escapeHtml(albumName)}">${escapeHtml(albumName)}</span>
+                    </div>
+                    <div class="fusion-album-header-right">
+                      <button type="button" class="fusion-album-select-all-btn" onclick="window.toggleFusionAlbumSelectAll(${albumIdx})">
+                        <i class="${selectAllIcon}"></i> <span>${selectAllLabel}</span>
+                      </button>
+                      ${canRemoveAlbum ? `
+                        <button type="button" class="fusion-album-remove-btn" onclick="window.removeAlbumFromFusion(${albumIdx})" title="Remove this entire album from merge">
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                  <div class="fusion-album-header-bottom">
+                    <span class="fusion-album-subrow-text">
+                      <strong style="color: #fbbf24;">${selectedPhotoIds.length}</strong> of ${albumPhotos.length} photos from '<span class="fusion-album-subrow-name">${escapeHtml(albumName)}</span>'
+                    </span>
+                  </div>
+                </div>
+                <div class="move-copy-preview-rail fusion-album-rail">
+                  ${thumbsHtml}
                 </div>
               </div>
             `;
-          }).join('') : `<div style="padding: 10px; color: var(--text-muted); font-size: 11.5px;">No photos available in this album</div>`;
-
-          return `
-            <div class="fusion-album-card" id="fusionAlbumCard_${albumIdx}">
-              <div class="fusion-album-header">
-                <div class="fusion-album-header-top">
-                  <div class="fusion-album-identity">
-                    <span class="fusion-album-num-badge">#${albumIdx + 1}</span>
-                    <span class="fusion-album-dot" style="background: ${color}; color: ${color};"></span>
-                    <span class="fusion-album-name" title="${escapeHtml(albumName)}">${escapeHtml(albumName)}</span>
-                  </div>
-                  <div class="fusion-album-header-right">
-                    <button type="button" class="fusion-album-select-all-btn" onclick="window.toggleFusionAlbumSelectAll(${albumIdx})">
-                      <i class="${selectAllIcon}"></i> <span>${selectAllLabel}</span>
-                    </button>
-                    ${canRemoveAlbum ? `
-                      <button type="button" class="fusion-album-remove-btn" onclick="window.removeAlbumFromFusion(${albumIdx})" title="Remove this entire album from merge">
-                        <i class="fa-solid fa-xmark"></i>
-                      </button>
-                    ` : ''}
-                  </div>
-                </div>
-                <div class="fusion-album-header-bottom">
-                  <span class="fusion-album-subrow-text">
-                    <strong style="color: #fbbf24;">${selectedPhotoIds.length}</strong> of ${albumPhotos.length} photos from '<span class="fusion-album-subrow-name">${escapeHtml(albumName)}</span>'
-                  </span>
-                </div>
-              </div>
-              <div class="move-copy-preview-rail fusion-album-rail">
-                ${thumbsHtml}
-              </div>
-            </div>
-          `;
-        }).join('');
+          }).join('');
+        }
       }
-    }
 
-    // 3. Render Candidate Album Chips
-    window.renderFusionCandidateChips();
+      // 3. Render Candidate Album Chips
+      window.renderFusionCandidateChips();
 
-    // 4. Render Collection Name & Categorized Color Picker Kit
-    const nameInput = document.getElementById('fusionCollectionNameInput');
-    if (nameInput) {
-      if (!state.fusionCollectionName) {
-        state.fusionCollectionName = window.generateSmartCollectionName(state.fusionNameVariation || 0);
+      // 4. Render Collection Name & Categorized Color Picker Kit
+      const nameInput = document.getElementById('fusionCollectionNameInput');
+      if (nameInput) {
+        if (!state.fusionCollectionName) {
+          state.fusionCollectionName = window.generateSmartCollectionName(state.fusionNameVariation || 0);
+        }
+        nameInput.value = state.fusionCollectionName;
       }
-      nameInput.value = state.fusionCollectionName;
-    }
 
-    window.renderFusionColorPicker();
-    window.updateFusionActionFooter();
+      window.renderFusionColorPicker();
+      window.updateFusionActionFooter();
+    } catch (err) {
+      console.error('Error in renderFusionStudio:', err);
+    }
   };
 
   // Render candidate albums to add
@@ -9815,7 +9822,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const allTags = state.tags || [];
     const addedAlbumNames = new Set((state.fusionAlbums || []).map(a => a.albumName.toLowerCase()));
-    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+    const validPhotos = (state.photos || []).filter(p => !p.deletedAt);
     const q = (state.fusionCandidateSearch || '').trim().toLowerCase();
 
     // Filter candidate tags: exclude already added albums
@@ -9840,7 +9847,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <div class="fusion-candidate-chip" onclick="window.addAlbumToFusion('${safeName}')" title="Add '${escapeHtml(candidate.name)}' to collection">
-          <span class="fusion-chip-dot" style="background: ${candidate.color}; color: ${candidate.color};"></span>
+          <span class="fusion-chip-dot" style="background: ${candidate.color || '#3b82f6'}; color: ${candidate.color || '#3b82f6'};"></span>
           <span class="fusion-chip-name">${escapeHtml(candidate.name)}</span>
           <span class="fusion-chip-count">${matchCount} ${countNoun}</span>
         </div>
@@ -9863,7 +9870,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tagObj = (state.tags || []).find(t => t.name.toLowerCase() === albumName.toLowerCase());
     const color = tagObj ? tagObj.color : '#3b82f6';
-    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+    const validPhotos = (state.photos || []).filter(p => !p.deletedAt);
     const albumPhotos = validPhotos.filter(p => Array.isArray(p.tags) && p.tags.includes(albumName));
     const allPhotoIds = albumPhotos.map(p => p.id);
 
