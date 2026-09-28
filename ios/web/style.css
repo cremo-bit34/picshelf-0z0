@@ -723,21 +723,27 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 14px;
-  padding: 4px 18px 24px;
+  padding: 4px 18px 110px;
   perspective: 1000px;
 }
 
 .album-rich-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg, 18px);
   overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+  clip-path: inset(0 round var(--radius-lg, 18px));
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-sm);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   cursor: pointer;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .album-rich-card:hover {
@@ -748,15 +754,15 @@ body {
 
 /* Featured Favorites Album Card - Ultra Luxury Ruby/Rose Aesthetic */
 .album-rich-card.favorites-album-card {
-  border: 1.5px solid rgba(244, 63, 94, 0.45);
+  border: 1px solid rgba(244, 63, 94, 0.45);
   background: linear-gradient(180deg, rgba(244, 63, 94, 0.08) 0%, var(--bg-surface) 60%);
-  box-shadow: 0 4px 20px -4px rgba(244, 63, 94, 0.25);
+  box-shadow: 0 6px 22px -4px rgba(244, 63, 94, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .album-rich-card.favorites-album-card:hover {
   transform: translateY(-5px);
   border-color: rgba(244, 63, 94, 0.85);
-  box-shadow: 0 16px 36px -4px rgba(244, 63, 94, 0.45);
+  box-shadow: 0 16px 36px -4px rgba(244, 63, 94, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .album-rich-card.favorites-album-card .album-tag-dot-pill.fav-pill {
@@ -807,12 +813,19 @@ body {
   position: relative;
   overflow: hidden;
   background: #0f172a;
+  border-top-left-radius: calc(var(--radius-lg, 18px) - 1px);
+  border-top-right-radius: calc(var(--radius-lg, 18px) - 1px);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+  clip-path: inset(0 round calc(var(--radius-lg, 18px) - 1px) calc(var(--radius-lg, 18px) - 1px) 0 0);
 }
 
 .album-cover-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-top-left-radius: calc(var(--radius-lg, 18px) - 1px);
+  border-top-right-radius: calc(var(--radius-lg, 18px) - 1px);
   transition: transform 0.35s ease;
 }
 
@@ -902,6 +915,8 @@ body {
   flex: 1;
   justify-content: space-between;
   background: var(--bg-surface);
+  border-bottom-left-radius: calc(var(--radius-lg, 18px) - 1px);
+  border-bottom-right-radius: calc(var(--radius-lg, 18px) - 1px);
 }
 
 .album-title-text {
@@ -8304,17 +8319,33 @@ body.light-mode .trash-album-card {
   transition: transform 0.12s ease-out, box-shadow 0.25s ease, border-color 0.25s ease;
   position: relative;
   contain: layout;
+  border-radius: var(--radius-lg, 18px);
+  overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+  clip-path: inset(0 round var(--radius-lg, 18px));
+  isolation: isolate;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  outline: 1px solid transparent;
 }
 
 .album-rich-card.card-3d .album-cover-box {
   transform-style: preserve-3d;
   position: relative;
   overflow: hidden;
+  border-top-left-radius: calc(var(--radius-lg, 18px) - 1px);
+  border-top-right-radius: calc(var(--radius-lg, 18px) - 1px);
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+  clip-path: inset(0 round calc(var(--radius-lg, 18px) - 1px) calc(var(--radius-lg, 18px) - 1px) 0 0);
 }
 
 .album-rich-card.card-3d .album-cover-img {
   transform: translateZ(10px);
   transition: transform 0.35s ease;
+  border-top-left-radius: calc(var(--radius-lg, 18px) - 1px);
+  border-top-right-radius: calc(var(--radius-lg, 18px) - 1px);
 }
 
 .album-rich-card.card-3d:hover .album-cover-img {
@@ -8330,7 +8361,8 @@ body.light-mode .trash-album-card {
   opacity: 0;
   transition: opacity 0.25s ease;
   mix-blend-mode: overlay;
-  border-radius: inherit;
+  border-top-left-radius: calc(var(--radius-lg, 18px) - 1px);
+  border-top-right-radius: calc(var(--radius-lg, 18px) - 1px);
 }
 
 .album-rich-card.card-3d:hover .album-3d-shine,
@@ -8362,6 +8394,8 @@ body.light-mode .trash-album-card {
 .album-rich-card.card-3d .album-body {
   transform: translateZ(16px);
   transform-style: preserve-3d;
+  border-bottom-left-radius: calc(var(--radius-lg, 18px) - 1px);
+  border-bottom-right-radius: calc(var(--radius-lg, 18px) - 1px);
 }
 
 .album-rich-card.card-3d .album-title-text {
@@ -8379,6 +8413,15 @@ body.light-mode .trash-album-card {
   will-change: transform;
   transition: transform 0.12s ease-out, box-shadow 0.25s ease, border-color 0.25s ease;
   position: relative;
+  border-radius: var(--radius-lg, 18px);
+  overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+  clip-path: inset(0 round var(--radius-lg, 18px));
+  isolation: isolate;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  outline: 1px solid transparent;
 }
 
 .photo-card-elegant.card-3d .card-image-box {
@@ -8527,392 +8570,392 @@ body.light-mode .trash-album-card {
   flex-shrink: 0;
 }
 
-/* 3. Luxury 3D Surface Finishes (12 Ultra-Premium Materials) */
+/* 3. Luxury 3D Surface Finishes (32 Ultra-Premium Materials) */
 /* 1. Holo Prism */
 .card-3d.surface-holo,
 .card-3d-preview.surface-holo {
-  border: 1.5px solid rgba(255, 255, 255, 0.32);
-  box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5), 0 0 22px rgba(244, 63, 94, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(244, 63, 94, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 0 14px -4px rgba(244, 63, 94, 0.16);
 }
 .card-3d.surface-holo:hover,
 .card-3d-preview.surface-holo:hover {
-  border-color: rgba(244, 63, 94, 0.75);
-  box-shadow: 0 20px 42px -6px rgba(0, 0, 0, 0.65), 0 0 30px rgba(244, 63, 94, 0.45), 0 0 16px rgba(6, 182, 212, 0.3);
+  border-color: rgba(244, 63, 94, 0.7);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.7), 0 6px 24px -2px rgba(244, 63, 94, 0.42), 0 4px 14px -2px rgba(6, 182, 212, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 2. Liquid Glass */
 .card-3d.surface-glass,
 .card-3d-preview.surface-glass {
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.32);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(15, 23, 42, 0.95) 100%);
-  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.35), inset 0 0 14px -4px rgba(255, 255, 255, 0.12);
 }
 .card-3d.surface-glass:hover,
 .card-3d-preview.surface-glass:hover {
-  border-color: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 20px 44px -4px rgba(0, 0, 0, 0.7), 0 0 28px rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.7), 0 6px 24px -2px rgba(255, 255, 255, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.45);
 }
 
 /* 3. 24K Luxury Gold */
 .card-3d.surface-gold,
 .card-3d-preview.surface-gold {
-  border: 1.5px solid rgba(245, 158, 11, 0.7);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.55), 0 0 24px rgba(245, 158, 11, 0.35);
+  border: 1px solid rgba(245, 158, 11, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(245, 158, 11, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(245, 158, 11, 0.16);
 }
 .card-3d.surface-gold:hover,
 .card-3d-preview.surface-gold:hover {
   border-color: #fbbf24;
-  box-shadow: 0 22px 46px -6px rgba(0, 0, 0, 0.65), 0 0 34px rgba(245, 158, 11, 0.55);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.7), 0 6px 26px -2px rgba(245, 158, 11, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 4. Cyberpunk Aurora */
 .card-3d.surface-aurora,
 .card-3d-preview.surface-aurora {
-  border: 1.5px solid rgba(6, 182, 212, 0.65);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.55), 0 0 24px rgba(236, 72, 153, 0.35);
+  border: 1px solid rgba(6, 182, 212, 0.45);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(6, 182, 212, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(236, 72, 153, 0.16);
 }
 .card-3d.surface-aurora:hover,
 .card-3d-preview.surface-aurora:hover {
   border-color: #06b6d4;
-  box-shadow: 0 22px 46px -6px rgba(0, 0, 0, 0.65), 0 0 32px rgba(6, 182, 212, 0.5), 0 0 22px rgba(236, 72, 153, 0.4);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.7), 0 6px 26px -2px rgba(6, 182, 212, 0.45), 0 4px 16px -2px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 5. Obsidian Carbon */
 .card-3d.surface-carbon,
 .card-3d-preview.surface-carbon {
-  border: 1.5px solid rgba(148, 163, 184, 0.32);
+  border: 1px solid rgba(148, 163, 184, 0.25);
   background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 70%, #020617 100%);
-  box-shadow: 0 12px 34px -4px rgba(0, 0, 0, 0.8), 0 0 20px rgba(15, 23, 42, 0.6);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.8), 0 4px 16px -2px rgba(15, 23, 42, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 .card-3d.surface-carbon:hover,
 .card-3d-preview.surface-carbon:hover {
   border-color: rgba(203, 213, 225, 0.55);
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.9), 0 0 28px rgba(148, 163, 184, 0.3);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.9), 0 6px 24px -2px rgba(148, 163, 184, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 /* 6. Midnight Titanium */
 .card-3d.surface-titanium,
 .card-3d-preview.surface-titanium {
-  border: 1.5px solid rgba(203, 213, 225, 0.45);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 22px rgba(148, 163, 184, 0.35);
+  border: 1px solid rgba(203, 213, 225, 0.35);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(148, 163, 184, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .card-3d.surface-titanium:hover,
 .card-3d-preview.surface-titanium:hover {
   border-color: #f8fafc;
-  box-shadow: 0 22px 46px -6px rgba(0, 0, 0, 0.75), 0 0 32px rgba(203, 213, 225, 0.45);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 26px -2px rgba(203, 213, 225, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 7. Cosmic Nebula */
 .card-3d.surface-nebula,
 .card-3d-preview.surface-nebula {
-  border: 1.5px solid rgba(168, 85, 247, 0.65);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 26px rgba(168, 85, 247, 0.4);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(168, 85, 247, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(168, 85, 247, 0.18);
 }
 .card-3d.surface-nebula:hover,
 .card-3d-preview.surface-nebula:hover {
   border-color: #c084fc;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 38px rgba(168, 85, 247, 0.6), 0 0 20px rgba(236, 72, 153, 0.35);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 28px -2px rgba(168, 85, 247, 0.5), 0 4px 16px -2px rgba(236, 72, 153, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 8. Imperial Emerald */
 .card-3d.surface-emerald,
 .card-3d-preview.surface-emerald {
-  border: 1.5px solid rgba(16, 185, 129, 0.65);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 26px rgba(16, 185, 129, 0.4);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(16, 185, 129, 0.18);
 }
 .card-3d.surface-emerald:hover,
 .card-3d-preview.surface-emerald:hover {
   border-color: #34d399;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 38px rgba(16, 185, 129, 0.6);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 28px -2px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 9. Opal Pearl */
 .card-3d.surface-pearl,
 .card-3d-preview.surface-pearl {
-  border: 1.5px solid rgba(254, 215, 170, 0.65);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.5), 0 0 26px rgba(224, 231, 255, 0.38);
+  border: 1px solid rgba(254, 215, 170, 0.45);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.5), 0 4px 16px -2px rgba(224, 231, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .card-3d.surface-pearl:hover,
 .card-3d-preview.surface-pearl:hover {
   border-color: #ffffff;
-  box-shadow: 0 22px 46px -6px rgba(0, 0, 0, 0.65), 0 0 36px rgba(254, 215, 170, 0.5), 0 0 20px rgba(224, 231, 255, 0.4);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.65), 0 6px 26px -2px rgba(254, 215, 170, 0.42), 0 4px 16px -2px rgba(224, 231, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
 
 /* 10. Rose Diamond */
 .card-3d.surface-rose,
 .card-3d-preview.surface-rose {
-  border: 1.5px solid rgba(244, 63, 94, 0.65);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.55), 0 0 26px rgba(244, 63, 94, 0.4);
+  border: 1px solid rgba(244, 63, 94, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.55), 0 4px 16px -2px rgba(244, 63, 94, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(244, 63, 94, 0.18);
 }
 .card-3d.surface-rose:hover,
 .card-3d-preview.surface-rose:hover {
   border-color: #fb7185;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.7), 0 0 38px rgba(244, 63, 94, 0.6);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.7), 0 6px 28px -2px rgba(244, 63, 94, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 11. Solar Flare */
 .card-3d.surface-solar,
 .card-3d-preview.surface-solar {
-  border: 1.5px solid rgba(249, 115, 22, 0.7);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 26px rgba(239, 68, 68, 0.4);
+  border: 1px solid rgba(249, 115, 22, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(249, 115, 22, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(239, 68, 68, 0.18);
 }
 .card-3d.surface-solar:hover,
 .card-3d-preview.surface-solar:hover {
   border-color: #fb923c;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 40px rgba(249, 115, 22, 0.6);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 28px -2px rgba(249, 115, 22, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 12. Cyber Matrix */
 .card-3d.surface-matrix,
 .card-3d-preview.surface-matrix {
-  border: 1.5px solid rgba(6, 182, 212, 0.7);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 26px rgba(6, 182, 212, 0.4);
+  border: 1px solid rgba(6, 182, 212, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(6, 182, 212, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(6, 182, 212, 0.18);
 }
 .card-3d.surface-matrix:hover,
 .card-3d-preview.surface-matrix:hover {
   border-color: #22d3ee;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 40px rgba(6, 182, 212, 0.6);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 28px -2px rgba(6, 182, 212, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 13. Royal Amethyst */
 .card-3d.surface-amethyst,
 .card-3d-preview.surface-amethyst {
-  border: 1.5px solid rgba(192, 132, 252, 0.7);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 28px rgba(168, 85, 247, 0.45);
+  border: 1px solid rgba(192, 132, 252, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(168, 85, 247, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(192, 132, 252, 0.18);
 }
 .card-3d.surface-amethyst:hover,
 .card-3d-preview.surface-amethyst:hover {
   border-color: #d8b4fe;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 42px rgba(192, 132, 252, 0.65);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 30px -2px rgba(192, 132, 252, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 14. Midnight Sapphire */
 .card-3d.surface-sapphire,
 .card-3d-preview.surface-sapphire {
-  border: 1.5px solid rgba(56, 189, 248, 0.7);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 28px rgba(30, 58, 138, 0.5);
+  border: 1px solid rgba(56, 189, 248, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(56, 189, 248, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(30, 58, 138, 0.18);
 }
 .card-3d.surface-sapphire:hover,
 .card-3d-preview.surface-sapphire:hover {
   border-color: #7dd3fc;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 42px rgba(56, 189, 248, 0.6);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 30px -2px rgba(56, 189, 248, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 15. Blood Ruby */
 .card-3d.surface-ruby,
 .card-3d-preview.surface-ruby {
-  border: 1.5px solid rgba(225, 29, 72, 0.75);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 30px rgba(225, 29, 72, 0.5);
+  border: 1px solid rgba(225, 29, 72, 0.5);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(225, 29, 72, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(225, 29, 72, 0.18);
 }
 .card-3d.surface-ruby:hover,
 .card-3d-preview.surface-ruby:hover {
   border-color: #f43f5e;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 44px rgba(225, 29, 72, 0.7);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 30px -2px rgba(225, 29, 72, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 16. Quantum Chromatic */
 .card-3d.surface-quantum,
 .card-3d-preview.surface-quantum {
-  border: 1.5px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 85, 247, 0.4), 0 0 15px rgba(6, 182, 212, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(168, 85, 247, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .card-3d.surface-quantum:hover,
 .card-3d-preview.surface-quantum:hover {
   border-color: #ffffff;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 44px rgba(168, 85, 247, 0.6), 0 0 22px rgba(244, 63, 94, 0.45);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 30px -2px rgba(168, 85, 247, 0.48), 0 4px 16px -2px rgba(244, 63, 94, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
 
 /* 17. Damascus Steel */
 .card-3d.surface-damascus,
 .card-3d-preview.surface-damascus {
-  border: 1.5px solid rgba(148, 163, 184, 0.5);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.65), 0 0 22px rgba(71, 85, 105, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.65), 0 4px 16px -2px rgba(71, 85, 105, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 .card-3d.surface-damascus:hover,
 .card-3d-preview.surface-damascus:hover {
   border-color: #cbd5e1;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.8), 0 0 35px rgba(148, 163, 184, 0.5);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.8), 0 6px 26px -2px rgba(148, 163, 184, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 /* 18. Neon Synth */
 .card-3d.surface-cyberpunk,
 .card-3d-preview.surface-cyberpunk {
-  border: 1.5px solid rgba(236, 72, 153, 0.75);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 28px rgba(236, 72, 153, 0.5), 0 0 18px rgba(6, 182, 212, 0.4);
+  border: 1px solid rgba(236, 72, 153, 0.5);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(236, 72, 153, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 14px -4px rgba(6, 182, 212, 0.18);
 }
 .card-3d.surface-cyberpunk:hover,
 .card-3d-preview.surface-cyberpunk:hover {
   border-color: #06b6d4;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 42px rgba(236, 72, 153, 0.7), 0 0 24px rgba(6, 182, 212, 0.5);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 30px -2px rgba(236, 72, 153, 0.55), 0 4px 16px -2px rgba(6, 182, 212, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 19. Liquid Platinum */
 .card-3d.surface-platina,
 .card-3d-preview.surface-platina {
-  border: 1.5px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(255, 255, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 .card-3d.surface-platina:hover,
 .card-3d-preview.surface-platina:hover {
   border-color: #ffffff;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 45px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 32px -2px rgba(255, 255, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 
 /* 20. Magma Volcanic */
 .card-3d.surface-volcanic,
 .card-3d-preview.surface-volcanic {
-  border: 1.5px solid rgba(239, 68, 68, 0.75);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.7), 0 0 28px rgba(239, 68, 68, 0.5);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.7), 0 4px 16px -2px rgba(239, 68, 68, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .card-3d.surface-volcanic:hover,
 .card-3d-preview.surface-volcanic:hover {
   border-color: #f87171;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.8), 0 0 42px rgba(239, 68, 68, 0.7), 0 0 18px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.8), 0 6px 30px -2px rgba(239, 68, 68, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 21. Supernova Gold */
 .card-3d.surface-supernova,
 .card-3d-preview.surface-supernova {
-  border: 1.5px solid rgba(253, 224, 71, 0.8);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.65), 0 0 32px rgba(253, 224, 71, 0.55);
+  border: 1px solid rgba(253, 224, 71, 0.5);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.65), 0 4px 16px -2px rgba(253, 224, 71, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .card-3d.surface-supernova:hover,
 .card-3d-preview.surface-supernova:hover {
   border-color: #ffffff;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 46px rgba(253, 224, 71, 0.8), 0 0 24px rgba(249, 115, 22, 0.5);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 32px -2px rgba(253, 224, 71, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 /* 22. Glacial Ice */
 .card-3d.surface-aquamarine,
 .card-3d-preview.surface-aquamarine {
-  border: 1.5px solid rgba(45, 212, 191, 0.7);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 28px rgba(45, 212, 191, 0.45);
+  border: 1px solid rgba(45, 212, 191, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(45, 212, 191, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .card-3d.surface-aquamarine:hover,
 .card-3d-preview.surface-aquamarine:hover {
   border-color: #5eead4;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 40px rgba(45, 212, 191, 0.65);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 28px -2px rgba(45, 212, 191, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 23. Brushed Copper */
 .card-3d.surface-copper,
 .card-3d-preview.surface-copper {
-  border: 1.5px solid rgba(249, 115, 22, 0.65);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 26px rgba(234, 88, 12, 0.4);
+  border: 1px solid rgba(249, 115, 22, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(234, 88, 12, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .card-3d.surface-copper:hover,
 .card-3d-preview.surface-copper:hover {
   border-color: #fb923c;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 38px rgba(249, 115, 22, 0.6);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 28px -2px rgba(249, 115, 22, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 24. Mystic Chameleon */
 .card-3d.surface-chameleon,
 .card-3d-preview.surface-chameleon {
-  border: 1.5px solid rgba(52, 211, 153, 0.65);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 28px rgba(168, 85, 247, 0.45);
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(52, 211, 153, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .card-3d.surface-chameleon:hover,
 .card-3d-preview.surface-chameleon:hover {
   border-color: #c084fc;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 42px rgba(52, 211, 153, 0.55), 0 0 22px rgba(168, 85, 247, 0.45);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 28px -2px rgba(52, 211, 153, 0.45), 0 4px 16px -2px rgba(168, 85, 247, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 25. Celestial Moondust */
 .card-3d.surface-celestial,
 .card-3d-preview.surface-celestial {
-  border: 1.5px solid rgba(199, 210, 254, 0.65);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.45);
+  border: 1px solid rgba(199, 210, 254, 0.45);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(99, 102, 241, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .card-3d.surface-celestial:hover,
 .card-3d-preview.surface-celestial:hover {
   border-color: #ffffff;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 44px rgba(199, 210, 254, 0.65);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 30px -2px rgba(199, 210, 254, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
 
 /* 26. Black Onyx */
 .card-3d.surface-onyx,
 .card-3d-preview.surface-onyx {
-  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   background: #020617;
-  box-shadow: 0 14px 40px -4px rgba(0, 0, 0, 0.9), 0 0 20px rgba(15, 23, 42, 0.8);
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.88), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 .card-3d.surface-onyx:hover,
 .card-3d-preview.surface-onyx:hover {
-  border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 24px 52px -6px rgba(0, 0, 0, 0.95), 0 0 30px rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 20px 44px -6px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 /* 27. Malibu Sunset */
 .card-3d.surface-sunset,
 .card-3d-preview.surface-sunset {
-  border: 1.5px solid rgba(244, 63, 94, 0.7);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 30px rgba(249, 115, 22, 0.45);
+  border: 1px solid rgba(244, 63, 94, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(249, 115, 22, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .card-3d.surface-sunset:hover,
 .card-3d-preview.surface-sunset:hover {
   border-color: #fb923c;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 42px rgba(244, 63, 94, 0.65), 0 0 20px rgba(168, 85, 247, 0.35);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 30px -2px rgba(244, 63, 94, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 28. Dark Prism Noir */
 .card-3d.surface-prism_noir,
 .card-3d-preview.surface-prism_noir {
-  border: 1.5px solid rgba(168, 85, 247, 0.45);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.8), 0 0 24px rgba(99, 102, 241, 0.35);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.8), 0 4px 16px -2px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .card-3d.surface-prism_noir:hover,
 .card-3d-preview.surface-prism_noir:hover {
   border-color: #c084fc;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.9), 0 0 38px rgba(168, 85, 247, 0.55);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.9), 0 6px 28px -2px rgba(168, 85, 247, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 
 /* 29. Bio Emerald */
 .card-3d.surface-biolum,
 .card-3d-preview.surface-biolum {
-  border: 1.5px solid rgba(74, 222, 128, 0.75);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 30px rgba(34, 197, 94, 0.5);
+  border: 1px solid rgba(74, 222, 128, 0.48);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .card-3d.surface-biolum:hover,
 .card-3d-preview.surface-biolum:hover {
   border-color: #86efac;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 44px rgba(74, 222, 128, 0.75);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 30px -2px rgba(74, 222, 128, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* 30. Warp Hyperdrive */
 .card-3d.surface-hyperdrive,
 .card-3d-preview.surface-hyperdrive {
-  border: 1.5px solid rgba(56, 189, 248, 0.8);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 32px rgba(14, 165, 233, 0.55);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(14, 165, 233, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 .card-3d.surface-hyperdrive:hover,
 .card-3d-preview.surface-hyperdrive:hover {
   border-color: #ffffff;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 46px rgba(56, 189, 248, 0.8), 0 0 24px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 32px -2px rgba(56, 189, 248, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 /* 31. Cosmic Meteorite */
 .card-3d.surface-meteorite,
 .card-3d-preview.surface-meteorite {
-  border: 1.5px solid rgba(148, 163, 184, 0.55);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.7), 0 0 24px rgba(71, 85, 105, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.7), 0 4px 16px -2px rgba(71, 85, 105, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 .card-3d.surface-meteorite:hover,
 .card-3d-preview.surface-meteorite:hover {
   border-color: #e2e8f0;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.85), 0 0 38px rgba(148, 163, 184, 0.6);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.85), 0 6px 28px -2px rgba(148, 163, 184, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 
 /* 32. Retro Vaporwave */
 .card-3d.surface-vaporwave,
 .card-3d-preview.surface-vaporwave {
-  border: 1.5px solid rgba(244, 114, 182, 0.75);
-  box-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.45);
+  border: 1px solid rgba(244, 114, 182, 0.5);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.6), 0 4px 16px -2px rgba(56, 189, 248, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 .card-3d.surface-vaporwave:hover,
 .card-3d-preview.surface-vaporwave:hover {
   border-color: #38bdf8;
-  box-shadow: 0 22px 48px -6px rgba(0, 0, 0, 0.75), 0 0 44px rgba(244, 114, 182, 0.65), 0 0 22px rgba(192, 132, 252, 0.45);
+  box-shadow: 0 18px 40px -4px rgba(0, 0, 0, 0.75), 0 6px 30px -2px rgba(244, 114, 182, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* ------------------------------------------------------------- */
@@ -12553,8 +12596,12 @@ body.light-mode .album-rich-card.favorites-album-card:not(.album-card-highlight-
 body.light-mode .album-rich-card.card-3d:not(.album-card-highlight-return),
 body.light-mode .photo-card-elegant.card-3d:not(.album-card-highlight-return) {
   background: #ffffff !important;
-  border: 1.5px solid rgba(15, 23, 42, 0.09) !important;
-  border-radius: 20px !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  border-radius: 18px !important;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+  clip-path: inset(0 round 18px);
+  isolation: isolate;
   box-shadow: 
     0 2px 5px rgba(15, 23, 42, 0.04),
     0 12px 28px -4px rgba(15, 23, 42, 0.12),
