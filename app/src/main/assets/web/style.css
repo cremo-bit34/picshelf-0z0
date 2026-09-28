@@ -14525,3 +14525,86 @@ body.light-mode .card-loc-pill:hover {
   from { opacity: 0; transform: scale(0.92); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* Source to Destination Context Banner */
+.multitag-source-context-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.88) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.context-banner-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.context-banner-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+}
+
+.context-banner-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-item .context-banner-val {
+  color: #fbbf24;
+}
+
+.dest-item .context-banner-val {
+  color: #38bdf8;
+}
+
+.context-banner-arrow {
+  color: rgba(251, 191, 36, 0.75);
+  font-size: 12px;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+/* Stable Non-Displacing Hover Preview Chip inside Formula Chain */
+.multitag-waiting-slot.preview-mode {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+  font-style: normal;
+  animation: fadeInPop 0.15s ease-out;
+}
+
+.multitag-hover-hint-active {
+  color: #38bdf8;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  animation: fadeInPop 0.15s ease-out;
+}
+
+.multitag-candidate-card.hover-active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(30, 41, 59, 0.98) 100%) !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4) !important;
+  transform: translateX(4px);
+}
+

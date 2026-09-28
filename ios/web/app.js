@@ -9367,6 +9367,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const multiTagCard = document.getElementById('multiTagResultCard');
     const multiTagRow = document.getElementById('multiTagChainRow');
     const searchInput = document.getElementById('multiTagPickerSearchInput');
+    const sourceVal = document.getElementById('multiTagSourceVal');
+    const destVal = document.getElementById('multiTagDestVal');
 
     if (multiTagContainer) multiTagContainer.classList.remove('highlighted-dest');
     if (multiTagToggleBtn) {
@@ -9381,6 +9383,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (searchInput) searchInput.value = '';
     if (multiTagRow) multiTagRow.innerHTML = '';
+    if (sourceVal) sourceVal.textContent = '';
+    if (destVal) destVal.textContent = 'Choose below';
   }
 
   window.toggleMultiTagBuilder = function() {
@@ -9409,6 +9413,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Main Studio Render: Updates formula row & candidate options simultaneously
   window.renderMultiTagStudio = function() {
+    const sourceAlbum = state.moveCopySourceAlbum || (window.t ? window.t('organize_current_photos') : 'Selected Photos');
+    const sourceVal = document.getElementById('multiTagSourceVal');
+    const destVal = document.getElementById('multiTagDestVal');
+    const formulaLabel = document.getElementById('multiTagFormulaLabel');
+
+    if (sourceVal) {
+      sourceVal.textContent = sourceAlbum;
+      sourceVal.title = `Photos will be moved/copied from '${sourceAlbum}'`;
+    }
+
+    const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
+    if (destVal) {
+      destVal.textContent = validTags.length > 0 ? validTags.join(' + ') : 'Select tags below';
+      destVal.title = validTags.length > 0 ? `Target destination: ${validTags.join(' + ')}` : 'Choose destination tags below';
+    }
+
+    if (formulaLabel) {
+      formulaLabel.innerHTML = `DESTINATION COMBINATION <span style="font-size: 10px; color: #fbbf24; font-weight: 600; text-transform: none;">(for photos from '${escapeHtml(sourceAlbum)}')</span>:`;
+    }
+
     window.renderMultiTagChain();
     window.renderMultiTagCandidateList();
     window.updateMultiTagIntersection();
@@ -9421,6 +9445,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const allTags = state.tags || [];
     const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
+    const sourceAlbum = state.moveCopySourceAlbum || (window.t ? window.t('organize_current_photos') : 'Selected Photos');
 
     // Update active badge in toggle header
     if (badge) {
@@ -9456,13 +9481,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let extraSlotHtml = '';
     if (validTags.length === 0) {
       extraSlotHtml = `
-        <span class="multitag-waiting-slot empty-start">
-          <i class="fa-solid fa-hand-pointer" style="font-size: 11px; color: #fbbf24;"></i>
-          <span>Choose any tag below to start combination</span>
+        <span class="multitag-waiting-slot empty-start" id="multiTagWaitingSlot">
+          <i class="fa-solid fa-arrow-down-long" style="font-size: 11px; color: #fbbf24;"></i>
+          <span>Pick destination tags for photos from '<strong>${escapeHtml(sourceAlbum)}</strong>'</span>
         </span>
       `;
     } else if (validTags.length === 1 && unselectedRemaining.length > 0) {
-      extraSlotHtml = `<span class="multitag-waiting-slot"><i class="fa-solid fa-arrow-down" style="font-size: 10px;"></i> Select second tag below</span>`;
+      extraSlotHtml = `
+        <span class="multitag-waiting-slot" id="multiTagWaitingSlot">
+          <i class="fa-solid fa-arrow-down-long" style="font-size: 10px; color: #fbbf24;"></i>
+          <span>Select second destination tag below</span>
+        </span>
+      `;
     } else if (validTags.length >= 2 && unselectedRemaining.length > 0) {
       extraSlotHtml = `
         <button type="button" class="multitag-chain-plus-btn" onclick="document.getElementById('multiTagCandidatesSection')?.scrollIntoView({ behavior: 'smooth' })" title="Add another tag" aria-label="Add another tag">
@@ -9487,18 +9517,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const allTags = state.tags || [];
     const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
     const selectedSet = new Set(validTags.map(t => String(t).toLowerCase()));
+    const sourceAlbum = state.moveCopySourceAlbum || (window.t ? window.t('organize_current_photos') : 'Selected Photos');
 
     // STRICT EXCLUSION: If a tag is already selected in the chain, it NEVER appears in the candidates list!
     let candidates = allTags.filter(t => !selectedSet.has(t.name.toLowerCase()));
 
-    // Title explanation
+    // Title explanation clearly linking to source album
     if (titleEl) {
       if (validTags.length === 0) {
-        titleEl.innerHTML = `<i class="fa-solid fa-layer-group" style="color: #fbbf24; margin-right: 5px;"></i> Select first tag to combine:`;
+        titleEl.innerHTML = `<i class="fa-solid fa-layer-group" style="color: #fbbf24; margin-right: 5px;"></i> Choose destination tags to receive '<strong>${escapeHtml(sourceAlbum)}</strong>' photos:`;
       } else if (validTags.length === 1) {
-        titleEl.innerHTML = `Select second tag to combine with '<strong>${escapeHtml(validTags[0])}</strong>':`;
+        titleEl.innerHTML = `Combine destination '<strong>${escapeHtml(validTags[0])}</strong>' with another tag:`;
       } else {
-        titleEl.innerHTML = `Combine with '<strong>${escapeHtml(validTags.join(' + '))}</strong>':`;
+        titleEl.innerHTML = `Combine with destination '<strong>${escapeHtml(validTags.join(' + '))}</strong>':`;
       }
     }
 
@@ -9545,6 +9576,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <div class="multitag-candidate-card" 
+             data-tag-name="${escapeHtml(candidate.name)}"
              onmouseenter="window.hoverPreviewCandidate('${safeCandidateName}')" 
              onclick="window.pickCandidateTag('${safeCandidateName}')"
              title="Combine with ${escapeHtml(candidate.name)}">
@@ -9558,99 +9590,122 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   };
 
-  // Live Hover Preview
+  // Rock-Solid Stable Hover Preview (Zero Layout Shift - No Flickering/Fluctuation)
   window.hoverPreviewCandidate = function(encodedCandidateTagName) {
     const candidateTagName = decodeURIComponent(encodedCandidateTagName);
-    const card = document.getElementById('multiTagResultCard');
-    const dotStack = document.getElementById('multiTagDotStack');
-    const label = document.getElementById('multiTagResultLabel');
-    const countEl = document.getElementById('multiTagResultCount');
-    const thumbsRail = document.getElementById('multiTagMatchingThumbs');
-    if (!card) return;
-
     const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
     const hypothetical = [...validTags, candidateTagName];
 
-    card.style.display = 'block';
-    card.classList.add('hover-previewing');
-
-    // Dot stack
-    if (dotStack) {
-      const allTags = state.tags || [];
-      dotStack.innerHTML = hypothetical.map(t => {
-        const tagObj = allTags.find(tag => tag.name.toLowerCase() === String(t).toLowerCase());
-        const color = tagObj ? tagObj.color : '#fbbf24';
-        return `<span class="multitag-stack-dot" style="background: ${color};" title="${escapeHtml(t)}"></span>`;
-      }).join('');
-    }
-
-    // Label: Live Hover Preview
-    if (label) {
-      if (validTags.length === 0) {
-        label.innerHTML = `<i class="fa-solid fa-eye" style="color: #38bdf8; margin-right: 4px;"></i> Preview starting tag: <strong>${escapeHtml(candidateTagName)}</strong>`;
+    // Highlight the hovered card with glowing cyan accent
+    document.querySelectorAll('.multitag-candidate-card').forEach(card => {
+      if (card.getAttribute('data-tag-name') === candidateTagName) {
+        card.classList.add('hover-active');
       } else {
-        label.innerHTML = `<i class="fa-solid fa-eye" style="color: #38bdf8; margin-right: 4px;"></i> Preview: <strong>${escapeHtml(hypothetical.join(' + '))}</strong>`;
+        card.classList.remove('hover-active');
       }
-    }
+    });
 
-    // Matching photos calculation
+    // Calculate matching photos
     const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
     const matchingPhotos = validPhotos.filter(p =>
       Array.isArray(p.tags) && hypothetical.every(vt =>
         p.tags.some(pt => pt && String(pt).toLowerCase() === String(vt).toLowerCase())
       )
     );
+    const matchCount = matchingPhotos.length;
+    const countNoun = matchCount === 1 ? 'photo' : 'photos';
 
-    if (countEl) {
-      const countNoun = matchingPhotos.length === 1 ? 'photo' : 'photos';
-      if (matchingPhotos.length === 0) {
-        countEl.textContent = validTags.length === 0 ? '0 photos currently in this tag' : '0 photos currently match this combination';
+    // 1. Update hint in candidates header
+    const hoverHint = document.getElementById('multiTagHoverHint');
+    if (hoverHint) {
+      hoverHint.innerHTML = `<span class="multitag-hover-hint-active"><i class="fa-solid fa-eye"></i> ${escapeHtml(hypothetical.join(' + '))} (${matchCount} ${countNoun})</span>`;
+    }
+
+    // 2. Update destination value in Source-to-Destination Banner
+    const destVal = document.getElementById('multiTagDestVal');
+    if (destVal) {
+      destVal.innerHTML = `<span style="color: #38bdf8;"><i class="fa-solid fa-eye" style="font-size: 10px; margin-right: 4px;"></i>${escapeHtml(hypothetical.join(' + '))} (Preview)</span>`;
+    }
+
+    // 3. Update the formula row slot in-place (ZERO layout shift!)
+    const slot = document.getElementById('multiTagWaitingSlot');
+    if (slot) {
+      slot.className = 'multitag-waiting-slot preview-mode';
+      if (validTags.length === 0) {
+        slot.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 11px; color: #38bdf8;"></i> <span>Previewing: <strong style="color: #38bdf8;">${escapeHtml(candidateTagName)}</strong> (${matchCount} ${countNoun} in library) — Click to pick</span>`;
       } else {
-        countEl.textContent = validTags.length === 0 ? `${matchingPhotos.length} ${countNoun} in this tag` : `${matchingPhotos.length} ${countNoun} match combination`;
+        slot.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 11px; color: #38bdf8;"></i> <span>+ <strong style="color: #38bdf8;">${escapeHtml(candidateTagName)}</strong> (${matchCount} ${countNoun} in common) — Click to combine</span>`;
       }
     }
 
-    // Update hint in candidates header
-    const hoverHint = document.getElementById('multiTagHoverHint');
-    if (hoverHint) {
-      const countText = matchingPhotos.length === 1 ? '1 photo' : `${matchingPhotos.length} photos`;
-      hoverHint.innerHTML = `<span style="color: #38bdf8; font-weight: 700;"><i class="fa-solid fa-eye"></i> ${escapeHtml(hypothetical.join(' + '))} (${countText})</span>`;
-    }
-
-    // Thumbnails
-    if (thumbsRail) {
-      if (matchingPhotos.length > 0) {
-        thumbsRail.style.display = 'flex';
-        const maxThumbs = 6;
-        const displayThumbs = matchingPhotos.slice(0, maxThumbs);
-        const extraCount = matchingPhotos.length - displayThumbs.length;
-
-        let thumbsHtml = displayThumbs.map(p => `
-          <img src="${p.dataUrl}" alt="${escapeHtml(p.displayName || 'Photo')}" class="multitag-match-thumb" title="${escapeHtml(p.displayName || '')}">
-        `).join('');
-
-        if (extraCount > 0) {
-          thumbsHtml += `<div class="multitag-match-more">+${extraCount}</div>`;
+    // 4. If 2+ tags are already confirmed, result card is already visible and we safely preview 3rd+ tag
+    if (validTags.length >= 2) {
+      const card = document.getElementById('multiTagResultCard');
+      const dotStack = document.getElementById('multiTagDotStack');
+      const label = document.getElementById('multiTagResultLabel');
+      const countEl = document.getElementById('multiTagResultCount');
+      const thumbsRail = document.getElementById('multiTagMatchingThumbs');
+      if (card) {
+        card.classList.add('hover-previewing');
+        if (dotStack) {
+          const allTags = state.tags || [];
+          dotStack.innerHTML = hypothetical.map(t => {
+            const tagObj = allTags.find(tag => tag.name.toLowerCase() === String(t).toLowerCase());
+            const color = tagObj ? tagObj.color : '#fbbf24';
+            return `<span class="multitag-stack-dot" style="background: ${color};" title="${escapeHtml(t)}"></span>`;
+          }).join('');
         }
-        thumbsRail.innerHTML = thumbsHtml;
-      } else {
-        thumbsRail.style.display = 'none';
-        thumbsRail.innerHTML = '';
+        if (label) {
+          label.innerHTML = `<i class="fa-solid fa-eye" style="color: #38bdf8; margin-right: 4px;"></i> Preview adding: <strong>${escapeHtml(candidateTagName)}</strong> (Total: ${escapeHtml(hypothetical.join(' + '))})`;
+        }
+        if (countEl) {
+          countEl.textContent = `${matchCount} ${countNoun} match combination`;
+        }
+        if (thumbsRail) {
+          if (matchingPhotos.length > 0) {
+            thumbsRail.style.display = 'flex';
+            const maxThumbs = 6;
+            const displayThumbs = matchingPhotos.slice(0, maxThumbs);
+            const extraCount = matchingPhotos.length - displayThumbs.length;
+            let thumbsHtml = displayThumbs.map(p => `
+              <img src="${p.dataUrl}" alt="${escapeHtml(p.displayName || 'Photo')}" class="multitag-match-thumb" title="${escapeHtml(p.displayName || '')}">
+            `).join('');
+            if (extraCount > 0) {
+              thumbsHtml += `<div class="multitag-match-more">+${extraCount}</div>`;
+            }
+            thumbsRail.innerHTML = thumbsHtml;
+          } else {
+            thumbsRail.style.display = 'none';
+            thumbsRail.innerHTML = '';
+          }
+        }
       }
     }
   };
 
   window.clearCandidateHoverPreview = function() {
-    const card = document.getElementById('multiTagResultCard');
-    if (card) card.classList.remove('hover-previewing');
+    // Remove hover card highlight
+    document.querySelectorAll('.multitag-candidate-card').forEach(card => card.classList.remove('hover-active'));
 
     const hoverHint = document.getElementById('multiTagHoverHint');
     if (hoverHint) {
       hoverHint.innerHTML = `<i class="fa-solid fa-arrow-pointer"></i> Hover to preview`;
     }
 
-    // Revert to active selected tags
-    window.updateMultiTagIntersection();
+    // Restore destination banner text
+    const destVal = document.getElementById('multiTagDestVal');
+    const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
+    if (destVal) {
+      destVal.textContent = validTags.length > 0 ? validTags.join(' + ') : 'Select tags below';
+    }
+
+    // Revert chain row waiting slot
+    window.renderMultiTagChain();
+
+    // Revert result card if 2+ tags selected
+    if (validTags.length >= 2) {
+      window.updateMultiTagIntersection();
+    }
   };
 
   window.pickCandidateTag = function(encodedCandidateTagName) {
