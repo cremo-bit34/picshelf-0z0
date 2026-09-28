@@ -2319,63 +2319,8 @@
             <button class="close-dialog-btn" onclick="closeMoveCopyModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
-          <!-- Source Album Badge (for Full Album Move/Copy) -->
-          <div class="move-copy-source-badge" id="moveCopySourceBadge" style="display: none;">
-            <div class="source-badge-left">
-              <span class="source-badge-dot" id="sourceBadgeDot"></span>
-              <div>
-                <span class="source-badge-sub" data-i18n="organize_source_album">SOURCE ALBUM</span>
-                <span class="source-badge-title" id="sourceBadgeName">Album Name</span>
-              </div>
-            </div>
-            <span class="source-badge-count-pill" id="sourceBadgeCount">0 Photos</span>
-          </div>
-
-          <!-- Selected Photos Preview Rail -->
-          <div class="move-copy-preview-section">
-            <div class="move-copy-preview-header">
-              <div class="move-copy-preview-summary" id="moveCopyPreviewSummary">3 photos selected</div>
-              <button type="button" class="move-copy-select-all-btn" id="moveCopySelectAllBtn" onclick="toggleMoveCopySelectAllPhotos()">
-                <i class="fa-solid fa-check-double"></i> <span>Deselect All</span>
-              </button>
-            </div>
-            <div class="move-copy-preview-rail" id="moveCopyPreviewRail">
-              <!-- Rendered by JS -->
-            </div>
-          </div>
-
-          <!-- Mode Segmented Control (Copy vs Move) -->
-          <div class="move-copy-mode-selector">
-            <button type="button" class="mode-segment-btn active" id="modeCopyBtn" onclick="setMoveCopyMode('copy')">
-              <i class="fa-solid fa-copy"></i>
-              <span data-i18n="organize_copy_photos">Copy Photos</span>
-            </button>
-            <button type="button" class="mode-segment-btn" id="modeMoveBtn" onclick="setMoveCopyMode('move')">
-              <i class="fa-solid fa-arrow-right-arrow-left"></i>
-              <span data-i18n="organize_move_photos">Move Photos</span>
-            </button>
-          </div>
-          <div class="move-copy-mode-hint" id="moveCopyModeHint">
-            Adds photos to the destination album. They will also remain in their current album(s).
-          </div>
-          <div class="move-copy-option-row" id="moveCopyOptionRow" style="display: none;">
-            <label class="move-copy-checkbox-label">
-              <input type="checkbox" id="moveCopyDeleteSourceCheck">
-              <span id="moveCopyDeleteSourceText" data-i18n="organize_remove_source_check">Also remove empty source album after moving</span>
-            </label>
-          </div>
-
-          <!-- Search & Create New Album Bar -->
-          <div class="move-copy-search-bar">
-            <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input type="text" id="moveCopyAlbumSearchInput" placeholder="Search albums or type new name..." data-i18n-placeholder="organize_search_placeholder" oninput="handleMoveCopySearch(this.value)">
-            <button type="button" class="btn btn-xs btn-primary" id="moveCopyQuickCreateBtn" onclick="quickCreateMoveCopyAlbum()" style="display: none;">
-              <i class="fa-solid fa-plus"></i> Create & Pick
-            </button>
-          </div>
-
-          <!-- Multi-Album Merge / Collection Fusion Studio (Luxury VIP Feature) -->
-          <div class="move-copy-multitag-container move-copy-fusion-container" id="moveCopyMultiTagContainer">
+          <!-- Folder 1: Multi-Album Merge / Collection Fusion Studio (Luxury VIP Feature, Collapsed by Default) -->
+          <div class="move-copy-multitag-container move-copy-fusion-container" id="moveCopyMultiTagContainer" style="margin-top: 4px; margin-bottom: 12px;">
             <!-- Header Toggle Bar -->
             <button type="button" class="multitag-toggle-btn fusion-toggle-btn" id="multiTagToggleBtn" onclick="toggleFusionStudio()" aria-expanded="false">
               <div class="multitag-toggle-left">
@@ -2398,20 +2343,16 @@
               <!-- Luxury Studio Intro Banner -->
               <div class="fusion-hero-banner">
                 <div class="fusion-hero-title">
-                  <i class="fa-solid fa-sparkles" style="color: #fbbf24;"></i> Hand-Pick & Merge Across Albums
+                  <i class="fa-solid fa-sparkles" style="color: #fbbf24;"></i> Hand-Pick &amp; Merge Across Albums
                 </div>
                 <div class="fusion-hero-subtitle">
-                  Select special photos from your source album, add Album 2 & 3, curate shots from each, and forge a brand new luxury collection.
+                  Select special photos from your source album, add Album 2 &amp; 3, curate shots from each, and forge a brand new luxury collection.
                 </div>
               </div>
 
               <!-- List of Merged Album Cards with Individual Photo Preview Rails -->
               <div class="fusion-albums-list" id="fusionAlbumsList">
-                <!-- Rendered dynamically by JS:
-                     Each album card contains:
-                     - Header: Album dot, Album Name, "X of Y photos selected", Select/Deselect All button, Remove album [×] button
-                     - Photo preview rail: Swipeable horizontal cards with glowing checkmarks, recognizable deselected state, and ruby [×] buttons
-                -->
+                <!-- Rendered dynamically by JS -->
               </div>
 
               <!-- Add Another Album to Merge Section -->
@@ -2536,13 +2477,90 @@
             </div>
           </div>
 
-          <!-- Destination Album Selection List -->
-          <div class="move-copy-destinations-header" id="moveCopyDestinationsHeader">
-            <span class="move-copy-dest-title">Select Destination Album(s):</span>
-            <span class="move-copy-dest-pill" id="moveCopyDestSelectionPill" style="display: none;">0 Selected</span>
-          </div>
-          <div class="move-copy-albums-list" id="moveCopyAlbumsList">
-            <!-- Rendered by JS: Album rows with checkbox/radio indicators -->
+          <!-- Folder 2: Single Album / Tag Organize (Standard Move/Copy Screen, Expanded by Default) -->
+          <div class="move-copy-single-tag-container" id="moveCopySingleTagContainer">
+            <!-- Header Toggle Bar for Single Tag Screen -->
+            <button type="button" class="multitag-toggle-btn single-tag-toggle-btn expanded" id="singleTagToggleBtn" onclick="toggleSingleTagStudio()" aria-expanded="true">
+              <div class="multitag-toggle-left">
+                <span class="multitag-icon-badge single-tag-icon-badge">
+                  <i class="fa-solid fa-folder-tree"></i>
+                </span>
+                <div class="multitag-title-wrap">
+                  <span class="multitag-title" id="singleTagHeaderTitle">Single Album Organize</span>
+                  <span class="multitag-badge single-tag-active-badge" id="singleTagActiveBadge">Copy &amp; Move</span>
+                </div>
+              </div>
+              <div class="multitag-toggle-right">
+                <i class="fa-solid fa-chevron-down multitag-chevron" id="singleTagChevron"></i>
+              </div>
+            </button>
+
+            <!-- Single Tag Screen Body (Expanded by Default) -->
+            <div class="single-tag-builder-body" id="singleTagBuilderBody">
+              <!-- Source Album Badge (for Full Album Move/Copy) -->
+              <div class="move-copy-source-badge" id="moveCopySourceBadge" style="display: none; margin-top: 10px;">
+                <div class="source-badge-left">
+                  <span class="source-badge-dot" id="sourceBadgeDot"></span>
+                  <div>
+                    <span class="source-badge-sub" data-i18n="organize_source_album">SOURCE ALBUM</span>
+                    <span class="source-badge-title" id="sourceBadgeName">Album Name</span>
+                  </div>
+                </div>
+                <span class="source-badge-count-pill" id="sourceBadgeCount">0 Photos</span>
+              </div>
+
+              <!-- Selected Photos Preview Rail -->
+              <div class="move-copy-preview-section" style="margin-top: 10px;">
+                <div class="move-copy-preview-header">
+                  <div class="move-copy-preview-summary" id="moveCopyPreviewSummary">3 photos selected</div>
+                  <button type="button" class="move-copy-select-all-btn" id="moveCopySelectAllBtn" onclick="toggleMoveCopySelectAllPhotos()">
+                    <i class="fa-solid fa-check-double"></i> <span>Deselect All</span>
+                  </button>
+                </div>
+                <div class="move-copy-preview-rail" id="moveCopyPreviewRail">
+                  <!-- Rendered by JS -->
+                </div>
+              </div>
+
+              <!-- Mode Segmented Control (Copy vs Move) -->
+              <div class="move-copy-mode-selector" style="margin-top: 10px;">
+                <button type="button" class="mode-segment-btn active" id="modeCopyBtn" onclick="setMoveCopyMode('copy')">
+                  <i class="fa-solid fa-copy"></i>
+                  <span data-i18n="organize_copy_photos">Copy Photos</span>
+                </button>
+                <button type="button" class="mode-segment-btn" id="modeMoveBtn" onclick="setMoveCopyMode('move')">
+                  <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                  <span data-i18n="organize_move_photos">Move Photos</span>
+                </button>
+              </div>
+              <div class="move-copy-mode-hint" id="moveCopyModeHint">
+                Adds photos to the destination album. They will also remain in their current album(s).
+              </div>
+              <div class="move-copy-option-row" id="moveCopyOptionRow" style="display: none;">
+                <label class="move-copy-checkbox-label">
+                  <input type="checkbox" id="moveCopyDeleteSourceCheck">
+                  <span id="moveCopyDeleteSourceText" data-i18n="organize_remove_source_check">Also remove empty source album after moving</span>
+                </label>
+              </div>
+
+              <!-- Search & Create New Album Bar -->
+              <div class="move-copy-search-bar" style="margin-top: 10px;">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="moveCopyAlbumSearchInput" placeholder="Search albums or type new name..." data-i18n-placeholder="organize_search_placeholder" oninput="handleMoveCopySearch(this.value)">
+                <button type="button" class="btn btn-xs btn-primary" id="moveCopyQuickCreateBtn" onclick="quickCreateMoveCopyAlbum()" style="display: none;">
+                  <i class="fa-solid fa-plus"></i> Create &amp; Pick
+                </button>
+              </div>
+
+              <!-- Destination Album Selection List -->
+              <div class="move-copy-destinations-header" id="moveCopyDestinationsHeader" style="margin-top: 12px;">
+                <span class="move-copy-dest-title">Select Destination Album(s):</span>
+                <span class="move-copy-dest-pill" id="moveCopyDestSelectionPill" style="display: none;">0 Selected</span>
+              </div>
+              <div class="move-copy-albums-list" id="moveCopyAlbumsList">
+                <!-- Rendered by JS: Album rows with checkbox/radio indicators -->
+              </div>
+            </div>
           </div>
 
           <!-- Footer Action Buttons -->

@@ -9553,10 +9553,22 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleBtn.classList.remove('expanded');
       toggleBtn.setAttribute('aria-expanded', 'false');
     }
+    const chevron = document.getElementById('multiTagChevron');
+    if (chevron) chevron.className = 'fa-solid fa-chevron-down multitag-chevron';
     if (body) body.style.display = 'none';
     if (activeBadge) activeBadge.textContent = 'Merge Albums';
     if (searchInput) searchInput.value = '';
     if (nameInput) nameInput.value = '';
+
+    // Folder 2 (Single Tag Screen) expanded by default
+    const singleBody = document.getElementById('singleTagBuilderBody');
+    const singleToggleBtn = document.getElementById('singleTagToggleBtn');
+    if (singleBody) singleBody.style.display = 'block';
+    if (singleToggleBtn) {
+      singleToggleBtn.classList.add('expanded');
+      singleToggleBtn.setAttribute('aria-expanded', 'true');
+    }
+
     const outerDestHeader = document.getElementById('moveCopyDestinationsHeader');
     const outerAlbumsList = document.getElementById('moveCopyAlbumsList');
     const outerConfirmBtn = document.getElementById('confirmMoveCopyBtn');
@@ -9574,8 +9586,8 @@ document.addEventListener('DOMContentLoaded', () => {
     state.moveCopyMultiTagExpanded = !state.moveCopyMultiTagExpanded;
     const body = document.getElementById('multiTagBuilderBody');
     const toggleBtn = document.getElementById('multiTagToggleBtn');
-    const outerDestHeader = document.getElementById('moveCopyDestinationsHeader');
-    const outerAlbumsList = document.getElementById('moveCopyAlbumsList');
+    const singleBody = document.getElementById('singleTagBuilderBody');
+    const singleToggleBtn = document.getElementById('singleTagToggleBtn');
     const outerConfirmBtn = document.getElementById('confirmMoveCopyBtn');
     if (!body || !toggleBtn) return;
 
@@ -9583,9 +9595,15 @@ document.addEventListener('DOMContentLoaded', () => {
       body.style.display = 'block';
       toggleBtn.classList.add('expanded');
       toggleBtn.setAttribute('aria-expanded', 'true');
-      if (outerDestHeader) outerDestHeader.style.display = 'none';
-      if (outerAlbumsList) outerAlbumsList.style.display = 'none';
+
+      // Collapse single tag folder to give full room to Fusion Studio
+      if (singleBody) singleBody.style.display = 'none';
+      if (singleToggleBtn) {
+        singleToggleBtn.classList.remove('expanded');
+        singleToggleBtn.setAttribute('aria-expanded', 'false');
+      }
       if (outerConfirmBtn) outerConfirmBtn.style.display = 'none';
+      state.singleTagExpanded = false;
 
       // Initialize with primary source album if not already populated
       if (!Array.isArray(state.fusionAlbums) || state.fusionAlbums.length === 0) {
@@ -9597,10 +9615,52 @@ document.addEventListener('DOMContentLoaded', () => {
       body.style.display = 'none';
       toggleBtn.classList.remove('expanded');
       toggleBtn.setAttribute('aria-expanded', 'false');
-      if (outerDestHeader) outerDestHeader.style.display = 'flex';
-      if (outerAlbumsList) outerAlbumsList.style.display = 'flex';
+
+      // Re-expand single tag folder
+      if (singleBody) singleBody.style.display = 'block';
+      if (singleToggleBtn) {
+        singleToggleBtn.classList.add('expanded');
+        singleToggleBtn.setAttribute('aria-expanded', 'true');
+      }
       if (outerConfirmBtn) outerConfirmBtn.style.display = 'flex';
+      state.singleTagExpanded = true;
       window.renderMoveCopyAlbumsList();
+    }
+  };
+
+  window.toggleSingleTagStudio = function() {
+    state.singleTagExpanded = !state.singleTagExpanded;
+    const singleBody = document.getElementById('singleTagBuilderBody');
+    const singleToggleBtn = document.getElementById('singleTagToggleBtn');
+    const outerConfirmBtn = document.getElementById('confirmMoveCopyBtn');
+
+    if (state.singleTagExpanded) {
+      if (singleBody) singleBody.style.display = 'block';
+      if (singleToggleBtn) {
+        singleToggleBtn.classList.add('expanded');
+        singleToggleBtn.setAttribute('aria-expanded', 'true');
+      }
+      if (outerConfirmBtn) outerConfirmBtn.style.display = 'flex';
+
+      // Collapse fusion studio if open
+      if (state.moveCopyMultiTagExpanded) {
+        state.moveCopyMultiTagExpanded = false;
+        const fusionBody = document.getElementById('multiTagBuilderBody');
+        const fusionToggleBtn = document.getElementById('multiTagToggleBtn');
+        if (fusionBody) fusionBody.style.display = 'none';
+        if (fusionToggleBtn) {
+          fusionToggleBtn.classList.remove('expanded');
+          fusionToggleBtn.setAttribute('aria-expanded', 'false');
+        }
+      }
+      window.renderMoveCopyAlbumsList();
+    } else {
+      if (singleBody) singleBody.style.display = 'none';
+      if (singleToggleBtn) {
+        singleToggleBtn.classList.remove('expanded');
+        singleToggleBtn.setAttribute('aria-expanded', 'false');
+      }
+      if (outerConfirmBtn) outerConfirmBtn.style.display = 'none';
     }
   };
 
