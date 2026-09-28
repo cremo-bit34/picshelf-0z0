@@ -764,6 +764,12 @@ function deleteSavedCustomColor(color, event, onSelectFnName) {
         });
       }
     }
+  } else if (onSelectFnName === 'selectFusionColor') {
+    if (state.fusionCollectionColor && normalizeHex(state.fusionCollectionColor) === norm) {
+      if (typeof window.selectFusionColor === 'function') window.selectFusionColor(PRESET_COLORS[0], true);
+    } else {
+      if (typeof window.renderFusionColorPicker === 'function') window.renderFusionColorPicker();
+    }
   } else {
     renderAllPalettes();
   }
@@ -877,6 +883,7 @@ function applyCustomColorFromModal() {
     else if (fnName === 'selectRenameColor') fn = selectRenameColor;
     else if (fnName === 'setAppAccentColor') fn = setAppAccentColor;
     else if (fnName === 'selectModalAlbumColor') fn = window.selectModalAlbumColor;
+    else if (fnName === 'selectFusionColor') fn = window.selectFusionColor;
   }
 
   if (typeof fn === 'function') {

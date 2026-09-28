@@ -3756,6 +3756,12 @@ body.light-mode .settings-subgroup {
   flex-direction: column;
 }
 
+#customColorPickerModal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+}
+
 .modal-overlay.dialog-mode {
   align-items: center;
   justify-content: center;
