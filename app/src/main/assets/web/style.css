@@ -10949,6 +10949,7 @@ body.light-mode .album-cover-add-btn {
 .multitag-waiting-slot {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   color: #fbbf24;
   font-size: 12px;
@@ -10961,7 +10962,9 @@ body.light-mode .album-cover-add-btn {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  width: 100%;
+  flex-basis: 100%;
+  box-sizing: border-box;
 }
 
 .multitag-waiting-slot.empty-start {
@@ -11029,6 +11032,10 @@ body.light-mode .album-cover-add-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+  max-height: 24px;
+  overflow: hidden;
   margin-bottom: 8px;
 }
 
@@ -11037,6 +11044,11 @@ body.light-mode .album-cover-add-btn {
   font-weight: 700;
   color: #fbbf24;
   letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 .multitag-hover-hint {
@@ -11045,6 +11057,8 @@ body.light-mode .album-cover-add-btn {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .multitag-picker-search-wrap {
@@ -11053,10 +11067,12 @@ body.light-mode .album-cover-add-btn {
   background: rgba(30, 41, 59, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 0 10px;
+  height: 34px;
+  box-sizing: border-box;
   margin-bottom: 8px;
   gap: 8px;
-  transition: all 0.18s ease;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .multitag-picker-search-wrap:focus-within {
@@ -11357,6 +11373,85 @@ body.light-mode .album-cover-add-btn {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1;
+}
+
+.multitag-combined-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.multitag-combined-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.multitag-combined-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.multitag-combined-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fbbf24;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.multitag-vip-pill {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  padding: 1.5px 7px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+}
+
+.multitag-combined-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.multitag-combined-desc {
+  color: #38bdf8;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.multitag-combined-sep {
+  opacity: 0.5;
+}
+
+.multitag-combined-match {
+  color: #94a3b8;
 }
 
 .album-row-dot {
@@ -14659,7 +14754,6 @@ body.light-mode .card-loc-pill:hover {
   border-color: #38bdf8;
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
   font-style: normal;
-  animation: fadeInPop 0.15s ease-out;
 }
 
 .multitag-hover-hint-active {
@@ -14668,7 +14762,6 @@ body.light-mode .card-loc-pill:hover {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  animation: fadeInPop 0.15s ease-out;
 }
 
 .multitag-candidate-card.hover-active {

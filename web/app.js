@@ -9222,13 +9222,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.moveCopyIsMultiTagDest && state.moveCopyDestinationTags && state.moveCopyDestinationTags.length > 0) {
       btn.disabled = false;
       const combinedName = state.moveCopyDestinationTags.join(' + ');
-      const actionLabel = state.moveCopyMode === 'copy'
-        ? (window.t ? window.t('organize_multitag_copy_to', { dest: combinedName }) : `Copy to '${combinedName}'`)
-        : (window.t ? window.t('organize_multitag_move_to', { dest: combinedName }) : `Move to '${combinedName}'`);
+      const mode = state.moveCopyMode || 'copy';
+      const verb = mode === 'copy' ? 'Copy' : 'Move';
+      const tagCount = state.moveCopyDestinationTags.length;
+
+      let actionLabel;
+      if (combinedName.length <= 20) {
+        actionLabel = `${verb} to '${combinedName}'`;
+      } else {
+        actionLabel = `${verb} to ${tagCount} Destination Tags`;
+      }
+
       text.textContent = actionLabel;
       const countNoun = count === 1 ? (window.t ? window.t('organize_photo_singular') : 'photo') : (window.t ? window.t('organize_photos_plural') : 'photos');
-      btn.title = `${actionLabel} (${count} ${countNoun})`;
-      if (icon) icon.className = state.moveCopyMode === 'copy' ? 'fa-solid fa-copy' : 'fa-solid fa-arrow-right-arrow-left';
+      btn.title = `1-to-Many Mapping: ${verb} ${count} ${countNoun} into all ${tagCount} destination tags (${combinedName})`;
+      if (icon) icon.className = mode === 'copy' ? 'fa-solid fa-copy' : 'fa-solid fa-arrow-right-arrow-left';
       return;
     }
 
@@ -9294,17 +9302,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       multiTagTopRowHtml = `
         <div class="move-copy-album-row multitag-combined-row ${isMultiSelected ? 'selected' : ''}" 
-             onclick="selectMultiTagAsDestination()" title="Select combined multi-tag destination">
-          <div class="album-row-left">
+             onclick="selectMultiTagAsDestination()" title="Select 1-to-Many combined destination: ${escapeHtml(combinedName)}">
+          <div class="album-row-left multitag-combined-left">
             <div class="multitag-result-dot-stack">
               ${dotStackHtml}
             </div>
-            <div>
-              <div class="album-row-name" style="color: #fbbf24; font-weight: 700;">
-                ${escapeHtml(combinedName)}
-                <span style="font-size: 10px; background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 1px 6px; border-radius: 8px; margin-left: 6px;">VIP MULTI-TAG</span>
+            <div class="multitag-combined-info">
+              <div class="multitag-combined-header">
+                <span class="multitag-combined-title" title="${escapeHtml(combinedName)}">${escapeHtml(combinedName)}</span>
+                <span class="multitag-vip-pill" title="1-to-Many: Photos will be assigned to all ${multiTags.length} destination tags"><i class="fa-solid fa-diagram-project"></i> 1-to-Many VIP</span>
               </div>
-              <div class="album-row-count">${matchCount} ${escapeHtml(countNoun)} match</div>
+              <div class="multitag-combined-sub">
+                <span class="multitag-combined-desc"><i class="fa-solid fa-arrows-split-up-and-left" style="font-size: 10px;"></i> Mapped to all ${multiTags.length} tags</span>
+                <span class="multitag-combined-sep">•</span>
+                <span class="multitag-combined-match">${matchCount} ${escapeHtml(countNoun)} match</span>
+              </div>
             </div>
           </div>
           <div class="album-row-radio">
@@ -9615,10 +9627,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const matchCount = matchingPhotos.length;
     const countNoun = matchCount === 1 ? 'photo' : 'photos';
 
-    // 1. Update hint in candidates header
+    // 1. Update hint in candidates header (compact & fixed-width friendly)
     const hoverHint = document.getElementById('multiTagHoverHint');
     if (hoverHint) {
-      hoverHint.innerHTML = `<span class="multitag-hover-hint-active"><i class="fa-solid fa-eye"></i> ${escapeHtml(hypothetical.join(' + '))} (${matchCount} ${countNoun})</span>`;
+      hoverHint.innerHTML = `<span class="multitag-hover-hint-active"><i class="fa-solid fa-eye"></i> ${matchCount} ${countNoun} match</span>`;
     }
 
     // 2. Update destination value in Source-to-Destination Banner
@@ -9632,9 +9644,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (slot) {
       slot.className = 'multitag-waiting-slot preview-mode';
       if (validTags.length === 0) {
-        slot.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 11px; color: #38bdf8;"></i> <span>Previewing: <strong style="color: #38bdf8;">${escapeHtml(candidateTagName)}</strong> (${matchCount} ${countNoun} in library) — Click to pick</span>`;
+        slot.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 11px; color: #38bdf8;"></i> <span>Preview: <strong style="color: #38bdf8;">${escapeHtml(candidateTagName)}</strong> (${matchCount} ${countNoun})</span>`;
       } else {
-        slot.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 11px; color: #38bdf8;"></i> <span>+ <strong style="color: #38bdf8;">${escapeHtml(candidateTagName)}</strong> (${matchCount} ${countNoun} in common) — Click to combine</span>`;
+        slot.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 11px; color: #38bdf8;"></i> <span>+ <strong style="color: #38bdf8;">${escapeHtml(candidateTagName)}</strong> (${matchCount} common)</span>`;
       }
     }
 
@@ -9699,8 +9711,23 @@ document.addEventListener('DOMContentLoaded', () => {
       destVal.textContent = validTags.length > 0 ? validTags.join(' + ') : 'Select tags below';
     }
 
-    // Revert chain row waiting slot
-    window.renderMultiTagChain();
+    // Revert chain row waiting slot in place (ZERO layout shift / NO full chain DOM teardown)
+    const slot = document.getElementById('multiTagWaitingSlot');
+    if (slot) {
+      slot.className = validTags.length === 0 ? 'multitag-waiting-slot empty-start' : 'multitag-waiting-slot';
+      const sourceAlbum = state.moveCopySourceAlbum || (window.t ? window.t('organize_current_photos') : 'Selected Photos');
+      if (validTags.length === 0) {
+        slot.innerHTML = `
+          <i class="fa-solid fa-arrow-down-long" style="font-size: 11px; color: #fbbf24;"></i>
+          <span>Pick destination tags for photos from '<strong>${escapeHtml(sourceAlbum)}</strong>'</span>
+        `;
+      } else if (validTags.length === 1) {
+        slot.innerHTML = `
+          <i class="fa-solid fa-arrow-down-long" style="font-size: 10px; color: #fbbf24;"></i>
+          <span>Select second destination tag below</span>
+        `;
+      }
+    }
 
     // Revert result card if 2+ tags selected
     if (validTags.length >= 2) {
@@ -9984,9 +10011,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const actionText = mode === 'copy' ? 'Copied' : 'Moved';
       if (isAlbumMode) {
         const cleanupNote = sourceAlbumRemoved ? ' (Source album cleaned up)' : '';
-        showToast(`✨ ${actionText} complete album '${sourceAlbum}' (${affectedCount} photo${affectedCount === 1 ? '' : 's'}) to multi-tag destination '${combinedLabel}'!${cleanupNote}`);
+        showToast(`✨ 1-to-Many: ${actionText} complete album '${sourceAlbum}' (${affectedCount} photo${affectedCount === 1 ? '' : 's'}) into all ${destTags.length} tags: '${combinedLabel}'!${cleanupNote}`);
       } else {
-        showToast(`✨ ${actionText} ${affectedCount} photo${affectedCount === 1 ? '' : 's'} to multi-tag destination '${combinedLabel}'!`);
+        showToast(`✨ 1-to-Many: ${actionText} ${affectedCount} photo${affectedCount === 1 ? '' : 's'} into all ${destTags.length} tags: '${combinedLabel}'!`);
       }
       return;
     }
