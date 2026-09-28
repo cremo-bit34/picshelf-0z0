@@ -9145,6 +9145,65 @@ document.addEventListener('DOMContentLoaded', () => {
         summary.textContent = `${selectedCount} of ${totalCount} ${photoNoun} selected`;
       }
     }
+
+    updateMoveCopyOptionRowAndHint();
+  }
+
+  function updateMoveCopyOptionRowAndHint() {
+    const mode = state.moveCopyMode || 'copy';
+    const hint = document.getElementById('moveCopyModeHint');
+    const optionRow = document.getElementById('moveCopyOptionRow');
+    const deleteSourceCheck = document.getElementById('moveCopyDeleteSourceCheck');
+
+    if (!optionRow) return;
+
+    if (state.moveCopyIsAlbumMode && state.moveCopySourceAlbum) {
+      const sourceAlbum = state.moveCopySourceAlbum;
+      const allSourcePhotos = state.photos.filter(p => !p.isPending && !p.deletedAt && p.tags && p.tags.includes(sourceAlbum));
+      const totalCount = allSourcePhotos.length;
+      const selectedCount = (state.moveCopyTargetIds || []).length;
+      const remainingCount = totalCount - selectedCount;
+
+      if (mode === 'copy') {
+        optionRow.style.display = 'none';
+        if (deleteSourceCheck) deleteSourceCheck.checked = false;
+        if (hint) {
+          hint.textContent = window.t ? window.t('organize_copy_album_hint', { album: sourceAlbum }) : `Duplicates selected photos in '${sourceAlbum}' into the destination album. '${sourceAlbum}' remains intact.`;
+        }
+      } else {
+        // Move mode
+        if (remainingCount === 0 && totalCount > 0) {
+          // All photos in source album are selected to be moved -> source album will be completely empty!
+          optionRow.style.display = 'block';
+          if (hint) {
+            hint.textContent = window.t ? window.t('organize_move_album_hint', { album: sourceAlbum }) : `Relocates all photos from '${sourceAlbum}' into the destination album.`;
+          }
+        } else {
+          // At least 1 photo remains in source album -> do NOT show empty album warning checkbox!
+          optionRow.style.display = 'none';
+          if (deleteSourceCheck) deleteSourceCheck.checked = false;
+          if (hint) {
+            const photoNoun = remainingCount === 1 ? 'photo' : 'photos';
+            hint.textContent = `Relocates ${selectedCount} selected photo(s) from '${sourceAlbum}' into destination album. ${remainingCount} ${photoNoun} will remain in '${sourceAlbum}'.`;
+          }
+        }
+      }
+    } else {
+      optionRow.style.display = 'none';
+      if (deleteSourceCheck) deleteSourceCheck.checked = false;
+      const activeTag = state.moveCopySourceAlbum;
+      if (hint) {
+        if (mode === 'copy') {
+          hint.textContent = activeTag
+            ? (window.t ? window.t('organize_copy_hint_source', { album: activeTag }) : `Adds photos to destination album. They will also remain in '${activeTag}'.`)
+            : (window.t ? window.t('organize_copy_hint_general') : `Adds photos to destination album. They will also remain in their current album(s).`);
+        } else {
+          hint.textContent = activeTag
+            ? (window.t ? window.t('organize_move_hint_source', { album: activeTag }) : `Moves photos to destination album and removes them from '${activeTag}'.`)
+            : (window.t ? window.t('organize_move_hint_general') : `Relocates photos to destination album. Originals remain safe in your library.`);
+        }
+      }
+    }
   }
 
   window.toggleMoveCopyPhotoSelection = function(photoId) {
@@ -9186,37 +9245,11 @@ document.addEventListener('DOMContentLoaded', () => {
     state.moveCopyMode = mode;
     const copyBtn = document.getElementById('modeCopyBtn');
     const moveBtn = document.getElementById('modeMoveBtn');
-    const hint = document.getElementById('moveCopyModeHint');
-    const optionRow = document.getElementById('moveCopyOptionRow');
 
     if (copyBtn) copyBtn.classList.toggle('active', mode === 'copy');
     if (moveBtn) moveBtn.classList.toggle('active', mode === 'move');
 
-    if (state.moveCopyIsAlbumMode) {
-      if (optionRow) optionRow.style.display = mode === 'move' ? 'block' : 'none';
-      if (hint) {
-        if (mode === 'copy') {
-          hint.textContent = window.t ? window.t('organize_copy_album_hint', { album: state.moveCopySourceAlbum }) : `Duplicates all photos in '${state.moveCopySourceAlbum}' into the destination album. '${state.moveCopySourceAlbum}' remains intact.`;
-        } else {
-          hint.textContent = window.t ? window.t('organize_move_album_hint', { album: state.moveCopySourceAlbum }) : `Relocates all photos from '${state.moveCopySourceAlbum}' into the destination album.`;
-        }
-      }
-    } else {
-      if (optionRow) optionRow.style.display = 'none';
-      const activeTag = state.moveCopySourceAlbum;
-      if (hint) {
-        if (mode === 'copy') {
-          hint.textContent = activeTag
-            ? (window.t ? window.t('organize_copy_hint_source', { album: activeTag }) : `Adds photos to destination album. They will also remain in '${activeTag}'.`)
-            : (window.t ? window.t('organize_copy_hint_general') : `Adds photos to destination album. They will also remain in their current album(s).`);
-        } else {
-          hint.textContent = activeTag
-            ? (window.t ? window.t('organize_move_hint_source', { album: activeTag }) : `Moves photos to destination album and removes them from '${activeTag}'.`)
-            : (window.t ? window.t('organize_move_hint_general') : `Relocates photos to destination album. Originals remain safe in your library.`);
-        }
-      }
-    }
-
+    updateMoveCopyOptionRowAndHint();
     updateMoveCopyConfirmButton();
     window.renderMoveCopyAlbumsList();
   };
