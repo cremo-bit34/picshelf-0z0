@@ -63,12 +63,6 @@ body.light-mode {
   margin: 0;
   padding: 0;
   -webkit-tap-highlight-color: transparent;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
-}
-
-body.light-mode * {
-  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
 }
 
 /* Universal Luxury Modern Scrollbar Engine (Eliminates retro Windows 95 scrollbars) */
@@ -10552,7 +10546,6 @@ body.light-mode .album-cover-add-btn {
   gap: 8px;
   overflow-x: auto;
   padding: 4px 2px 8px 2px;
-  scrollbar-width: thin;
 }
 
 .move-copy-thumb {
@@ -10801,11 +10794,78 @@ body.light-mode .album-cover-add-btn {
 }
 
 .multitag-builder-body {
-  padding: 14px 16px 16px 16px;
+  padding: 14px 10px 16px 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(10, 15, 28, 0.5);
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
+  max-height: min(420px, 50vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Unified Sexy Golden Luxury Scrollbar Engine */
+.multitag-builder-body::-webkit-scrollbar,
+#moveCopyModal .dialog-card::-webkit-scrollbar,
+.luxury-dialog::-webkit-scrollbar,
+.multitag-candidate-list::-webkit-scrollbar,
+.move-copy-albums-list::-webkit-scrollbar,
+.move-copy-thumbs-row::-webkit-scrollbar,
+.move-copy-preview-rail::-webkit-scrollbar,
+.dropdown-items-list::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.multitag-builder-body::-webkit-scrollbar-button,
+#moveCopyModal .dialog-card::-webkit-scrollbar-button,
+.luxury-dialog::-webkit-scrollbar-button,
+.multitag-candidate-list::-webkit-scrollbar-button,
+.move-copy-albums-list::-webkit-scrollbar-button,
+.move-copy-thumbs-row::-webkit-scrollbar-button,
+.move-copy-preview-rail::-webkit-scrollbar-button,
+.dropdown-items-list::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.multitag-builder-body::-webkit-scrollbar-track,
+#moveCopyModal .dialog-card::-webkit-scrollbar-track,
+.luxury-dialog::-webkit-scrollbar-track,
+.multitag-candidate-list::-webkit-scrollbar-track,
+.move-copy-albums-list::-webkit-scrollbar-track,
+.move-copy-thumbs-row::-webkit-scrollbar-track,
+.move-copy-preview-rail::-webkit-scrollbar-track,
+.dropdown-items-list::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.45);
+  border-radius: 9999px;
+  margin: 4px 0;
+}
+
+.multitag-builder-body::-webkit-scrollbar-thumb,
+#moveCopyModal .dialog-card::-webkit-scrollbar-thumb,
+.luxury-dialog::-webkit-scrollbar-thumb,
+.multitag-candidate-list::-webkit-scrollbar-thumb,
+.move-copy-albums-list::-webkit-scrollbar-thumb,
+.move-copy-thumbs-row::-webkit-scrollbar-thumb,
+.move-copy-preview-rail::-webkit-scrollbar-thumb,
+.dropdown-items-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #fbbf24 0%, #d97706 100%);
+  border-radius: 9999px;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+}
+
+.multitag-builder-body::-webkit-scrollbar-thumb:hover,
+#moveCopyModal .dialog-card::-webkit-scrollbar-thumb:hover,
+.luxury-dialog::-webkit-scrollbar-thumb:hover,
+.multitag-candidate-list::-webkit-scrollbar-thumb:hover,
+.move-copy-albums-list::-webkit-scrollbar-thumb:hover,
+.move-copy-thumbs-row::-webkit-scrollbar-thumb:hover,
+.move-copy-preview-rail::-webkit-scrollbar-thumb:hover,
+.dropdown-items-list::-webkit-scrollbar-thumb:hover {
+  background: #fbbf24;
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.9);
 }
 
 /* Formula Row */
@@ -10898,6 +10958,10 @@ body.light-mode .album-cover-add-btn {
   background: rgba(251, 191, 36, 0.08);
   border: 1px dashed rgba(251, 191, 36, 0.35);
   border-radius: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .multitag-waiting-slot.empty-start {
@@ -10911,6 +10975,10 @@ body.light-mode .album-cover-add-btn {
   border-radius: 20px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .multitag-waiting-slot.empty-start i {
@@ -11017,7 +11085,6 @@ body.light-mode .album-cover-add-btn {
   max-height: 180px;
   overflow-y: auto;
   padding-right: 4px;
-  scrollbar-width: thin;
 }
 
 .multitag-candidate-card {
@@ -11029,16 +11096,19 @@ body.light-mode .album-cover-add-btn {
   background: rgba(30, 41, 59, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
   user-select: none;
+}
+
+.multitag-candidate-card > * {
+  pointer-events: none;
 }
 
 .multitag-candidate-card:hover,
 .multitag-candidate-card.hovered {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(30, 41, 59, 0.95) 100%);
-  border-color: rgba(251, 191, 36, 0.65);
-  transform: translateX(3px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.22) 0%, rgba(30, 41, 59, 0.98) 100%);
+  border-color: rgba(251, 191, 36, 0.7);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 10px rgba(251, 191, 36, 0.25);
 }
 
 .candidate-left {
@@ -11253,7 +11323,6 @@ body.light-mode .album-cover-add-btn {
   max-height: 220px;
   overflow-y: auto;
   padding-right: 4px;
-  scrollbar-width: thin;
 }
 
 .move-copy-album-row {
@@ -11641,7 +11710,6 @@ body.light-mode #confirmMoveCopyBtn:disabled {
   padding: 6px;
   overflow-y: auto;
   max-height: 260px;
-  scrollbar-width: thin;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -14440,7 +14508,6 @@ body.light-mode .card-loc-pill:hover {
   max-height: 155px;
   overflow-y: auto;
   padding-right: 4px;
-  scrollbar-width: thin;
 }
 
 .multitag-candidate-item {
@@ -14452,15 +14519,18 @@ body.light-mode .card-loc-pill:hover {
   background: rgba(30, 41, 59, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
   user-select: none;
+}
+
+.multitag-candidate-item > * {
+  pointer-events: none;
 }
 
 .multitag-candidate-item:hover,
 .multitag-candidate-item.hovered {
   background: linear-gradient(135deg, rgba(251, 191, 36, 0.18) 0%, rgba(30, 41, 59, 0.95) 100%);
   border-color: rgba(251, 191, 36, 0.6);
-  transform: translateX(3px);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
@@ -14605,6 +14675,6 @@ body.light-mode .card-loc-pill:hover {
   background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(30, 41, 59, 0.98) 100%) !important;
   border-color: #38bdf8 !important;
   box-shadow: 0 0 16px rgba(56, 189, 248, 0.4) !important;
-  transform: translateX(4px);
 }
+
 

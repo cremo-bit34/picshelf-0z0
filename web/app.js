@@ -9732,8 +9732,21 @@ document.addEventListener('DOMContentLoaded', () => {
       updateMoveCopyConfirmButton();
     }
 
+    // Capture scroll positions before re-rendering
+    const candidateList = document.getElementById('multiTagCandidateList');
+    const builderBody = document.getElementById('multiTagBuilderBody');
+    const prevListScroll = candidateList ? candidateList.scrollTop : 0;
+    const prevBodyScroll = builderBody ? builderBody.scrollTop : 0;
+
+    window.clearCandidateHoverPreview();
     window.renderMultiTagStudio();
     window.renderMoveCopyAlbumsList();
+
+    // Restore scroll positions to prevent any scroll jump or flicker
+    const newCandidateList = document.getElementById('multiTagCandidateList');
+    const newBuilderBody = document.getElementById('multiTagBuilderBody');
+    if (newCandidateList) newCandidateList.scrollTop = prevListScroll;
+    if (newBuilderBody) newBuilderBody.scrollTop = prevBodyScroll;
   };
 
   window.removeMultiTagChainItem = function(idx) {
@@ -9753,6 +9766,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateMoveCopyConfirmButton();
     }
 
+    window.clearCandidateHoverPreview();
     window.renderMultiTagStudio();
     window.renderMoveCopyAlbumsList();
   };
