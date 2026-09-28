@@ -10905,8 +10905,9 @@ body.light-mode .album-cover-add-btn {
 
 .multitag-title-wrap {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -11111,13 +11112,19 @@ body.light-mode .album-cover-add-btn {
 
 .fusion-album-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  gap: 6px;
   margin-bottom: 8px;
 }
 
-.fusion-album-header-left {
+.fusion-album-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fusion-album-identity {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -11145,13 +11152,35 @@ body.light-mode .album-cover-add-btn {
 }
 
 .fusion-album-name {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #f8fafc;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: 0.2px;
+}
+
+.fusion-album-header-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-left: 2px;
+}
+
+.fusion-album-subrow-text {
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fusion-album-subrow-name {
+  color: #f1f5f9;
+  font-weight: 700;
 }
 
 .fusion-album-count-badge {
@@ -11528,51 +11557,71 @@ body.light-mode .album-cover-add-btn {
   box-shadow: 0 0 16px rgba(251, 191, 36, 0.5);
 }
 
-/* Color Accent Swatches */
+/* Color Accent Categorized Palette Kit */
 .fusion-color-section {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
   margin-bottom: 14px;
-  padding: 8px 10px;
-  background: rgba(15, 23, 42, 0.5);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .fusion-color-label {
   font-size: 11.5px;
   font-weight: 700;
-  color: #94a3b8;
-  white-space: nowrap;
-}
-
-.fusion-color-swatches {
+  color: #cbd5e1;
   display: flex;
-  gap: 7px;
   align-items: center;
+  gap: 6px;
 }
 
-.fusion-color-swatch {
-  width: 22px;
-  height: 22px;
+.fusion-palette-container {
+  width: 100%;
+}
+
+.fusion-palette-container .palette-category-block {
+  margin-bottom: 8px;
+}
+
+.fusion-palette-container .palette-category-title {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.fusion-palette-container .color-option {
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   cursor: pointer;
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #ffffff;
   transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   border: 2px solid transparent;
 }
 
-.fusion-color-swatch:hover {
-  transform: scale(1.22);
+.fusion-palette-container .color-option:hover {
+  transform: scale(1.18);
 }
 
-.fusion-color-swatch.active {
-  transform: scale(1.22);
+.fusion-palette-container .color-option.selected {
+  transform: scale(1.18);
   border-color: #ffffff;
   box-shadow: 0 0 12px currentColor, 0 0 4px #ffffff;
+}
+
+.fusion-palette-container .custom-color-option {
+  background: conic-gradient(from 180deg at 50% 50%, #f43f5e, #fbbf24, #10b981, #3b82f6, #8b5cf6, #f43f5e);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 /* Footer & Master Forge Button */
@@ -11606,10 +11655,19 @@ body.light-mode .album-cover-add-btn {
   align-items: center !important;
   justify-content: center !important;
   width: 100% !important;
+  max-width: 100% !important;
   gap: 8px !important;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
   white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
   box-sizing: border-box !important;
+}
+
+.fusion-create-btn span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .fusion-create-btn:hover:not(:disabled) {
