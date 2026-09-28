@@ -2333,10 +2333,15 @@
 
           <!-- Selected Photos Preview Rail -->
           <div class="move-copy-preview-section">
+            <div class="move-copy-preview-header">
+              <div class="move-copy-preview-summary" id="moveCopyPreviewSummary">3 photos selected</div>
+              <button type="button" class="move-copy-select-all-btn" id="moveCopySelectAllBtn" onclick="toggleMoveCopySelectAllPhotos()">
+                <i class="fa-solid fa-check-double"></i> <span>Deselect All</span>
+              </button>
+            </div>
             <div class="move-copy-preview-rail" id="moveCopyPreviewRail">
               <!-- Rendered by JS -->
             </div>
-            <div class="move-copy-preview-summary" id="moveCopyPreviewSummary">3 photos selected</div>
           </div>
 
           <!-- Mode Segmented Control (Copy vs Move) -->
@@ -2451,8 +2456,12 @@
           </div>
 
           <!-- Destination Album Selection List -->
+          <div class="move-copy-destinations-header" id="moveCopyDestinationsHeader">
+            <span class="move-copy-dest-title">Select Destination Album(s):</span>
+            <span class="move-copy-dest-pill" id="moveCopyDestSelectionPill" style="display: none;">0 Selected</span>
+          </div>
           <div class="move-copy-albums-list" id="moveCopyAlbumsList">
-            <!-- Rendered by JS: Album rows with radio indicators -->
+            <!-- Rendered by JS: Album rows with checkbox/radio indicators -->
           </div>
 
           <!-- Footer Action Buttons -->

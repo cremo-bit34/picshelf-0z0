@@ -8921,8 +8921,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    
-    state.moveCopyTargetIds = ids;
+    state.moveCopyAllSourcePhotoIds = [...ids];
+    state.moveCopyTargetIds = [...ids];
+    state.moveCopySelectedDestinations = [];
     state.moveCopyIsAlbumMode = false;
     state.moveCopySourceAlbum = sourceAlbumName || (state.selectedFilterTags && state.selectedFilterTags.size === 1 ? Array.from(state.selectedFilterTags)[0] : null);
     state.moveCopyMode = state.moveCopyMode || 'copy';
@@ -9001,8 +9002,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    
-    state.moveCopyTargetIds = validPhotos.map(p => p.id);
+    state.moveCopyAllSourcePhotoIds = validPhotos.map(p => p.id);
+    state.moveCopyTargetIds = [...state.moveCopyAllSourcePhotoIds];
+    state.moveCopySelectedDestinations = [];
     state.moveCopyMode = state.moveCopyMode || 'copy';
     state.moveCopyDestinationAlbum = null;
     state.moveCopySearchQuery = '';
@@ -9058,8 +9060,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ? albumNameToHighlight
       : (state.moveCopyIsAlbumMode ? state.moveCopySourceAlbum : null);
 
-    
+    state.moveCopyAllSourcePhotoIds = [];
     state.moveCopyTargetIds = [];
+    state.moveCopySelectedDestinations = [];
     state.moveCopyDestinationAlbum = null;
     state.moveCopySourceAlbum = null;
     state.moveCopyIsAlbumMode = false;
@@ -9085,36 +9088,99 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderMoveCopyPreviewRail() {
     const rail = document.getElementById('moveCopyPreviewRail');
     const summary = document.getElementById('moveCopyPreviewSummary');
+    const selectAllBtn = document.getElementById('moveCopySelectAllBtn');
     if (!rail) return;
 
-    const ids = state.moveCopyTargetIds || [];
-    const photos = ids.map(id => state.photos.find(p => p.id === id)).filter(Boolean);
+    const allIds = state.moveCopyAllSourcePhotoIds || state.moveCopyTargetIds || [];
+    const selectedIds = new Set(state.moveCopyTargetIds || []);
+    const validPhotos = allIds.map(id => state.photos.find(p => p.id === id)).filter(Boolean);
 
-    const maxThumbs = 6;
-    const thumbs = photos.slice(0, maxThumbs);
-    const extraCount = photos.length - thumbs.length;
-
-    let thumbsHtml = thumbs.map(p => `
-      <img src="${p.dataUrl}" alt="${escapeHtml(p.displayName)}" class="move-copy-thumb" title="${escapeHtml(p.displayName)}">
-    `).join('');
-
-    if (extraCount > 0) {
-      thumbsHtml += `<div class="move-copy-thumb-more">+${extraCount}</div>`;
+    if (validPhotos.length === 0) {
+      rail.innerHTML = `<div style="padding: 12px; color: var(--text-muted); font-size: 12px; text-align: center; width: 100%;">No source photos available</div>`;
+      if (summary) summary.textContent = '0 photos selected';
+      if (selectAllBtn) selectAllBtn.style.display = 'none';
+      return;
     }
 
-    rail.innerHTML = thumbsHtml;
+    if (selectAllBtn) {
+      selectAllBtn.style.display = 'inline-flex';
+      const allSelected = validPhotos.length > 0 && selectedIds.size === validPhotos.length;
+      const selectAllSpan = selectAllBtn.querySelector('span');
+      const selectAllIcon = selectAllBtn.querySelector('i');
+      if (allSelected) {
+        if (selectAllSpan) selectAllSpan.textContent = 'Deselect All';
+        if (selectAllIcon) selectAllIcon.className = 'fa-solid fa-square-minus';
+      } else {
+        if (selectAllSpan) selectAllSpan.textContent = 'Select All';
+        if (selectAllIcon) selectAllIcon.className = 'fa-solid fa-check-double';
+      }
+    }
+
+    const cardsHtml = validPhotos.map(p => {
+      const isSelected = selectedIds.has(p.id);
+      const cardClass = isSelected ? 'move-copy-thumb-card selected' : 'move-copy-thumb-card deselected';
+      const badgeIcon = isSelected ? '<i class="fa-solid fa-check"></i>' : '';
+      const escapedTitle = escapeHtml(p.displayName || 'Photo');
+
+      return `
+        <div class="${cardClass}" onclick="toggleMoveCopyPhotoSelection('${p.id}')" title="${escapedTitle} (${isSelected ? 'Selected' : 'Deselected - Click to include'})">
+          <img src="${p.dataUrl}" alt="${escapedTitle}" class="move-copy-thumb-img">
+          <div class="move-copy-thumb-badge">${badgeIcon}</div>
+          <div class="move-copy-thumb-remove" onclick="event.stopPropagation(); removeMoveCopyPhoto('${p.id}')" title="Remove from batch">
+            <i class="fa-solid fa-xmark"></i>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    rail.innerHTML = cardsHtml;
 
     if (summary) {
-      if (state.moveCopyIsAlbumMode) {
-        summary.textContent = window.t ? window.t('organize_all_from_album', { count: photos.length, album: state.moveCopySourceAlbum }) : `All ${photos.length} photos from album '${state.moveCopySourceAlbum}'`;
+      const selectedCount = selectedIds.size;
+      const totalCount = validPhotos.length;
+      const photoNoun = selectedCount === 1 ? 'photo' : 'photos';
+      if (state.moveCopyIsAlbumMode && state.moveCopySourceAlbum) {
+        summary.textContent = `${selectedCount} of ${totalCount} ${photoNoun} from '${state.moveCopySourceAlbum}'`;
       } else {
-        const activeTag = state.moveCopySourceAlbum;
-        const photoNoun = photos.length === 1 ? (window.t ? window.t('organize_photo_singular') : 'photo') : (window.t ? window.t('organize_photos_plural') : 'photos');
-        const actionMsg = activeTag ? (window.t ? window.t('organize_selected_from', { album: activeTag }) : `selected from '${activeTag}'`) : (window.t ? window.t('organize_selected_organize') : 'selected to organize');
-        summary.textContent = `${photos.length} ${photoNoun} ${actionMsg}`;
+        summary.textContent = `${selectedCount} of ${totalCount} ${photoNoun} selected`;
       }
     }
   }
+
+  window.toggleMoveCopyPhotoSelection = function(photoId) {
+    if (!state.moveCopyTargetIds) state.moveCopyTargetIds = [];
+    const idx = state.moveCopyTargetIds.indexOf(photoId);
+    if (idx >= 0) {
+      state.moveCopyTargetIds.splice(idx, 1);
+    } else {
+      state.moveCopyTargetIds.push(photoId);
+    }
+    renderMoveCopyPreviewRail();
+    updateMoveCopyConfirmButton();
+  };
+
+  window.removeMoveCopyPhoto = function(photoId) {
+    if (state.moveCopyAllSourcePhotoIds) {
+      state.moveCopyAllSourcePhotoIds = state.moveCopyAllSourcePhotoIds.filter(id => id !== photoId);
+    }
+    if (state.moveCopyTargetIds) {
+      state.moveCopyTargetIds = state.moveCopyTargetIds.filter(id => id !== photoId);
+    }
+    renderMoveCopyPreviewRail();
+    updateMoveCopyConfirmButton();
+  };
+
+  window.toggleMoveCopySelectAllPhotos = function() {
+    const allIds = state.moveCopyAllSourcePhotoIds || [];
+    const currentSelected = state.moveCopyTargetIds || [];
+    if (currentSelected.length === allIds.length && allIds.length > 0) {
+      state.moveCopyTargetIds = [];
+    } else {
+      state.moveCopyTargetIds = [...allIds];
+    }
+    renderMoveCopyPreviewRail();
+    updateMoveCopyConfirmButton();
+  };
 
   window.setMoveCopyMode = function(mode) {
     state.moveCopyMode = mode;
@@ -9200,9 +9266,23 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.selectMoveCopyDestination = function(albumName) {
-    state.moveCopyIsMultiTagDest = false;
-    state.moveCopyDestinationTags = null;
-    state.moveCopyDestinationAlbum = albumName;
+    if (state.moveCopyIsMultiTagDest) {
+      state.moveCopyIsMultiTagDest = false;
+      state.moveCopyDestinationTags = null;
+      state.moveCopySelectedDestinations = [];
+    }
+    if (!state.moveCopySelectedDestinations) {
+      state.moveCopySelectedDestinations = [];
+    }
+
+    const idx = state.moveCopySelectedDestinations.indexOf(albumName);
+    if (idx >= 0) {
+      state.moveCopySelectedDestinations.splice(idx, 1);
+    } else {
+      state.moveCopySelectedDestinations.push(albumName);
+    }
+
+    state.moveCopyDestinationAlbum = state.moveCopySelectedDestinations.join(' + ') || null;
     updateMoveCopyConfirmButton();
     window.renderMoveCopyAlbumsList();
     if (typeof window.updateMultiTagIntersection === 'function') {
@@ -9216,51 +9296,76 @@ document.addEventListener('DOMContentLoaded', () => {
     const text = document.getElementById('confirmMoveCopyText');
     if (!btn || !text) return;
 
-    const count = (state.moveCopyTargetIds || []).length;
-    const dest = state.moveCopyDestinationAlbum;
+    const photoCount = (state.moveCopyTargetIds || []).length;
+    const mode = state.moveCopyMode || 'copy';
+    const verb = mode === 'copy' ? 'Copy' : 'Move';
+    const countNoun = photoCount === 1 ? (window.t ? window.t('organize_photo_singular') : 'photo') : (window.t ? window.t('organize_photos_plural') : 'photos');
 
-    if (state.moveCopyIsMultiTagDest && state.moveCopyDestinationTags && state.moveCopyDestinationTags.length > 0) {
-      btn.disabled = false;
-      const combinedName = state.moveCopyDestinationTags.join(' + ');
-      const mode = state.moveCopyMode || 'copy';
-      const verb = mode === 'copy' ? 'Copy' : 'Move';
-      const tagCount = state.moveCopyDestinationTags.length;
-
-      let actionLabel;
-      if (combinedName.length <= 20) {
-        actionLabel = `${verb} to '${combinedName}'`;
-      } else {
-        actionLabel = `${verb} to ${tagCount} Destination Tags`;
-      }
-
-      text.textContent = actionLabel;
-      const countNoun = count === 1 ? (window.t ? window.t('organize_photo_singular') : 'photo') : (window.t ? window.t('organize_photos_plural') : 'photos');
-      btn.title = `1-to-Many Mapping: ${verb} ${count} ${countNoun} into all ${tagCount} destination tags (${combinedName})`;
+    if (photoCount === 0) {
+      btn.disabled = true;
+      text.textContent = `Select Photos to ${verb}`;
+      btn.title = 'Select at least 1 photo to move/copy';
       if (icon) icon.className = mode === 'copy' ? 'fa-solid fa-copy' : 'fa-solid fa-arrow-right-arrow-left';
       return;
     }
 
-    if (!dest) {
+    const selectedDests = state.moveCopySelectedDestinations || [];
+    if (state.moveCopyIsMultiTagDest && state.moveCopyDestinationTags && state.moveCopyDestinationTags.length > 0) {
+      btn.disabled = false;
+      const combinedName = state.moveCopyDestinationTags.join(' + ');
+      const tagCount = state.moveCopyDestinationTags.length;
+
+      let actionLabel;
+      if (combinedName.length <= 20) {
+        actionLabel = `${verb} ${photoCount} ${countNoun} to '${combinedName}'`;
+      } else {
+        actionLabel = `${verb} ${photoCount} ${countNoun} to ${tagCount} Destination Tags`;
+      }
+
+      text.textContent = actionLabel;
+      btn.title = `1-to-Many Mapping: ${verb} ${photoCount} ${countNoun} into all ${tagCount} destination tags (${combinedName})`;
+      if (icon) icon.className = mode === 'copy' ? 'fa-solid fa-copy' : 'fa-solid fa-arrow-right-arrow-left';
+      return;
+    }
+
+    if (!selectedDests.length) {
       btn.disabled = true;
       text.textContent = window.t ? window.t('organize_select_dest') : 'Select Destination';
-      btn.title = window.t ? window.t('organize_select_dest') : 'Select a destination album to proceed';
-      if (icon) icon.className = state.moveCopyMode === 'copy' ? 'fa-solid fa-copy' : 'fa-solid fa-arrow-right-arrow-left';
+      btn.title = window.t ? window.t('organize_select_dest') : 'Select one or more destination albums to proceed';
+      if (icon) icon.className = mode === 'copy' ? 'fa-solid fa-copy' : 'fa-solid fa-arrow-right-arrow-left';
       return;
     }
 
     btn.disabled = false;
-    const actionLabel = state.moveCopyMode === 'copy'
-      ? (window.t ? window.t('organize_copy_to', { dest }) : `Copy to '${dest}'`)
-      : (window.t ? window.t('organize_move_to', { dest }) : `Move to '${dest}'`);
-    text.textContent = actionLabel;
-    const countNoun = count === 1 ? (window.t ? window.t('organize_photo_singular') : 'photo') : (window.t ? window.t('organize_photos_plural') : 'photos');
-    btn.title = `${actionLabel} (${count} ${countNoun})`;
-    if (icon) icon.className = state.moveCopyMode === 'copy' ? 'fa-solid fa-copy' : 'fa-solid fa-arrow-right-arrow-left';
+    if (selectedDests.length === 1) {
+      const dest = selectedDests[0];
+      const actionLabel = `${verb} ${photoCount} ${countNoun} to '${dest}'`;
+      text.textContent = actionLabel;
+      btn.title = `${actionLabel}`;
+    } else {
+      const combined = selectedDests.join(' + ');
+      const destLabel = combined.length <= 22 ? `'${combined}'` : `${selectedDests.length} Destination Albums`;
+      const actionLabel = `${verb} ${photoCount} ${countNoun} to ${destLabel}`;
+      text.textContent = actionLabel;
+      btn.title = `${verb} ${photoCount} ${countNoun} into ${selectedDests.length} destination albums (${combined})`;
+    }
+    if (icon) icon.className = mode === 'copy' ? 'fa-solid fa-copy' : 'fa-solid fa-arrow-right-arrow-left';
   }
 
   window.renderMoveCopyAlbumsList = function() {
     const list = document.getElementById('moveCopyAlbumsList');
     if (!list) return;
+
+    const destPill = document.getElementById('moveCopyDestSelectionPill');
+    const selectedDestCount = (state.moveCopySelectedDestinations || []).length;
+    if (destPill) {
+      if (selectedDestCount > 0) {
+        destPill.style.display = 'inline-flex';
+        destPill.innerHTML = `<i class="fa-solid fa-check"></i> ${selectedDestCount} Selected`;
+      } else {
+        destPill.style.display = 'none';
+      }
+    }
 
     const q = state.moveCopySearchQuery || '';
     const sourceAlbum = state.moveCopySourceAlbum;
@@ -9327,7 +9432,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     list.innerHTML = multiTagTopRowHtml + availableTags.map(tag => {
-      const isSelected = state.moveCopyDestinationAlbum === tag.name;
+      const isSelected = (state.moveCopySelectedDestinations || []).includes(tag.name);
       // In album mode, disable source album for both copy and move (cannot copy/move an album into itself)
       // In photo mode, only disable source in move mode
       const isSource = sourceAlbum && sourceAlbum.toLowerCase() === tag.name.toLowerCase();
@@ -9897,6 +10002,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     state.moveCopyIsMultiTagDest = true;
     state.moveCopyDestinationTags = [...validTags];
+    state.moveCopySelectedDestinations = [...validTags];
     state.moveCopyDestinationAlbum = validTags.join(' + ');
 
     window.updateMultiTagIntersection();
@@ -9907,136 +10013,42 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.executeMoveCopyAction = function() {
-    const dest = state.moveCopyDestinationAlbum;
     const ids = state.moveCopyTargetIds || [];
-    if (!dest || !ids.length) return;
-
-    // Multi-tag Destination Execution
+    let destTags = [];
     if (state.moveCopyIsMultiTagDest && state.moveCopyDestinationTags && state.moveCopyDestinationTags.length > 0) {
-      const destTags = state.moveCopyDestinationTags;
-      
-      // Ensure all destination tags exist in state.tags
-      destTags.forEach(destTagName => {
-        if (!state.tags.some(t => t.name.toLowerCase() === destTagName.toLowerCase())) {
-          const now = Date.now();
-          state.tags.push({
-            name: destTagName,
-            color: PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
-            createdAt: now,
-            lastModifiedAt: now,
-            lastViewedAt: now,
-            isFavorite: false
-          });
-        }
-      });
+      destTags = state.moveCopyDestinationTags;
+    } else if (state.moveCopySelectedDestinations && state.moveCopySelectedDestinations.length > 0) {
+      destTags = state.moveCopySelectedDestinations;
+    } else if (state.moveCopyDestinationAlbum) {
+      destTags = [state.moveCopyDestinationAlbum];
+    }
 
-      const mode = state.moveCopyMode || 'copy';
-      const isAlbumMode = !!state.moveCopyIsAlbumMode;
-      const sourceAlbum = state.moveCopySourceAlbum;
-      const deleteSourceChecked = isAlbumMode && mode === 'move' && !!document.getElementById('moveCopyDeleteSourceCheck')?.checked;
-
-      // Save previous snapshot for undo
-      const previousSnapshots = ids.map(id => {
-        const p = state.photos.find(item => item.id === id);
-        return p ? { id, tags: [...p.tags], category: p.category } : null;
-      }).filter(Boolean);
-      const previousTags = state.tags.map(t => ({ ...t }));
-
-      let affectedCount = 0;
-      ids.forEach(id => {
-        const photo = state.photos.find(p => p.id === id);
-        if (!photo) return;
-        affectedCount++;
-
-        if (mode === 'copy') {
-          destTags.forEach(destTagName => {
-            if (!photo.tags.includes(destTagName)) {
-              photo.tags.push(destTagName);
-            }
-          });
-          if (!photo.category || photo.category === 'Import') {
-            photo.category = destTags[0];
-          }
-        } else if (mode === 'move') {
-          if (sourceAlbum) {
-            photo.tags = photo.tags.filter(t => t.toLowerCase() !== sourceAlbum.toLowerCase());
-          }
-          destTags.forEach(destTagName => {
-            if (!photo.tags.includes(destTagName)) {
-              photo.tags.push(destTagName);
-            }
-          });
-          photo.category = destTags[0];
-        }
-      });
-
-      let sourceAlbumRemoved = false;
-      if (deleteSourceChecked && sourceAlbum) {
-        const remainingInSource = state.photos.filter(p => !p.isPending && !p.deletedAt && p.tags && p.tags.includes(sourceAlbum)).length;
-        if (remainingInSource === 0) {
-          state.tags = state.tags.filter(t => t.name.toLowerCase() !== sourceAlbum.toLowerCase());
-          sourceAlbumRemoved = true;
-        }
-      }
-
-      destTags.forEach(destTagName => recordAlbumActivity(destTagName, 'modified'));
-      if (sourceAlbum) {
-        recordAlbumActivity(sourceAlbum, 'modified');
-      }
-
-      saveState();
-
-      const combinedLabel = destTags.join(' + ');
-      const targetToHighlight = (isAlbumMode && sourceAlbum)
-        ? (sourceAlbumRemoved ? destTags[0] : sourceAlbum)
-        : null;
-
-      window.closeMoveCopyModal(targetToHighlight);
-      state.selectedGalleryPhotoIds.clear();
-      renderAll();
-
-      if (targetToHighlight && window.highlightReturnedAlbumCard) {
-        window.highlightReturnedAlbumCard(targetToHighlight);
-      }
-
-      window._lastMoveCopyUndo = {
-        snapshots: previousSnapshots,
-        tags: previousTags,
-        mode,
-        sourceAlbum,
-        dest: combinedLabel,
-        isAlbumMode
-      };
-
-      const actionText = mode === 'copy' ? 'Copied' : 'Moved';
-      if (isAlbumMode) {
-        const cleanupNote = sourceAlbumRemoved ? ' (Source album cleaned up)' : '';
-        showToast(`✨ 1-to-Many: ${actionText} complete album '${sourceAlbum}' (${affectedCount} photo${affectedCount === 1 ? '' : 's'}) into all ${destTags.length} tags: '${combinedLabel}'!${cleanupNote}`);
-      } else {
-        showToast(`✨ 1-to-Many: ${actionText} ${affectedCount} photo${affectedCount === 1 ? '' : 's'} into all ${destTags.length} tags: '${combinedLabel}'!`);
-      }
+    if (!destTags.length || !ids.length) {
+      showToast('Please select at least 1 photo and 1 destination album.');
       return;
     }
 
-    // Ensure tag exists
-    if (!state.tags.some(t => t.name.toLowerCase() === dest.toLowerCase())) {
-      const now = Date.now();
-      state.tags.push({ 
-        name: dest, 
-        color: PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
-        createdAt: now,
-        lastModifiedAt: now,
-        lastViewedAt: now,
-        isFavorite: false
-      });
-    }
+    // Ensure all destination tags exist in state.tags
+    destTags.forEach(destTagName => {
+      if (!state.tags.some(t => t.name.toLowerCase() === destTagName.toLowerCase())) {
+        const now = Date.now();
+        state.tags.push({
+          name: destTagName,
+          color: PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
+          createdAt: now,
+          lastModifiedAt: now,
+          lastViewedAt: now,
+          isFavorite: false
+        });
+      }
+    });
 
     const mode = state.moveCopyMode || 'copy';
     const isAlbumMode = !!state.moveCopyIsAlbumMode;
     const sourceAlbum = state.moveCopySourceAlbum;
     const deleteSourceChecked = isAlbumMode && mode === 'move' && !!document.getElementById('moveCopyDeleteSourceCheck')?.checked;
 
-    // Save previous snapshot for 1-tap Undo
+    // Save previous snapshot for undo
     const previousSnapshots = ids.map(id => {
       const p = state.photos.find(item => item.id === id);
       return p ? { id, tags: [...p.tags], category: p.category } : null;
@@ -10050,25 +10062,27 @@ document.addEventListener('DOMContentLoaded', () => {
       affectedCount++;
 
       if (mode === 'copy') {
-        if (!photo.tags.includes(dest)) {
-          photo.tags.push(dest);
-        }
+        destTags.forEach(destTagName => {
+          if (!photo.tags.includes(destTagName)) {
+            photo.tags.push(destTagName);
+          }
+        });
         if (!photo.category || photo.category === 'Import') {
-          photo.category = dest;
+          photo.category = destTags[0];
         }
       } else if (mode === 'move') {
-        // Move mode: remove source album tag and add dest
         if (sourceAlbum) {
           photo.tags = photo.tags.filter(t => t.toLowerCase() !== sourceAlbum.toLowerCase());
         }
-        if (!photo.tags.includes(dest)) {
-          photo.tags.push(dest);
-        }
-        photo.category = dest;
+        destTags.forEach(destTagName => {
+          if (!photo.tags.includes(destTagName)) {
+            photo.tags.push(destTagName);
+          }
+        });
+        photo.category = destTags[0];
       }
     });
 
-    // If album move and user opted to clean up empty source album
     let sourceAlbumRemoved = false;
     if (deleteSourceChecked && sourceAlbum) {
       const remainingInSource = state.photos.filter(p => !p.isPending && !p.deletedAt && p.tags && p.tags.includes(sourceAlbum)).length;
@@ -10078,44 +10092,46 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    recordAlbumActivity(dest, 'modified');
+    destTags.forEach(destTagName => recordAlbumActivity(destTagName, 'modified'));
     if (sourceAlbum) {
       recordAlbumActivity(sourceAlbum, 'modified');
     }
 
     saveState();
 
+    const combinedLabel = destTags.join(' + ');
     const targetToHighlight = (isAlbumMode && sourceAlbum)
-      ? (sourceAlbumRemoved ? dest : sourceAlbum)
+      ? (sourceAlbumRemoved ? destTags[0] : sourceAlbum)
       : null;
 
     window.closeMoveCopyModal(targetToHighlight);
-
-    // Clear selection
     state.selectedGalleryPhotoIds.clear();
-
     renderAll();
 
     if (targetToHighlight && window.highlightReturnedAlbumCard) {
       window.highlightReturnedAlbumCard(targetToHighlight);
     }
 
-    // Setup Undo
     window._lastMoveCopyUndo = {
       snapshots: previousSnapshots,
       tags: previousTags,
       mode,
       sourceAlbum,
-      dest,
+      dest: combinedLabel,
       isAlbumMode
     };
 
     const actionText = mode === 'copy' ? 'Copied' : 'Moved';
-    if (isAlbumMode) {
-      const cleanupNote = sourceAlbumRemoved ? ' (Source album cleaned up)' : '';
-      showToast(`✨ ${actionText} complete album '${sourceAlbum}' (${affectedCount} photo${affectedCount === 1 ? '' : 's'}) to '${dest}'!${cleanupNote}`);
+    const photoNoun = affectedCount === 1 ? 'photo' : 'photos';
+    const cleanupNote = sourceAlbumRemoved ? ' (Source album cleaned up)' : '';
+    if (destTags.length > 1) {
+      showToast(`✨ ${actionText} ${affectedCount} ${photoNoun} into all ${destTags.length} albums: '${combinedLabel}'!${cleanupNote}`);
     } else {
-      showToast(`✨ ${actionText} ${affectedCount} photo${affectedCount === 1 ? '' : 's'} to '${dest}'!`);
+      if (isAlbumMode) {
+        showToast(`✨ ${actionText} complete album '${sourceAlbum}' (${affectedCount} ${photoNoun}) to '${destTags[0]}'!${cleanupNote}`);
+      } else {
+        showToast(`✨ ${actionText} ${affectedCount} ${photoNoun} to '${destTags[0]}'!`);
+      }
     }
   };
 
