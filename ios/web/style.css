@@ -10648,24 +10648,25 @@ body.light-mode .album-cover-add-btn {
   outline: none;
 }
 
-/* Multi-Tag Album Intersection Builder (Luxury VIP Aesthetic) */
+/* Multi-Tag Album Intersection Studio (Luxury VIP Aesthetic) */
 .move-copy-multitag-container {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.45) 0%, rgba(15, 23, 42, 0.65) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.25);
-  border-radius: 12px;
-  margin-bottom: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(145deg, rgba(22, 29, 49, 0.95) 0%, rgba(13, 18, 32, 0.98) 100%);
+  border: 1.5px solid rgba(251, 191, 36, 0.35);
+  border-radius: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
 }
 
 .move-copy-multitag-container:hover {
-  border-color: rgba(251, 191, 36, 0.45);
+  border-color: rgba(251, 191, 36, 0.55);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5), 0 0 16px rgba(251, 191, 36, 0.18);
 }
 
 .move-copy-multitag-container.highlighted-dest {
   border-color: #fbbf24;
-  box-shadow: 0 0 20px rgba(251, 191, 36, 0.25);
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.32), inset 0 0 12px rgba(251, 191, 36, 0.1);
 }
 
 .multitag-toggle-btn {
@@ -10673,16 +10674,17 @@ body.light-mode .album-cover-add-btn {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: transparent;
   border: none;
   cursor: pointer;
   user-select: none;
+  border-radius: 15px;
   transition: background 0.18s ease;
 }
 
 .multitag-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .multitag-toggle-left {
@@ -10693,17 +10695,18 @@ body.light-mode .album-cover-add-btn {
 }
 
 .multitag-icon-badge {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(244, 63, 94, 0.15) 100%);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(244, 63, 94, 0.2) 100%);
   color: #fbbf24;
-  font-size: 12px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(251, 191, 36, 0.35);
+  border: 1px solid rgba(251, 191, 36, 0.4);
   flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
 }
 
 .multitag-title-wrap {
@@ -10714,40 +10717,47 @@ body.light-mode .album-cover-add-btn {
 }
 
 .multitag-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.2px;
 }
 
 .multitag-badge {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(245, 158, 11, 0.2) 100%);
   color: #fbbf24;
-  border: 1px solid rgba(251, 191, 36, 0.45);
+  border: 1px solid rgba(251, 191, 36, 0.5);
   flex-shrink: 0;
 }
 
 .multitag-toggle-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
 }
 
-.multitag-hint-text {
-  font-size: 11px;
-  color: var(--text-muted);
+.multitag-pro-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: 0.5px;
 }
 
 .multitag-chevron {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: 12px;
+  color: #94a3b8;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.18s ease;
 }
 
@@ -10757,9 +10767,25 @@ body.light-mode .album-cover-add-btn {
 }
 
 .multitag-builder-body {
-  padding: 10px 12px 14px 12px;
+  padding: 14px 16px 16px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.3);
+  background: rgba(10, 15, 28, 0.5);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+/* Formula Row */
+.multitag-formula-section {
+  margin-bottom: 12px;
+}
+
+.multitag-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #94a3b8;
+  margin-bottom: 6px;
 }
 
 .multitag-chain-row {
@@ -10767,114 +10793,265 @@ body.light-mode .album-cover-add-btn {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  padding: 4px 0;
+  min-height: 40px;
 }
 
-.multitag-item {
-  display: flex;
+.multitag-tag-chip {
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(30, 41, 59, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 9px;
-  padding: 5px 8px;
-  transition: all 0.18s ease;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1.5px solid rgba(251, 191, 36, 0.45);
+  border-radius: 20px;
+  padding: 6px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
-.multitag-item:hover {
-  border-color: rgba(251, 191, 36, 0.45);
-  background: rgba(30, 41, 59, 1);
+.multitag-tag-chip:hover {
+  border-color: #fbbf24;
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.4);
+  transform: translateY(-1px);
 }
 
-.multitag-item.selected {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(30, 41, 59, 0.9) 100%);
-  border-color: rgba(251, 191, 36, 0.6);
-}
-
-.multitag-dot {
+.multitag-tag-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
 }
 
-.multitag-select {
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  font-size: 12.5px;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-  max-width: 140px;
-  text-overflow: ellipsis;
-}
-
-.multitag-select option {
-  background: #0f172a;
-  color: #f8fafc;
-  padding: 6px;
-}
-
-.multitag-remove-btn {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 11px;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-}
-
-.multitag-remove-btn:hover {
-  color: #f43f5e;
-  background: rgba(244, 63, 94, 0.18);
-}
-
-.multitag-add-tag-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  color: #0f172a;
-  border: none;
+.multitag-tag-name {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
+  color: #f8fafc;
+  letter-spacing: 0.2px;
+}
+
+.multitag-tag-remove {
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 11px;
   cursor: pointer;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.45);
+  transition: all 0.15s ease;
+  margin-left: 2px;
+}
+
+.multitag-tag-remove:hover {
+  background: #f43f5e;
+  color: #ffffff;
+  transform: scale(1.15);
+}
+
+.multitag-waiting-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fbbf24;
+  font-size: 12px;
+  font-weight: 600;
+  font-style: italic;
+  padding: 6px 10px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px dashed rgba(251, 191, 36, 0.35);
+  border-radius: 12px;
+}
+
+.multitag-chain-plus-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.22) 0%, rgba(245, 158, 11, 0.18) 100%);
+  border: 1.5px dashed rgba(251, 191, 36, 0.7);
+  color: #fbbf24;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.multitag-chain-plus-btn:hover {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #0f172a;
+  border-style: solid;
+  transform: scale(1.05);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.6);
+}
+
+/* Candidate Tags Section (Directly Visible) */
+.multitag-candidates-section {
+  margin-top: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.multitag-candidates-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.multitag-candidates-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fbbf24;
+  letter-spacing: 0.2px;
+}
+
+.multitag-hover-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.multitag-picker-search-wrap {
+  display: flex;
+  align-items: center;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  gap: 8px;
+  transition: all 0.18s ease;
+}
+
+.multitag-picker-search-wrap:focus-within {
+  border-color: #fbbf24;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+}
+
+.multitag-picker-search-icon {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.multitag-picker-search-input {
+  background: transparent;
+  border: none;
+  color: #f8fafc;
+  font-size: 12px;
+  width: 100%;
+  outline: none;
+}
+
+.multitag-candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+}
+
+.multitag-candidate-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.multitag-candidate-card:hover,
+.multitag-candidate-card.hovered {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(30, 41, 59, 0.95) 100%);
+  border-color: rgba(251, 191, 36, 0.65);
+  transform: translateX(3px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.candidate-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.candidate-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.candidate-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.candidate-count-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
 }
 
-.multitag-add-tag-btn:hover {
-  transform: scale(1.15) rotate(90deg);
-  box-shadow: 0 0 18px rgba(251, 191, 36, 0.7);
+.candidate-count-badge.has-photos {
+  background: rgba(16, 185, 129, 0.22);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
 }
 
-.multitag-add-tag-btn:active {
-  transform: scale(0.95);
+.candidate-count-badge.zero-photos {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Result / Preview Card */
 .multitag-result-card {
-  margin-top: 10px;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(244, 63, 94, 0.08) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.35);
-  border-radius: 10px;
-  padding: 10px 12px;
-  transition: all 0.2s ease;
+  margin-top: 14px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(244, 63, 94, 0.1) 100%);
+  border: 1.5px solid rgba(251, 191, 36, 0.45);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.multitag-result-card.hover-previewing {
+  border-color: #38bdf8;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(30, 41, 59, 0.9) 100%);
 }
 
 .multitag-result-card.active-destination {
   border-color: #fbbf24;
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.25);
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.16) 0%, rgba(244, 63, 94, 0.12) 100%);
+  box-shadow: 0 0 22px rgba(251, 191, 36, 0.38);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.18) 0%, rgba(244, 63, 94, 0.12) 100%);
 }
 
 .multitag-result-header {
@@ -10899,100 +11076,101 @@ body.light-mode .album-cover-add-btn {
 }
 
 .multitag-stack-dot {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 2px solid #0f172a;
   margin-right: -6px;
   display: inline-block;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
 }
 
 .multitag-result-label {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 500;
+  font-size: 11.5px;
+  color: #cbd5e1;
+  font-weight: 600;
 }
 
 .multitag-result-count {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-primary);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ffffff;
 }
 
 .multitag-select-btn {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.5);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(245, 158, 11, 0.2) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.6);
   color: #fbbf24;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 7px 14px;
+  border-radius: 10px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.18s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
 .multitag-select-btn:hover {
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   color: #0f172a;
-  box-shadow: 0 0 14px rgba(251, 191, 36, 0.45);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.55);
 }
 
 .multitag-select-btn.selected {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
   border-color: #10b981;
-  box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
 }
 
 .multitag-matching-thumbs {
   margin-top: 10px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
   padding: 4px 0;
   scrollbar-width: none;
 }
 
 .multitag-match-thumb {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
 }
 
 .multitag-match-more {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border: 1px dashed rgba(255, 255, 255, 0.3);
 }
 
 .move-copy-album-row.multitag-combined-row {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(244, 63, 94, 0.08) 100%);
-  border: 1.5px dashed rgba(251, 191, 36, 0.5);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14) 0%, rgba(244, 63, 94, 0.1) 100%);
+  border: 1.5px dashed rgba(251, 191, 36, 0.6);
 }
 
 .move-copy-album-row.multitag-combined-row.selected {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.22) 0%, rgba(244, 63, 94, 0.14) 100%);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(244, 63, 94, 0.16) 100%);
   border-style: solid;
   border-color: #fbbf24;
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.28);
+  box-shadow: 0 0 18px rgba(251, 191, 36, 0.32);
 }
 
 .move-copy-album-row.multitag-combined-row .album-row-radio {
@@ -11004,7 +11182,6 @@ body.light-mode .album-cover-add-btn {
   border-color: #fbbf24;
   color: #0f172a;
 }
-
 .move-copy-albums-list {
   display: flex;
   flex-direction: column;

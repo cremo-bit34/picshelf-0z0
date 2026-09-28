@@ -2369,51 +2369,53 @@
             </button>
           </div>
 
-          <!-- Multi-Tag Album Intersection Builder (Collapsible VIP Feature) -->
+          <!-- Multi-Tag Album Intersection Studio (Luxury VIP Feature) -->
           <div class="move-copy-multitag-container" id="moveCopyMultiTagContainer">
+            <!-- Header Toggle Bar -->
             <button type="button" class="multitag-toggle-btn" id="multiTagToggleBtn" onclick="toggleMultiTagBuilder()" aria-expanded="false">
               <div class="multitag-toggle-left">
                 <span class="multitag-icon-badge">
                   <i class="fa-solid fa-layer-group"></i>
                 </span>
                 <div class="multitag-title-wrap">
-                  <span class="multitag-title" data-i18n="organize_multitag_title">Find Album with Multiple Tags</span>
+                  <span class="multitag-title" id="multiTagHeaderTitle">Multi-Tag Studio</span>
                   <span class="multitag-badge" id="multiTagActiveBadge" style="display: none;">0 tags</span>
                 </div>
               </div>
               <div class="multitag-toggle-right">
-                <span class="multitag-hint-text" id="multiTagHintText" data-i18n="organize_multitag_subtitle">Combine 2+ tags</span>
+                <span class="multitag-pro-pill"><i class="fa-solid fa-crown" style="color: #fbbf24; font-size: 10px;"></i> VIP</span>
                 <i class="fa-solid fa-chevron-down multitag-chevron" id="multiTagChevron"></i>
               </div>
             </button>
 
-            <!-- Collapsible Body -->
+            <!-- Spacious Luxury Studio Body -->
             <div class="multitag-builder-body" id="multiTagBuilderBody" style="display: none;">
-              <!-- Horizontal Chain of Selected Tag Chips & Plus Button -->
-              <div class="multitag-chain-row" id="multiTagChainRow">
-                <!-- Rendered by JS: Chips for Tag 1, Tag 2, Tag 3 + Plus Button -->
+              <!-- Formula Row: Selected Tags & Connectors -->
+              <div class="multitag-formula-section">
+                <div class="multitag-section-label" id="multiTagFormulaLabel">Active Combination:</div>
+                <div class="multitag-chain-row" id="multiTagChainRow">
+                  <!-- Rendered by JS: Chips for Tag 1, Tag 2, Tag 3 + Plus Button -->
+                </div>
               </div>
 
-              <!-- Interactive Candidate Picker Drawer (Shows B options with live hover counts) -->
-              <div class="multitag-picker-drawer" id="multiTagPickerDrawer" style="display: none;">
-                <div class="multitag-picker-header">
-                  <span class="multitag-picker-title" id="multiTagPickerTitle">
-                    <i class="fa-solid fa-layer-group"></i> <span id="multiTagPickerTitleText">Choose tag to combine:</span>
-                  </span>
-                  <button type="button" class="multitag-picker-close-btn" onclick="closeMultiTagPicker()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+              <!-- Available Tags to Combine (Directly Visible - No Hidden Sub-Drawers) -->
+              <div class="multitag-candidates-section" id="multiTagCandidatesSection">
+                <div class="multitag-candidates-header">
+                  <span class="multitag-candidates-title" id="multiTagCandidatesTitle">Select Tag to Combine:</span>
+                  <span class="multitag-hover-hint"><i class="fa-solid fa-arrow-pointer"></i> Hover to preview</span>
                 </div>
-                <!-- Search input if many tags -->
+                <!-- Search filter for tags -->
                 <div class="multitag-picker-search-wrap">
                   <i class="fa-solid fa-magnifying-glass multitag-picker-search-icon"></i>
-                  <input type="text" class="multitag-picker-search-input" id="multiTagPickerSearchInput" placeholder="Filter remaining tags..." oninput="handleMultiTagPickerSearch(this.value)">
+                  <input type="text" class="multitag-picker-search-input" id="multiTagPickerSearchInput" placeholder="Filter available tags..." oninput="handleMultiTagPickerSearch(this.value)">
                 </div>
-                <!-- Scrollable Candidate Options List with Live Counts & Hover Previews -->
+                <!-- Scrollable Candidate Cards with Live Counts -->
                 <div class="multitag-candidate-list" id="multiTagCandidateList" onmouseleave="clearCandidateHoverPreview()">
-                  <!-- Rendered by JS: Remaining unselected tags with photo counts and hover events -->
+                  <!-- Rendered by JS: Candidates with photo counts & hover events -->
                 </div>
               </div>
 
-              <!-- Live Hover / Selected Intersection Preview Panel -->
+              <!-- Live Preview / Destination Summary Card -->
               <div class="multitag-result-card" id="multiTagResultCard" style="display: none;">
                 <div class="multitag-result-header">
                   <div class="multitag-result-info">
@@ -2424,7 +2426,7 @@
                     </div>
                   </div>
                   <button type="button" class="multitag-select-btn" id="multiTagSelectDestBtn" onclick="selectMultiTagAsDestination()">
-                    <i class="fa-solid fa-check"></i> <span id="multiTagSelectBtnText" data-i18n="organize_multitag_select_dest">Select Combined Destination</span>
+                    <i class="fa-solid fa-check"></i> <span id="multiTagSelectBtnText" data-i18n="organize_multitag_select_dest">Select Destination</span>
                   </button>
                 </div>
                 <!-- Thumbnail Rail of Matching Intersection Photos -->
