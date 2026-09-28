@@ -2389,12 +2389,31 @@
 
             <!-- Collapsible Body -->
             <div class="multitag-builder-body" id="multiTagBuilderBody" style="display: none;">
-              <!-- Horizontal Chain of Dropdowns & Plus Button -->
+              <!-- Horizontal Chain of Selected Tag Chips & Plus Button -->
               <div class="multitag-chain-row" id="multiTagChainRow">
-                <!-- Rendered by JS -->
+                <!-- Rendered by JS: Chips for Tag 1, Tag 2, Tag 3 + Plus Button -->
               </div>
 
-              <!-- Live Intersection Summary Card -->
+              <!-- Interactive Candidate Picker Drawer (Shows B options with live hover counts) -->
+              <div class="multitag-picker-drawer" id="multiTagPickerDrawer" style="display: none;">
+                <div class="multitag-picker-header">
+                  <span class="multitag-picker-title" id="multiTagPickerTitle">
+                    <i class="fa-solid fa-layer-group"></i> <span id="multiTagPickerTitleText">Choose tag to combine:</span>
+                  </span>
+                  <button type="button" class="multitag-picker-close-btn" onclick="closeMultiTagPicker()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <!-- Search input if many tags -->
+                <div class="multitag-picker-search-wrap">
+                  <i class="fa-solid fa-magnifying-glass multitag-picker-search-icon"></i>
+                  <input type="text" class="multitag-picker-search-input" id="multiTagPickerSearchInput" placeholder="Filter remaining tags..." oninput="handleMultiTagPickerSearch(this.value)">
+                </div>
+                <!-- Scrollable Candidate Options List with Live Counts & Hover Previews -->
+                <div class="multitag-candidate-list" id="multiTagCandidateList" onmouseleave="clearCandidateHoverPreview()">
+                  <!-- Rendered by JS: Remaining unselected tags with photo counts and hover events -->
+                </div>
+              </div>
+
+              <!-- Live Hover / Selected Intersection Preview Panel -->
               <div class="multitag-result-card" id="multiTagResultCard" style="display: none;">
                 <div class="multitag-result-header">
                   <div class="multitag-result-info">

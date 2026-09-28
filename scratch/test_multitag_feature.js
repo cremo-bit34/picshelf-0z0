@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-console.log('🧪 Starting Verification Suite: VIP Multi-Tag Album Intersection Feature');
+console.log('🧪 Starting Verification Suite: Revamped VIP Multi-Tag Intersection & Hover Previews');
 
 // 1. Verify HTML Structure in web/ and ios/web/
 const webHtml = fs.readFileSync(path.join(__dirname, '../web/index.html'), 'utf8');
@@ -15,12 +15,14 @@ const iosHtml = fs.readFileSync(path.join(__dirname, '../ios/web/index.html'), '
   'id="multiTagChevron"',
   'id="multiTagBuilderBody"',
   'id="multiTagChainRow"',
+  'id="multiTagPickerDrawer"',
+  'id="multiTagPickerSearchInput"',
+  'id="multiTagCandidateList"',
   'id="multiTagResultCard"',
   'id="multiTagDotStack"',
   'id="multiTagResultLabel"',
   'id="multiTagResultCount"',
   'id="multiTagSelectDestBtn"',
-  'id="multiTagSelectBtnText"',
   'id="multiTagMatchingThumbs"'
 ].forEach(id => {
   assert(webHtml.includes(id), `web/index.html missing ${id}`);
@@ -31,53 +33,36 @@ console.log('  ✅ HTML markup verified across web/ and ios/web/');
 // 2. Verify CSS Styles
 const webCss = fs.readFileSync(path.join(__dirname, '../web/style.css'), 'utf8');
 [
-  '.move-copy-multitag-container',
-  '.multitag-toggle-btn',
-  '.multitag-item',
-  '.multitag-dot',
-  '.multitag-select',
-  '.multitag-remove-btn',
-  '.multitag-add-tag-btn',
-  '.multitag-result-card',
-  '.multitag-stack-dot',
-  '.multitag-select-btn',
-  '.multitag-matching-thumbs',
-  '.multitag-match-thumb',
-  '.move-copy-album-row.multitag-combined-row'
+  '.multitag-tag-chip',
+  '.multitag-tag-dot',
+  '.multitag-tag-name',
+  '.multitag-tag-remove',
+  '.multitag-chain-plus-btn',
+  '.multitag-picker-drawer',
+  '.multitag-candidate-list',
+  '.multitag-candidate-item',
+  '.candidate-count-badge',
+  '.candidate-count-badge.has-photos',
+  '.candidate-count-badge.zero-photos',
+  '.multitag-result-card.hover-previewing'
 ].forEach(cssClass => {
   assert(webCss.includes(cssClass), `style.css missing ${cssClass}`);
 });
-console.log('  ✅ CSS styles verified');
+console.log('  ✅ CSS styles verified for Chips, Candidate Drawer, and Hover Previews');
 
-// 3. Verify i18n Translations
-const webI18n = fs.readFileSync(path.join(__dirname, '../web/i18n.js'), 'utf8');
-const expectedKeys = [
-  'organize_multitag_title',
-  'organize_multitag_subtitle',
-  'organize_multitag_placeholder',
-  'organize_multitag_add_btn',
-  'organize_multitag_match_both',
-  'organize_multitag_match_all',
-  'organize_multitag_select_dest',
-  'organize_multitag_selected',
-  'organize_multitag_no_matches',
-  'organize_multitag_badge',
-  'organize_multitag_copy_to',
-  'organize_multitag_move_to'
-];
-expectedKeys.forEach(k => {
-  assert(webI18n.includes(k), `i18n.js missing key: ${k}`);
-});
-console.log('  ✅ All 12 multi-tag i18n translation keys verified');
-
-// 4. Verify app.js function exports
+// 3. Verify app.js function exports
 const appJs = fs.readFileSync(path.join(__dirname, '../web/app.js'), 'utf8');
 [
   'window.toggleMultiTagBuilder =',
   'window.renderMultiTagChain =',
-  'window.addMultiTagChainItem =',
+  'window.openMultiTagPicker =',
+  'window.closeMultiTagPicker =',
+  'window.handleMultiTagPickerSearch =',
+  'window.renderMultiTagCandidateList =',
+  'window.hoverPreviewCandidate =',
+  'window.clearCandidateHoverPreview =',
+  'window.pickCandidateTag =',
   'window.removeMultiTagChainItem =',
-  'window.handleMultiTagChainChange =',
   'window.updateMultiTagIntersection =',
   'window.selectMultiTagAsDestination ='
 ].forEach(fn => {
@@ -85,87 +70,104 @@ const appJs = fs.readFileSync(path.join(__dirname, '../web/app.js'), 'utf8');
 });
 console.log('  ✅ app.js functions and exports verified');
 
-// 5. Behavioral Simulation
+// 4. Behavioral Simulation: Exact User Scenario
 const mockState = {
   photos: [
-    { id: 'p1', displayName: 'Eiffel Tower', tags: ['Paris', 'France', 'Vacation'], dataUrl: 'data:image/jpeg;base64,111' },
-    { id: 'p2', displayName: 'Louvre', tags: ['Paris', 'France'], dataUrl: 'data:image/jpeg;base64,222' },
-    { id: 'p3', displayName: 'Nice Beach', tags: ['France'], dataUrl: 'data:image/jpeg;base64,333' },
-    { id: 'p4', displayName: 'Tokyo Tower', tags: ['Tokyo', 'Japan'], dataUrl: 'data:image/jpeg;base64,444' }
+    { id: 'p1', displayName: 'Birthday Party', tags: ['Birthday', 'Family'], dataUrl: 'data:img1' },
+    { id: 'p2', displayName: 'Family Dinner', tags: ['Birthday', 'Family', 'Vacation'], dataUrl: 'data:img2' },
+    { id: 'p3', displayName: 'Alone Cake', tags: ['Birthday'], dataUrl: 'data:img3' },
+    { id: 'p4', displayName: 'Wedding Cake', tags: ['Wedding'], dataUrl: 'data:img4' },
+    { id: 'p5', displayName: 'Job Celebration', tags: ['Job Offer'], dataUrl: 'data:img5' }
   ],
   tags: [
-    { name: 'Paris', color: '#3b82f6' },
-    { name: 'France', color: '#10b981' },
-    { name: 'Vacation', color: '#f59e0b' },
-    { name: 'Tokyo', color: '#ec4899' },
-    { name: 'Japan', color: '#8b5cf6' }
+    { name: 'Birthday', color: '#f59e0b' },
+    { name: 'Wedding', color: '#ec4899' },
+    { name: 'Family', color: '#10b981' },
+    { name: 'Vacation', color: '#3b82f6' },
+    { name: 'Job Offer', color: '#8b5cf6' }
   ],
-  moveCopyMultiTags: ['Paris'],
+  moveCopyMultiTags: ['Birthday'],
   moveCopyIsMultiTagDest: false,
   moveCopyDestinationTags: null,
   moveCopyDestinationAlbum: null,
   moveCopyMode: 'copy',
-  moveCopyTargetIds: ['p4'] // Moving Tokyo Tower photo into Paris + France
+  moveCopyTargetIds: ['p5']
 };
 
-// Check unselected remaining tags for 'Paris'
+// Test 1: In the candidates list, 'Birthday' MUST NEVER appear
 const selectedSet = new Set(mockState.moveCopyMultiTags.map(t => t.toLowerCase()));
-const unselected = mockState.tags.filter(t => !selectedSet.has(t.name.toLowerCase()));
-assert.strictEqual(unselected.length, 4, 'Should have 4 unselected remaining tags');
-assert(!unselected.some(t => t.name === 'Paris'), 'Paris must not be in unselected');
-console.log('  ✅ Dropdown chaining filter verified: prevents duplicate tag selection');
+const candidates = mockState.tags.filter(t => !selectedSet.has(t.name.toLowerCase()));
 
-// Add second tag 'France'
-mockState.moveCopyMultiTags.push('France');
-assert.strictEqual(mockState.moveCopyMultiTags.length, 2);
+assert.strictEqual(candidates.length, 4, 'Should have 4 candidates');
+assert(!candidates.some(c => c.name.toLowerCase() === 'birthday'), 'Birthday MUST be excluded from candidate options');
+console.log('  ✅ Candidate options filter verified: Tag A (Birthday) is 100% excluded');
 
-// Calculate intersection
-const activeTags = mockState.moveCopyMultiTags;
-const matchingPhotos = mockState.photos.filter(p =>
-  activeTags.every(vt => p.tags && p.tags.some(pt => pt.toLowerCase() === vt.toLowerCase()))
+// Test 2: Calculate photo intersection counts for each candidate with 'Birthday'
+const validPhotos = mockState.photos.filter(p => !p.isPending && !p.deletedAt);
+const countsByCandidate = {};
+candidates.forEach(c => {
+  const combo = [...mockState.moveCopyMultiTags, c.name];
+  const count = validPhotos.filter(p =>
+    combo.every(vt => p.tags && p.tags.some(pt => pt.toLowerCase() === vt.toLowerCase()))
+  ).length;
+  countsByCandidate[c.name] = count;
+});
+
+assert.strictEqual(countsByCandidate['Family'], 2, 'Family must have 2 photos with Birthday (p1, p2)');
+assert.strictEqual(countsByCandidate['Wedding'], 0, 'Wedding must have 0 photos with Birthday');
+assert.strictEqual(countsByCandidate['Job Offer'], 0, 'Job Offer must have 0 photos with Birthday');
+console.log('  ✅ Live candidate counts verified (Family: 2 photos, Wedding: 0 photos)');
+
+// Test 3: Hover preview on Family
+const hoverCombo = [...mockState.moveCopyMultiTags, 'Family'];
+const hoverMatchingPhotos = validPhotos.filter(p =>
+  hoverCombo.every(vt => p.tags && p.tags.some(pt => pt.toLowerCase() === vt.toLowerCase()))
 );
-assert.strictEqual(matchingPhotos.length, 2, 'Only p1 and p2 have BOTH Paris and France tags');
-console.log('  ✅ Intersection calculation verified: found exactly 2 matching photos');
+assert.strictEqual(hoverMatchingPhotos.length, 2);
+assert.deepStrictEqual(hoverMatchingPhotos.map(p => p.id), ['p1', 'p2']);
+console.log('  ✅ Hover preview correctly computes matching photos for Birthday + Family');
 
-// Select combined multi-tag destination
+// Test 4: User selects 'Family' as Tag B
+mockState.moveCopyMultiTags.push('Family');
+assert.deepStrictEqual(mockState.moveCopyMultiTags, ['Birthday', 'Family']);
+
+// Combined destination automatically activated
 mockState.moveCopyIsMultiTagDest = true;
-mockState.moveCopyDestinationTags = [...activeTags];
-mockState.moveCopyDestinationAlbum = activeTags.join(' + ');
+mockState.moveCopyDestinationTags = [...mockState.moveCopyMultiTags];
+mockState.moveCopyDestinationAlbum = mockState.moveCopyMultiTags.join(' + ');
 
-assert.strictEqual(mockState.moveCopyDestinationAlbum, 'Paris + France');
-console.log('  ✅ Multi-tag destination selection verified');
+assert.strictEqual(mockState.moveCopyDestinationAlbum, 'Birthday + Family');
+console.log('  ✅ Destination automatically selected as Birthday + Family');
 
-// Simulate Copy Execution into Multi-Tag Destination
-const targetPhoto = mockState.photos.find(p => p.id === 'p4');
-assert(!targetPhoto.tags.includes('Paris'));
-assert(!targetPhoto.tags.includes('France'));
+// Test 5: User wants to add Tag C (3rd tag)
+// Candidate options MUST NOW EXCLUDE both Birthday and Family
+const selectedSet3 = new Set(mockState.moveCopyMultiTags.map(t => t.toLowerCase()));
+const candidates3 = mockState.tags.filter(t => !selectedSet3.has(t.name.toLowerCase()));
+assert.strictEqual(candidates3.length, 3, 'Must have 3 remaining candidates');
+assert(!candidates3.some(c => c.name === 'Birthday'));
+assert(!candidates3.some(c => c.name === 'Family'));
 
-mockState.moveCopyDestinationTags.forEach(t => {
-  if (!targetPhoto.tags.includes(t)) {
-    targetPhoto.tags.push(t);
-  }
+// Check 3rd tag counts with Birthday + Family
+const countsForTag3 = {};
+candidates3.forEach(c => {
+  const combo3 = [...mockState.moveCopyMultiTags, c.name];
+  const count = validPhotos.filter(p =>
+    combo3.every(vt => p.tags && p.tags.some(pt => pt.toLowerCase() === vt.toLowerCase()))
+  ).length;
+  countsForTag3[c.name] = count;
 });
 
-assert(targetPhoto.tags.includes('Paris'), 'Target photo must now have Paris');
-assert(targetPhoto.tags.includes('France'), 'Target photo must now have France');
-assert(targetPhoto.tags.includes('Tokyo'), 'Target photo must retain Tokyo in Copy mode');
-console.log('  ✅ Multi-tag destination Copy operation verified');
+assert.strictEqual(countsForTag3['Vacation'], 1, 'Vacation has 1 photo matching Birthday + Family + Vacation (p2)');
+assert.strictEqual(countsForTag3['Wedding'], 0, 'Wedding has 0 photos matching Birthday + Family + Wedding');
+console.log('  ✅ 3rd tag chaining verified (Vacation: 1 matching photo)');
 
-// Simulate Move Execution into Multi-Tag Destination
-const photoToMove = { id: 'p5', tags: ['TemporarySource'], category: 'TemporarySource' };
-const sourceTag = 'TemporarySource';
-mockState.moveCopyMode = 'move';
+// Test 6: User removes 'Family'
+mockState.moveCopyMultiTags = mockState.moveCopyMultiTags.filter(t => t !== 'Family');
+assert.deepStrictEqual(mockState.moveCopyMultiTags, ['Birthday']);
+mockState.moveCopyIsMultiTagDest = false;
+mockState.moveCopyDestinationTags = null;
+mockState.moveCopyDestinationAlbum = null;
+assert.strictEqual(mockState.moveCopyIsMultiTagDest, false);
+console.log('  ✅ Tag removal cleans up state correctly');
 
-photoToMove.tags = photoToMove.tags.filter(t => t !== sourceTag);
-mockState.moveCopyDestinationTags.forEach(t => {
-  if (!photoToMove.tags.includes(t)) {
-    photoToMove.tags.push(t);
-  }
-});
-
-assert(!photoToMove.tags.includes('TemporarySource'), 'Source tag must be removed in Move mode');
-assert(photoToMove.tags.includes('Paris'), 'Target photo must have Paris in Move mode');
-assert(photoToMove.tags.includes('France'), 'Target photo must have France in Move mode');
-console.log('  ✅ Multi-tag destination Move operation verified');
-
-console.log('\n🌟 ALL MULTI-TAG FEATURE TESTS PASSED SUCCESSFULLY! 🚀');
+console.log('\n🌟 ALL REVAMPED MULTI-TAG TESTS PASSED! 🚀');

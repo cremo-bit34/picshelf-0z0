@@ -9366,6 +9366,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const multiTagBadge = document.getElementById('multiTagActiveBadge');
     const multiTagCard = document.getElementById('multiTagResultCard');
     const multiTagRow = document.getElementById('multiTagChainRow');
+    const pickerDrawer = document.getElementById('multiTagPickerDrawer');
+    const searchInput = document.getElementById('multiTagPickerSearchInput');
     if (multiTagContainer) multiTagContainer.classList.remove('highlighted-dest');
     if (multiTagToggleBtn) {
       multiTagToggleBtn.classList.remove('expanded');
@@ -9375,8 +9377,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (multiTagBadge) multiTagBadge.style.display = 'none';
     if (multiTagCard) {
       multiTagCard.style.display = 'none';
-      multiTagCard.classList.remove('active-destination');
+      multiTagCard.classList.remove('active-destination', 'hover-previewing');
     }
+    if (pickerDrawer) pickerDrawer.style.display = 'none';
+    if (searchInput) searchInput.value = '';
     if (multiTagRow) multiTagRow.innerHTML = '';
   }
 
@@ -9390,11 +9394,24 @@ document.addEventListener('DOMContentLoaded', () => {
       body.style.display = 'block';
       toggleBtn.classList.add('expanded');
       toggleBtn.setAttribute('aria-expanded', 'true');
+
+      // Initialize with source album if open in album mode, else leave empty or first tag
       if (!Array.isArray(state.moveCopyMultiTags) || state.moveCopyMultiTags.length === 0) {
-        const available = state.tags || [];
-        state.moveCopyMultiTags = available.length > 0 ? [available[0].name] : [''];
+        if (state.moveCopySourceAlbum) {
+          state.moveCopyMultiTags = [state.moveCopySourceAlbum];
+        } else if (state.tags && state.tags.length > 0) {
+          // Preselect first tag to give immediate anchor
+          state.moveCopyMultiTags = [state.tags[0].name];
+        } else {
+          state.moveCopyMultiTags = [];
+        }
       }
+
       window.renderMultiTagChain();
+      // If at least one tag is selected, automatically open the candidate picker drawer so user can immediately see option B with counts!
+      if (state.moveCopyMultiTags.length > 0) {
+        window.openMultiTagPicker();
+      }
     } else {
       body.style.display = 'none';
       toggleBtn.classList.remove('expanded');
@@ -9407,120 +9424,266 @@ document.addEventListener('DOMContentLoaded', () => {
     const badge = document.getElementById('multiTagActiveBadge');
     if (!chainRow) return;
 
-    if (!Array.isArray(state.moveCopyMultiTags) || state.moveCopyMultiTags.length === 0) {
-      state.moveCopyMultiTags = [''];
-    }
-
     const allTags = state.tags || [];
-    const validTags = state.moveCopyMultiTags.filter(t => t && t.trim().length > 0);
+    const validTags = (state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0);
 
     // Update active badge in toggle header
     if (badge) {
       if (validTags.length > 0) {
         badge.style.display = 'inline-block';
-        badge.textContent = window.t ? window.t('organize_multitag_badge', { count: validTags.length }) : `${validTags.length} tags`;
+        badge.textContent = window.t ? window.t('organize_multitag_badge', { count: validTags.length }) : `${validTags.length} tags combined`;
       } else {
         badge.style.display = 'none';
       }
     }
 
-    const itemsHtml = state.moveCopyMultiTags.map((currentTag, idx) => {
-      const tagObj = allTags.find(t => t.name.toLowerCase() === (currentTag || '').toLowerCase());
-      const dotColor = tagObj ? tagObj.color : '#64748b';
-
-      // Other selected tags to exclude from this dropdown
-      const selectedElsewhere = new Set(
-        state.moveCopyMultiTags
-          .filter((t, k) => k !== idx && t && t.trim().length > 0)
-          .map(t => t.toLowerCase())
-      );
-
-      const availableForThisSlot = allTags.filter(t => !selectedElsewhere.has(t.name.toLowerCase()));
-
-      const placeholderText = window.t ? window.t('organize_multitag_placeholder') : 'Select album tag...';
-      const optionsHtml = [
-        `<option value="" ${!currentTag ? 'selected' : ''}>${placeholderText}</option>`,
-        ...availableForThisSlot.map(t => {
-          const isSelected = currentTag && t.name.toLowerCase() === currentTag.toLowerCase();
-          return `<option value="${escapeHtml(t.name)}" ${isSelected ? 'selected' : ''}>${escapeHtml(t.name)}</option>`;
-        })
-      ].join('');
-
-      const removeBtnHtml = (state.moveCopyMultiTags.length > 1 || currentTag)
-        ? `<button type="button" class="multitag-remove-btn" onclick="removeMultiTagChainItem(${idx})" title="Remove tag" aria-label="Remove tag"><i class="fa-solid fa-xmark"></i></button>`
-        : '';
+    // Render tag chips
+    const chipsHtml = validTags.map((tagName, idx) => {
+      const tagObj = allTags.find(t => t.name.toLowerCase() === tagName.toLowerCase());
+      const dotColor = tagObj ? tagObj.color : '#fbbf24';
 
       return `
-        <div class="multitag-item ${currentTag ? 'selected' : ''}">
-          <span class="multitag-dot" style="background: ${dotColor};"></span>
-          <select class="multitag-select" onchange="handleMultiTagChainChange(${idx}, this.value)" aria-label="Select Album Tag ${idx + 1}">
-            ${optionsHtml}
-          </select>
-          ${removeBtnHtml}
+        <div class="multitag-tag-chip" title="${escapeHtml(tagName)}">
+          <span class="multitag-tag-dot" style="background: ${dotColor}; color: ${dotColor};"></span>
+          <span class="multitag-tag-name">${escapeHtml(tagName)}</span>
+          <button type="button" class="multitag-tag-remove" onclick="removeMultiTagChainItem(${idx})" title="Remove ${escapeHtml(tagName)}" aria-label="Remove ${escapeHtml(tagName)}">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
       `;
     }).join('');
 
-    // Check if at least one tag is selected and there are remaining unselected tags in state.tags
-    const selectedSet = new Set(state.moveCopyMultiTags.filter(t => t && t.trim().length > 0).map(t => t.toLowerCase()));
+    // Check if remaining unselected tags exist
+    const selectedSet = new Set(validTags.map(t => t.toLowerCase()));
     const unselectedRemaining = allTags.filter(t => !selectedSet.has(t.name.toLowerCase()));
-    const hasAtLeastOneSelected = state.moveCopyMultiTags.some(t => t && t.trim().length > 0);
 
-    const plusBtnHtml = (hasAtLeastOneSelected && unselectedRemaining.length > 0)
-      ? `<button type="button" class="multitag-add-tag-btn" onclick="addMultiTagChainItem()" title="${window.t ? window.t('organize_multitag_add_btn') : 'Add another tag'}" aria-label="Add another tag"><i class="fa-solid fa-plus"></i></button>`
-      : '';
+    let plusBtnHtml = '';
+    if (unselectedRemaining.length > 0) {
+      const plusLabel = validTags.length === 0
+        ? (window.t ? window.t('organize_multitag_placeholder') : 'Choose 1st Tag...')
+        : (validTags.length === 1 ? '+ Add 2nd Tag...' : '+ Add Another Tag...');
+      plusBtnHtml = `
+        <button type="button" class="multitag-chain-plus-btn" onclick="openMultiTagPicker()" title="Add another tag" aria-label="Add another tag">
+          <i class="fa-solid fa-plus"></i>
+          <span>${plusLabel}</span>
+        </button>
+      `;
+    }
 
-    chainRow.innerHTML = itemsHtml + plusBtnHtml;
+    chainRow.innerHTML = chipsHtml + plusBtnHtml;
+
+    // Refresh candidate picker list if drawer is open
+    const drawer = document.getElementById('multiTagPickerDrawer');
+    if (drawer && drawer.style.display !== 'none') {
+      window.renderMultiTagCandidateList();
+    }
 
     // Recalculate intersection
     window.updateMultiTagIntersection();
   };
 
-  window.addMultiTagChainItem = function() {
-    const allTags = state.tags || [];
-    const selectedSet = new Set((state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0).map(t => t.toLowerCase()));
-    const unselected = allTags.filter(t => !selectedSet.has(t.name.toLowerCase()));
+  window.openMultiTagPicker = function() {
+    const drawer = document.getElementById('multiTagPickerDrawer');
+    const searchInput = document.getElementById('multiTagPickerSearchInput');
+    const titleText = document.getElementById('multiTagPickerTitleText');
+    if (!drawer) return;
 
-    if (unselected.length > 0) {
-      state.moveCopyMultiTags.push(unselected[0].name);
-      window.renderMultiTagChain();
-      window.renderMoveCopyAlbumsList();
+    drawer.style.display = 'block';
+    if (searchInput) searchInput.value = '';
+
+    const validTags = (state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0);
+    if (titleText) {
+      if (validTags.length === 0) {
+        titleText.textContent = 'Select starting tag:';
+      } else if (validTags.length === 1) {
+        titleText.textContent = `Combine with '${validTags[0]}':`;
+      } else {
+        titleText.textContent = `Combine with '${validTags.join(' + ')}':`;
+      }
+    }
+
+    window.renderMultiTagCandidateList();
+  };
+
+  window.closeMultiTagPicker = function() {
+    const drawer = document.getElementById('multiTagPickerDrawer');
+    if (drawer) drawer.style.display = 'none';
+    window.clearCandidateHoverPreview();
+  };
+
+  window.handleMultiTagPickerSearch = function(query) {
+    window.renderMultiTagCandidateList(query);
+  };
+
+  window.renderMultiTagCandidateList = function(searchQuery) {
+    const listEl = document.getElementById('multiTagCandidateList');
+    if (!listEl) return;
+
+    const allTags = state.tags || [];
+    const validTags = (state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0);
+    const selectedSet = new Set(validTags.map(t => t.toLowerCase()));
+
+    // STRICT EXCLUSION: If a tag is already selected in the chain, it NEVER appears in the candidates list!
+    let candidates = allTags.filter(t => !selectedSet.has(t.name.toLowerCase()));
+
+    const q = (searchQuery !== undefined ? searchQuery : (document.getElementById('multiTagPickerSearchInput')?.value || '')).trim().toLowerCase();
+    if (q) {
+      candidates = candidates.filter(t => t.name.toLowerCase().includes(q));
+    }
+
+    if (candidates.length === 0) {
+      listEl.innerHTML = `
+        <div style="text-align: center; padding: 14px; color: var(--text-muted); font-size: 12px;">
+          ${allTags.length === validTags.length ? 'All available tags are already selected!' : 'No matching tags found.'}
+        </div>
+      `;
+      return;
+    }
+
+    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+
+    listEl.innerHTML = candidates.map(candidate => {
+      // Calculate intersection count of [current valid tags] + [this candidate]
+      const hypotheticalCombination = [...validTags, candidate.name];
+      const matchCount = validPhotos.filter(p =>
+        hypotheticalCombination.every(vt => p.tags && p.tags.some(pt => pt.toLowerCase() === vt.toLowerCase()))
+      ).length;
+
+      const countNoun = matchCount === 1
+        ? (window.t ? window.t('organize_photo_singular') : 'photo')
+        : (window.t ? window.t('organize_photos_plural') : 'photos');
+
+      const badgeHtml = matchCount > 0
+        ? `<span class="candidate-count-badge has-photos"><i class="fa-solid fa-sparkles"></i> ${matchCount} ${countNoun} ${validTags.length > 0 ? `with ${escapeHtml(validTags[validTags.length - 1])}` : 'total'}</span>`
+        : `<span class="candidate-count-badge zero-photos">0 photos match</span>`;
+
+      return `
+        <div class="multitag-candidate-item" 
+             onmouseenter="hoverPreviewCandidate('${escapeHtml(candidate.name)}')" 
+             onclick="pickCandidateTag('${escapeHtml(candidate.name)}')">
+          <div class="candidate-left">
+            <span class="candidate-dot" style="background: ${candidate.color};"></span>
+            <span class="candidate-name">${escapeHtml(candidate.name)}</span>
+          </div>
+          ${badgeHtml}
+        </div>
+      `;
+    }).join('');
+  };
+
+  // Live Hover Preview
+  window.hoverPreviewCandidate = function(candidateTagName) {
+    const card = document.getElementById('multiTagResultCard');
+    const dotStack = document.getElementById('multiTagDotStack');
+    const label = document.getElementById('multiTagResultLabel');
+    const countEl = document.getElementById('multiTagResultCount');
+    const thumbsRail = document.getElementById('multiTagMatchingThumbs');
+    if (!card) return;
+
+    const validTags = (state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0);
+    const hypothetical = [...validTags, candidateTagName];
+
+    card.style.display = 'block';
+    card.classList.add('hover-previewing');
+
+    // Dot stack
+    if (dotStack) {
+      const allTags = state.tags || [];
+      dotStack.innerHTML = hypothetical.map(t => {
+        const tagObj = allTags.find(tag => tag.name.toLowerCase() === t.toLowerCase());
+        const color = tagObj ? tagObj.color : '#fbbf24';
+        return `<span class="multitag-stack-dot" style="background: ${color};" title="${escapeHtml(t)}"></span>`;
+      }).join('');
+    }
+
+    // Label: Live Hover Preview
+    if (label) {
+      label.innerHTML = `<i class="fa-solid fa-eye" style="color: #38bdf8; margin-right: 4px;"></i> Preview: <strong>${escapeHtml(hypothetical.join(' + '))}</strong>`;
+    }
+
+    // Matching photos calculation
+    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+    const matchingPhotos = validPhotos.filter(p =>
+      hypothetical.every(vt => p.tags && p.tags.some(pt => pt.toLowerCase() === vt.toLowerCase()))
+    );
+
+    if (countEl) {
+      if (matchingPhotos.length === 0) {
+        countEl.textContent = '0 photos currently have all these tags';
+      } else {
+        const countNoun = matchingPhotos.length === 1
+          ? (window.t ? window.t('organize_photo_singular') : 'photo')
+          : (window.t ? window.t('organize_photos_plural') : 'photos');
+        countEl.textContent = `${matchingPhotos.length} ${countNoun} match combination`;
+      }
+    }
+
+    // Thumbnails
+    if (thumbsRail) {
+      if (matchingPhotos.length > 0) {
+        thumbsRail.style.display = 'flex';
+        const maxThumbs = 6;
+        const displayThumbs = matchingPhotos.slice(0, maxThumbs);
+        const extraCount = matchingPhotos.length - displayThumbs.length;
+
+        let thumbsHtml = displayThumbs.map(p => `
+          <img src="${p.dataUrl}" alt="${escapeHtml(p.displayName || 'Photo')}" class="multitag-match-thumb" title="${escapeHtml(p.displayName || '')}">
+        `).join('');
+
+        if (extraCount > 0) {
+          thumbsHtml += `<div class="multitag-match-more">+${extraCount}</div>`;
+        }
+        thumbsRail.innerHTML = thumbsHtml;
+      } else {
+        thumbsRail.style.display = 'none';
+        thumbsRail.innerHTML = '';
+      }
     }
   };
 
-  window.removeMultiTagChainItem = function(idx) {
-    if (!Array.isArray(state.moveCopyMultiTags)) return;
-    state.moveCopyMultiTags.splice(idx, 1);
-    if (state.moveCopyMultiTags.length === 0) {
-      state.moveCopyMultiTags = [''];
+  window.clearCandidateHoverPreview = function() {
+    const card = document.getElementById('multiTagResultCard');
+    if (card) card.classList.remove('hover-previewing');
+
+    // Revert to active selected tags
+    window.updateMultiTagIntersection();
+  };
+
+  window.pickCandidateTag = function(candidateTagName) {
+    if (!Array.isArray(state.moveCopyMultiTags)) state.moveCopyMultiTags = [];
+    if (!state.moveCopyMultiTags.some(t => t.toLowerCase() === candidateTagName.toLowerCase())) {
+      state.moveCopyMultiTags.push(candidateTagName);
     }
 
     const validTags = state.moveCopyMultiTags.filter(t => t && t.trim().length > 0);
-    if (validTags.length < 2 && state.moveCopyIsMultiTagDest) {
-      state.moveCopyIsMultiTagDest = false;
-      state.moveCopyDestinationAlbum = null;
-      state.moveCopyDestinationTags = null;
+
+    // If at least 2 tags are now chosen, automatically set as combined destination!
+    if (validTags.length >= 2) {
+      state.moveCopyIsMultiTagDest = true;
+      state.moveCopyDestinationTags = [...validTags];
+      state.moveCopyDestinationAlbum = validTags.join(' + ');
       updateMoveCopyConfirmButton();
+      showToast(`✨ Combined '${state.moveCopyDestinationAlbum}' as destination!`);
     }
 
     window.renderMultiTagChain();
     window.renderMoveCopyAlbumsList();
   };
 
-  window.handleMultiTagChainChange = function(idx, value) {
-    if (!Array.isArray(state.moveCopyMultiTags)) state.moveCopyMultiTags = [];
-    state.moveCopyMultiTags[idx] = value;
+  window.removeMultiTagChainItem = function(idx) {
+    if (!Array.isArray(state.moveCopyMultiTags)) return;
+    state.moveCopyMultiTags.splice(idx, 1);
 
     const validTags = state.moveCopyMultiTags.filter(t => t && t.trim().length > 0);
-    if (state.moveCopyIsMultiTagDest) {
-      if (validTags.length >= 2) {
-        state.moveCopyDestinationTags = [...validTags];
-        state.moveCopyDestinationAlbum = validTags.join(' + ');
-      } else {
-        state.moveCopyIsMultiTagDest = false;
-        state.moveCopyDestinationAlbum = null;
-        state.moveCopyDestinationTags = null;
-      }
+    if (validTags.length < 2) {
+      state.moveCopyIsMultiTagDest = false;
+      state.moveCopyDestinationAlbum = null;
+      state.moveCopyDestinationTags = null;
+      updateMoveCopyConfirmButton();
+    } else {
+      state.moveCopyIsMultiTagDest = true;
+      state.moveCopyDestinationTags = [...validTags];
+      state.moveCopyDestinationAlbum = validTags.join(' + ');
       updateMoveCopyConfirmButton();
     }
 
@@ -9560,11 +9723,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
     }
 
-    // Label: "Photos with both tags:" vs "Photos with all tags:"
+    // Label: "Both tags match:" vs "All tags match:"
     if (label) {
-      label.textContent = validTags.length === 2
-        ? (window.t ? window.t('organize_multitag_match_both') : 'Photos with both tags:')
-        : (window.t ? window.t('organize_multitag_match_all') : `Photos with all ${validTags.length} tags:`);
+      label.innerHTML = validTags.length === 2
+        ? `Both tags match: <strong>${escapeHtml(validTags.join(' + '))}</strong>`
+        : `All ${validTags.length} tags match: <strong>${escapeHtml(validTags.join(' + '))}</strong>`;
     }
 
     // Calculate intersection
@@ -9575,7 +9738,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (countEl) {
       if (matchingPhotos.length === 0) {
-        countEl.textContent = window.t ? window.t('organize_multitag_no_matches') : 'No photos currently match all tags';
+        countEl.textContent = '0 photos currently match all tags';
       } else {
         const countNoun = matchingPhotos.length === 1
           ? (window.t ? window.t('organize_photo_singular') : 'photo')
@@ -11462,11 +11625,16 @@ document.addEventListener('DOMContentLoaded', () => {
   window.permanentlyEraseAlbumFromTrash = permanentlyEraseAlbumFromTrash;
 
   // VIP Move & Copy Complete Album Exports
-  window.toggleMultiTagBuilder = toggleMultiTagBuilder;
+    window.toggleMultiTagBuilder = toggleMultiTagBuilder;
   window.renderMultiTagChain = renderMultiTagChain;
-  window.addMultiTagChainItem = addMultiTagChainItem;
+  window.openMultiTagPicker = openMultiTagPicker;
+  window.closeMultiTagPicker = closeMultiTagPicker;
+  window.handleMultiTagPickerSearch = handleMultiTagPickerSearch;
+  window.renderMultiTagCandidateList = renderMultiTagCandidateList;
+  window.hoverPreviewCandidate = hoverPreviewCandidate;
+  window.clearCandidateHoverPreview = clearCandidateHoverPreview;
+  window.pickCandidateTag = pickCandidateTag;
   window.removeMultiTagChainItem = removeMultiTagChainItem;
-  window.handleMultiTagChainChange = handleMultiTagChainChange;
   window.updateMultiTagIntersection = updateMultiTagIntersection;
   window.selectMultiTagAsDestination = selectMultiTagAsDestination;
   window.openMoveCopyAlbumModal = openMoveCopyAlbumModal;
