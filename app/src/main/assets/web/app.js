@@ -9557,8 +9557,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (activeBadge) activeBadge.textContent = 'Merge Albums';
     if (searchInput) searchInput.value = '';
     if (nameInput) nameInput.value = '';
-    if (albumsList) albumsList.innerHTML = '';
-    if (colorPickerContainer) colorPickerContainer.innerHTML = '';
+    const outerDestHeader = document.getElementById('moveCopyDestinationsHeader');
+    const outerAlbumsList = document.getElementById('moveCopyAlbumsList');
+    const outerConfirmBtn = document.getElementById('confirmMoveCopyBtn');
+    if (outerDestHeader) outerDestHeader.style.display = 'flex';
+    if (outerAlbumsList) outerAlbumsList.style.display = 'flex';
+    if (outerConfirmBtn) outerConfirmBtn.style.display = 'flex';
   };
 
   // Backwards compatibility alias
@@ -9570,12 +9574,18 @@ document.addEventListener('DOMContentLoaded', () => {
     state.moveCopyMultiTagExpanded = !state.moveCopyMultiTagExpanded;
     const body = document.getElementById('multiTagBuilderBody');
     const toggleBtn = document.getElementById('multiTagToggleBtn');
+    const outerDestHeader = document.getElementById('moveCopyDestinationsHeader');
+    const outerAlbumsList = document.getElementById('moveCopyAlbumsList');
+    const outerConfirmBtn = document.getElementById('confirmMoveCopyBtn');
     if (!body || !toggleBtn) return;
 
     if (state.moveCopyMultiTagExpanded) {
       body.style.display = 'block';
       toggleBtn.classList.add('expanded');
       toggleBtn.setAttribute('aria-expanded', 'true');
+      if (outerDestHeader) outerDestHeader.style.display = 'none';
+      if (outerAlbumsList) outerAlbumsList.style.display = 'none';
+      if (outerConfirmBtn) outerConfirmBtn.style.display = 'none';
 
       // Initialize with primary source album if not already populated
       if (!Array.isArray(state.fusionAlbums) || state.fusionAlbums.length === 0) {
@@ -9587,6 +9597,10 @@ document.addEventListener('DOMContentLoaded', () => {
       body.style.display = 'none';
       toggleBtn.classList.remove('expanded');
       toggleBtn.setAttribute('aria-expanded', 'false');
+      if (outerDestHeader) outerDestHeader.style.display = 'flex';
+      if (outerAlbumsList) outerAlbumsList.style.display = 'flex';
+      if (outerConfirmBtn) outerConfirmBtn.style.display = 'flex';
+      window.renderMoveCopyAlbumsList();
     }
   };
 
@@ -9630,6 +9644,10 @@ document.addEventListener('DOMContentLoaded', () => {
     state.fusionUserEditedName = false;
     state.fusionNameVariation = 0;
     state.fusionCollectionName = window.generateSmartCollectionName(0);
+    state.fusionOutputMode = 'forge';
+    state.fusionExistingMode = 'copy';
+    state.fusionSelectedDestinations = [];
+    state.fusionExistingSearchQuery = '';
   };
 
   // Smart collection name synthesis
@@ -9817,6 +9835,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       window.renderFusionColorPicker();
       window.updateFusionActionFooter();
+      if (state.fusionOutputMode === 'existing') {
+        window.renderFusionExistingAlbumsList();
+        window.updateFusionExistingActionFooter();
+      }
     } catch (err) {
       console.error('Error in renderFusionStudio:', err);
     }
@@ -10026,6 +10048,281 @@ document.addEventListener('DOMContentLoaded', () => {
         createBtnText.textContent = `Forge Collection (${totalSelectedCount} ${noun})`;
       }
     }
+  };
+
+  // -------------------------------------------------------------
+  // Fusion Output Mode Switcher: Forge New vs Merge into Existing
+  // -------------------------------------------------------------
+  window.setFusionOutputMode = function(mode) {
+    state.fusionOutputMode = mode;
+    const tabForge = document.getElementById('fusionTabForge');
+    const tabExisting = document.getElementById('fusionTabExisting');
+    const forgeCard = document.getElementById('fusionForgeCard');
+    const existingCard = document.getElementById('fusionExistingAlbumsCard');
+
+    if (mode === 'existing') {
+      if (tabExisting) tabExisting.classList.add('active');
+      if (tabForge) tabForge.classList.remove('active');
+      if (forgeCard) forgeCard.style.display = 'none';
+      if (existingCard) existingCard.style.display = 'block';
+      window.renderFusionExistingAlbumsList();
+      window.updateFusionExistingActionFooter();
+    } else {
+      if (tabForge) tabForge.classList.add('active');
+      if (tabExisting) tabExisting.classList.remove('active');
+      if (forgeCard) forgeCard.style.display = 'block';
+      if (existingCard) existingCard.style.display = 'none';
+      window.updateFusionActionFooter();
+    }
+  };
+
+  window.setFusionExistingMode = function(mode) {
+    state.fusionExistingMode = mode;
+    const copyBtn = document.getElementById('fusionModeCopyBtn');
+    const moveBtn = document.getElementById('fusionModeMoveBtn');
+    const hint = document.getElementById('fusionModeHint');
+    const icon = document.getElementById('fusionExistingActionIcon');
+
+    if (mode === 'copy') {
+      if (copyBtn) copyBtn.classList.add('active');
+      if (moveBtn) moveBtn.classList.remove('active');
+      if (hint) hint.textContent = 'Duplicates curated photos into destination album(s). They will also remain in their source albums.';
+      if (icon) icon.className = 'fa-solid fa-copy';
+    } else {
+      if (moveBtn) moveBtn.classList.add('active');
+      if (copyBtn) copyBtn.classList.remove('active');
+      if (hint) hint.textContent = 'Moves curated photos into destination album(s) and removes them from their source albums.';
+      if (icon) icon.className = 'fa-solid fa-arrow-right-arrow-left';
+    }
+
+    window.updateFusionExistingActionFooter();
+  };
+
+  window.handleFusionExistingSearch = function(val) {
+    state.fusionExistingSearchQuery = (val || '').toLowerCase().trim();
+    window.renderFusionExistingAlbumsList();
+  };
+
+  window.toggleFusionDestination = function(albumName) {
+    if (!Array.isArray(state.fusionSelectedDestinations)) {
+      state.fusionSelectedDestinations = [];
+    }
+    const idx = state.fusionSelectedDestinations.indexOf(albumName);
+    if (idx >= 0) {
+      state.fusionSelectedDestinations.splice(idx, 1);
+    } else {
+      state.fusionSelectedDestinations.push(albumName);
+    }
+    window.renderFusionExistingAlbumsList();
+    window.updateFusionExistingActionFooter();
+  };
+
+  window.renderFusionExistingAlbumsList = function() {
+    const list = document.getElementById('fusionExistingAlbumsList');
+    if (!list) return;
+
+    const allTags = state.tags || [];
+    const sourceAlbumNames = new Set((state.fusionAlbums || []).map(a => a.albumName.toLowerCase()));
+    const validPhotos = (state.photos || []).filter(p => !p.deletedAt);
+    const q = state.fusionExistingSearchQuery || '';
+
+    let visibleTags = allTags;
+    if (q) {
+      visibleTags = visibleTags.filter(t => t.name.toLowerCase().includes(q));
+    }
+
+    if (!visibleTags.length) {
+      list.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
+          No matching destination albums found.
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = visibleTags.map(tag => {
+      const isSource = sourceAlbumNames.has(tag.name.toLowerCase());
+      const isSelected = (state.fusionSelectedDestinations || []).includes(tag.name);
+      const count = validPhotos.filter(p => Array.isArray(p.tags) && p.tags.includes(tag.name)).length;
+      const countNoun = count === 1 ? 'photo' : 'photos';
+
+      if (isSource) {
+        return `
+          <div class="move-copy-album-row disabled source-album-row" 
+               onclick="showToast('${escapeHtml(tag.name)} is a source album in Collection Fusion and cannot be chosen as a destination.')" 
+               title="Source album (non-selectable)">
+            <div class="album-row-left">
+              <span class="album-row-dot" style="background: ${tag.color};"></span>
+              <div>
+                <div class="album-row-name">
+                  ${escapeHtml(tag.name)}
+                  <span style="font-size: 10px; color: #fbbf24; margin-left: 6px; font-weight: 600;">(Source Album)</span>
+                </div>
+                <div class="album-row-count">${count} ${countNoun}</div>
+              </div>
+            </div>
+            <div class="album-row-radio disabled"></div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="move-copy-album-row ${isSelected ? 'selected' : ''}" 
+             onclick="window.toggleFusionDestination('${escapeHtml(tag.name)}')" 
+             title="Select destination: ${escapeHtml(tag.name)}">
+          <div class="album-row-left">
+            <span class="album-row-dot" style="background: ${tag.color};"></span>
+            <div>
+              <div class="album-row-name">${escapeHtml(tag.name)}</div>
+              <div class="album-row-count">${count} ${countNoun}</div>
+            </div>
+          </div>
+          <div class="album-row-radio">
+            ${isSelected ? '<i class="fa-solid fa-check"></i>' : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  window.updateFusionExistingActionFooter = function() {
+    const summary = document.getElementById('fusionExistingTotalSummary');
+    const actionBtn = document.getElementById('fusionExistingActionBtn');
+    const actionIcon = document.getElementById('fusionExistingActionIcon');
+    const actionText = document.getElementById('fusionExistingActionText');
+    const pill = document.getElementById('fusionDestSelectionPill');
+
+    const albums = state.fusionAlbums || [];
+    const allSelectedPhotoIds = new Set();
+    albums.forEach(a => {
+      (a.selectedPhotoIds || []).forEach(id => allSelectedPhotoIds.add(id));
+    });
+
+    const totalCuratedCount = allSelectedPhotoIds.size;
+    const albumCount = albums.length;
+    const photoNoun = totalCuratedCount === 1 ? 'photo' : 'photos';
+    const albumNoun = albumCount === 1 ? 'album' : 'albums';
+
+    if (summary) {
+      summary.innerHTML = `<i class="fa-solid fa-sparkles" style="color: #fbbf24; margin-right: 4px;"></i> Total: <strong style="color: #ffffff;">${totalCuratedCount}</strong> curated ${photoNoun} from <strong style="color: #ffffff;">${albumCount}</strong> ${albumNoun}`;
+    }
+
+    const selectedDests = state.fusionSelectedDestinations || [];
+    const selectedCount = selectedDests.length;
+
+    if (pill) {
+      if (selectedCount > 0) {
+        pill.style.display = 'inline-flex';
+        pill.innerHTML = `<i class="fa-solid fa-check"></i> ${selectedCount} Selected`;
+      } else {
+        pill.style.display = 'none';
+      }
+    }
+
+    const mode = state.fusionExistingMode || 'copy';
+    const verb = mode === 'move' ? 'Move' : 'Copy';
+    if (actionIcon) {
+      actionIcon.className = mode === 'move' ? 'fa-solid fa-arrow-right-arrow-left' : 'fa-solid fa-copy';
+    }
+
+    if (totalCuratedCount === 0) {
+      if (actionBtn) actionBtn.disabled = true;
+      if (actionText) actionText.textContent = 'Select Photos to ' + verb;
+      return;
+    }
+
+    if (selectedCount === 0) {
+      if (actionBtn) actionBtn.disabled = true;
+      if (actionText) actionText.textContent = 'Select Destination Album(s)';
+      return;
+    }
+
+    if (actionBtn) actionBtn.disabled = false;
+    const countNoun = totalCuratedCount === 1 ? 'Photo' : 'Photos';
+    if (actionText) {
+      if (selectedCount === 1) {
+        actionText.textContent = `${verb} ${totalCuratedCount} ${countNoun} to '${selectedDests[0]}'`;
+      } else {
+        const combined = selectedDests.join(' + ');
+        actionText.textContent = combined.length <= 22
+          ? `${verb} ${totalCuratedCount} ${countNoun} to '${combined}'`
+          : `${verb} ${totalCuratedCount} ${countNoun} to ${selectedCount} Destination Albums`;
+      }
+    }
+  };
+
+  window.executeFusionIntoExistingAlbums = function() {
+    const albums = state.fusionAlbums || [];
+    const allSelectedPhotoIds = new Set();
+    albums.forEach(a => {
+      (a.selectedPhotoIds || []).forEach(id => allSelectedPhotoIds.add(id));
+    });
+
+    const uniqueIds = Array.from(allSelectedPhotoIds);
+    if (!uniqueIds.length) {
+      showToast('Please select at least 1 photo across your chosen albums.');
+      return;
+    }
+
+    const destTags = state.fusionSelectedDestinations || [];
+    if (!destTags.length) {
+      showToast('Please select at least 1 destination album.');
+      return;
+    }
+
+    // Ensure all dest tags exist in state.tags
+    destTags.forEach(destTagName => {
+      if (!state.tags.some(t => t.name.toLowerCase() === destTagName.toLowerCase())) {
+        const now = Date.now();
+        state.tags.push({
+          name: destTagName,
+          color: PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)],
+          createdAt: now,
+          lastModifiedAt: now,
+          lastViewedAt: now,
+          isFavorite: false
+        });
+      }
+    });
+
+    const mode = state.fusionExistingMode || 'copy';
+    const sourceAlbumNames = albums.map(a => a.albumName.toLowerCase());
+
+    uniqueIds.forEach(id => {
+      const photo = (state.photos || []).find(p => p.id === id);
+      if (!photo) return;
+      if (!Array.isArray(photo.tags)) photo.tags = [];
+
+      if (mode === 'move') {
+        photo.tags = photo.tags.filter(t => !sourceAlbumNames.includes(t.toLowerCase()));
+      }
+
+      destTags.forEach(dest => {
+        if (!photo.tags.includes(dest)) {
+          photo.tags.push(dest);
+        }
+      });
+
+      if (!photo.category || photo.category === 'Import') {
+        photo.category = destTags[0];
+      }
+    });
+
+    destTags.forEach(dest => recordAlbumActivity(dest, 'modified'));
+    if (mode === 'move') {
+      albums.forEach(a => recordAlbumActivity(a.albumName, 'modified'));
+    }
+
+    saveState();
+
+    window.closeMoveCopyModal(destTags[0]);
+
+    if (typeof renderAlbumsScreen === 'function') renderAlbumsScreen();
+    if (typeof renderGallery === 'function') renderGallery();
+
+    const verb = mode === 'move' ? 'moved' : 'copied';
+    const countNoun = uniqueIds.length === 1 ? 'photo' : 'photos';
+    showToast(`✨ Successfully ${verb} ${uniqueIds.length} ${countNoun} into ${destTags.join(' + ')}!`);
   };
 
   // Master Action: Create the new collection with all curated selections

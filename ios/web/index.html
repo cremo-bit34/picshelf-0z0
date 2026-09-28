@@ -2433,7 +2433,19 @@
                 </div>
               </div>
 
-              <!-- Forge Collection Settings Card -->
+              <!-- Output Mode Switcher: Forge New Collection vs Merge into Existing Album(s) -->
+              <div class="fusion-output-mode-tabs" id="fusionOutputModeTabs">
+                <button type="button" class="fusion-mode-tab active" id="fusionTabForge" onclick="setFusionOutputMode('forge')">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span>Forge New Collection</span>
+                </button>
+                <button type="button" class="fusion-mode-tab" id="fusionTabExisting" onclick="setFusionOutputMode('existing')">
+                  <i class="fa-solid fa-folder-tree"></i>
+                  <span>Add to Existing Album(s)</span>
+                </button>
+              </div>
+
+              <!-- Option A: Forge New Collection Settings Card -->
               <div class="fusion-forge-card" id="fusionForgeCard">
                 <div class="fusion-forge-header">
                   <span class="fusion-forge-title"><i class="fa-solid fa-gem" style="color: #fbbf24;"></i> New Collection Details</span>
@@ -2468,6 +2480,56 @@
                   <button type="button" class="btn btn-primary fusion-create-btn" id="fusionCreateBtn" onclick="executeCollectionFusion()">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                     <span id="fusionCreateBtnText">Create Collection</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Option B: Add to Existing Album(s) Card -->
+              <div class="fusion-forge-card fusion-existing-card" id="fusionExistingAlbumsCard" style="display: none;">
+                <div class="fusion-forge-header">
+                  <span class="fusion-forge-title"><i class="fa-solid fa-folder-tree" style="color: #fbbf24;"></i> Add to Existing Album(s)</span>
+                </div>
+
+                <!-- Mode Segmented Control (Copy vs Move) -->
+                <div class="move-copy-mode-selector fusion-mode-selector" style="margin-bottom: 8px;">
+                  <button type="button" class="mode-segment-btn active" id="fusionModeCopyBtn" onclick="setFusionExistingMode('copy')">
+                    <i class="fa-solid fa-copy"></i>
+                    <span data-i18n="organize_copy_photos">Copy Photos</span>
+                  </button>
+                  <button type="button" class="mode-segment-btn" id="fusionModeMoveBtn" onclick="setFusionExistingMode('move')">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    <span data-i18n="organize_move_photos">Move Photos</span>
+                  </button>
+                </div>
+                <div class="move-copy-mode-hint" id="fusionModeHint" style="margin-bottom: 12px;">
+                  Duplicates curated photos into destination album(s). They will also remain in their source albums.
+                </div>
+
+                <!-- Search destination albums -->
+                <div class="move-copy-search-bar" style="margin-bottom: 10px;">
+                  <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                  <input type="text" id="fusionExistingSearchInput" placeholder="Search destination albums..." data-i18n-placeholder="organize_search_placeholder" oninput="handleFusionExistingSearch(this.value)">
+                </div>
+
+                <!-- Destination Albums Header with Count Pill -->
+                <div class="move-copy-destinations-header" style="margin-bottom: 8px;">
+                  <span class="move-copy-dest-title">SELECT DESTINATION ALBUM(S):</span>
+                  <span class="move-copy-dest-pill" id="fusionDestSelectionPill" style="display: none;">0 Selected</span>
+                </div>
+
+                <!-- Destination Albums List -->
+                <div class="move-copy-albums-list" id="fusionExistingAlbumsList" style="max-height: 200px; overflow-y: auto;">
+                  <!-- Rendered dynamically -->
+                </div>
+
+                <!-- Action Footer & Execute Button -->
+                <div class="fusion-action-footer" style="margin-top: 14px;">
+                  <div class="fusion-total-summary" id="fusionExistingTotalSummary">
+                    0 curated photos selected
+                  </div>
+                  <button type="button" class="btn btn-primary fusion-create-btn" id="fusionExistingActionBtn" onclick="executeFusionIntoExistingAlbums()" disabled>
+                    <i class="fa-solid fa-copy" id="fusionExistingActionIcon"></i>
+                    <span id="fusionExistingActionText">Select Destination</span>
                   </button>
                 </div>
               </div>

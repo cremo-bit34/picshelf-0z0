@@ -11467,6 +11467,73 @@ body.light-mode .album-cover-add-btn {
   border-radius: 8px;
 }
 
+/* Fusion Output Mode Switcher: Forge New vs Add to Existing */
+.fusion-output-mode-tabs {
+  display: flex;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1.5px solid rgba(251, 191, 36, 0.35);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 4px;
+  margin-top: 14px;
+  margin-bottom: 12px;
+}
+
+.fusion-mode-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #94a3b8);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.fusion-mode-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f1f5f9;
+}
+
+.fusion-mode-tab.active {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.95) 0%, rgba(245, 158, 11, 0.95) 100%);
+  color: #0f172a;
+  box-shadow: 0 2px 12px rgba(251, 191, 36, 0.45);
+}
+
+body.light-mode .fusion-output-mode-tabs {
+  background: #f1f5f9;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+body.light-mode .fusion-mode-tab.active {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #0f172a;
+}
+
+.move-copy-album-row.source-album-row {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.move-copy-album-row.source-album-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.light-mode .move-copy-album-row.source-album-row {
+  background: rgba(0, 0, 0, 0.02);
+  opacity: 0.5;
+}
+
 /* Forge Collection Details Card */
 .fusion-forge-card {
   background: linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.96) 100%);
