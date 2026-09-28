@@ -9505,39 +9505,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   };
 
+  // -------------------------------------------------------------
+  // VIP COLLECTION FUSION STUDIO (MULTI-ALBUM MERGE & CURATION)
+  // -------------------------------------------------------------
+  const FUSION_JEWEL_COLORS = [
+    { name: 'Imperial Gold', hex: '#fbbf24' },
+    { name: 'Ruby Crimson', hex: '#f43f5e' },
+    { name: 'Electric Emerald', hex: '#10b981' },
+    { name: 'Royal Sapphire', hex: '#3b82f6' },
+    { name: 'Amethyst Purple', hex: '#a855f7' },
+    { name: 'Amber Sunset', hex: '#f59e0b' },
+    { name: 'Cyber Cyan', hex: '#06b6d4' },
+    { name: 'Rose Quartz', hex: '#ec4899' }
+  ];
 
-  // -------------------------------------------------------------
-  // VIP MULTI-TAG ALBUM INTERSECTION ENGINE (LUXURY STUDIO)
-  // -------------------------------------------------------------
   function resetMultiTagUI() {
-    const multiTagContainer = document.getElementById('moveCopyMultiTagContainer');
-    const multiTagToggleBtn = document.getElementById('multiTagToggleBtn');
-    const multiTagBody = document.getElementById('multiTagBuilderBody');
-    const multiTagBadge = document.getElementById('multiTagActiveBadge');
-    const multiTagCard = document.getElementById('multiTagResultCard');
-    const multiTagRow = document.getElementById('multiTagChainRow');
-    const searchInput = document.getElementById('multiTagPickerSearchInput');
-    const sourceVal = document.getElementById('multiTagSourceVal');
-    const destVal = document.getElementById('multiTagDestVal');
-
-    if (multiTagContainer) multiTagContainer.classList.remove('highlighted-dest');
-    if (multiTagToggleBtn) {
-      multiTagToggleBtn.classList.remove('expanded');
-      multiTagToggleBtn.setAttribute('aria-expanded', 'false');
-    }
-    if (multiTagBody) multiTagBody.style.display = 'none';
-    if (multiTagBadge) multiTagBadge.style.display = 'none';
-    if (multiTagCard) {
-      multiTagCard.style.display = 'none';
-      multiTagCard.classList.remove('active-destination', 'hover-previewing');
-    }
-    if (searchInput) searchInput.value = '';
-    if (multiTagRow) multiTagRow.innerHTML = '';
-    if (sourceVal) sourceVal.textContent = '';
-    if (destVal) destVal.textContent = 'Choose below';
+    window.resetFusionStudioUI();
   }
 
+  window.resetFusionStudioUI = function() {
+    state.moveCopyMultiTagExpanded = false;
+    state.fusionAlbums = [];
+    state.fusionCollectionName = '';
+    state.fusionUserEditedName = false;
+    state.fusionCollectionColor = '#fbbf24';
+    state.fusionCandidateSearch = '';
+    state.fusionNameVariation = 0;
+
+    const container = document.getElementById('moveCopyMultiTagContainer');
+    const toggleBtn = document.getElementById('multiTagToggleBtn');
+    const body = document.getElementById('multiTagBuilderBody');
+    const activeBadge = document.getElementById('fusionActiveBadge');
+    const searchInput = document.getElementById('fusionAlbumSearchInput');
+    const nameInput = document.getElementById('fusionCollectionNameInput');
+    const albumsList = document.getElementById('fusionAlbumsList');
+
+    if (container) container.classList.remove('highlighted-dest');
+    if (toggleBtn) {
+      toggleBtn.classList.remove('expanded');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+    }
+    if (body) body.style.display = 'none';
+    if (activeBadge) activeBadge.textContent = 'Merge Albums';
+    if (searchInput) searchInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (albumsList) albumsList.innerHTML = '';
+  };
+
+  // Backwards compatibility alias
   window.toggleMultiTagBuilder = function() {
+    window.toggleFusionStudio();
+  };
+
+  window.toggleFusionStudio = function() {
     state.moveCopyMultiTagExpanded = !state.moveCopyMultiTagExpanded;
     const body = document.getElementById('multiTagBuilderBody');
     const toggleBtn = document.getElementById('multiTagToggleBtn');
@@ -9548,12 +9568,12 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleBtn.classList.add('expanded');
       toggleBtn.setAttribute('aria-expanded', 'true');
 
-      // Do NOT default select source tag - allow user to combine ANY tags fresh
-      if (!Array.isArray(state.moveCopyMultiTags)) {
-        state.moveCopyMultiTags = [];
+      // Initialize with primary source album if not already populated
+      if (!Array.isArray(state.fusionAlbums) || state.fusionAlbums.length === 0) {
+        window.initFusionStudioWithSource();
       }
 
-      window.renderMultiTagStudio();
+      window.renderFusionStudio();
     } else {
       body.style.display = 'none';
       toggleBtn.classList.remove('expanded');
@@ -9561,488 +9581,533 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Main Studio Render: Updates formula row & candidate options simultaneously
-  window.renderMultiTagStudio = function() {
-    const sourceAlbum = state.moveCopySourceAlbum || (window.t ? window.t('organize_current_photos') : 'Selected Photos');
-    const sourceVal = document.getElementById('multiTagSourceVal');
-    const destVal = document.getElementById('multiTagDestVal');
-    const formulaLabel = document.getElementById('multiTagFormulaLabel');
+  window.initFusionStudioWithSource = function() {
+    state.fusionAlbums = [];
+    const sourceAlbum = state.moveCopySourceAlbum;
+    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
 
-    if (sourceVal) {
-      sourceVal.textContent = sourceAlbum;
-      sourceVal.title = `Photos will be moved/copied from '${sourceAlbum}'`;
+    if (sourceAlbum) {
+      const tagObj = (state.tags || []).find(t => t.name.toLowerCase() === sourceAlbum.toLowerCase());
+      const color = tagObj ? tagObj.color : '#fbbf24';
+      const albumPhotos = validPhotos.filter(p => Array.isArray(p.tags) && p.tags.includes(sourceAlbum));
+      const allPhotoIds = albumPhotos.map(p => p.id);
+      const selectedPhotoIds = (state.moveCopyTargetIds && state.moveCopyTargetIds.length > 0)
+        ? state.moveCopyTargetIds.filter(id => allPhotoIds.includes(id))
+        : [...allPhotoIds];
+
+      state.fusionAlbums.push({
+        albumName: sourceAlbum,
+        color: color,
+        allPhotoIds: allPhotoIds,
+        selectedPhotoIds: selectedPhotoIds
+      });
+    } else {
+      // Direct photo selection context
+      const targetIds = state.moveCopyTargetIds || state.moveCopyAllSourcePhotoIds || [];
+      const selectedPhotoIds = [...targetIds];
+      state.fusionAlbums.push({
+        albumName: 'Selected Photos',
+        color: '#fbbf24',
+        allPhotoIds: [...targetIds],
+        selectedPhotoIds: selectedPhotoIds
+      });
     }
 
-    const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
-    if (destVal) {
-      destVal.textContent = validTags.length > 0 ? validTags.join(' + ') : 'Select tags below';
-      destVal.title = validTags.length > 0 ? `Target destination: ${validTags.join(' + ')}` : 'Choose destination tags below';
-    }
-
-    if (formulaLabel) {
-      formulaLabel.innerHTML = `DESTINATION COMBINATION <span style="font-size: 10px; color: #fbbf24; font-weight: 600; text-transform: none;">(for photos from '${escapeHtml(sourceAlbum)}')</span>:`;
-    }
-
-    window.renderMultiTagChain();
-    window.renderMultiTagCandidateList();
-    window.updateMultiTagIntersection();
+    state.fusionCollectionColor = '#fbbf24';
+    state.fusionUserEditedName = false;
+    state.fusionNameVariation = 0;
+    state.fusionCollectionName = window.generateSmartCollectionName(0);
   };
 
-  window.renderMultiTagChain = function() {
-    const chainRow = document.getElementById('multiTagChainRow');
-    const badge = document.getElementById('multiTagActiveBadge');
-    if (!chainRow) return;
+  // Smart collection name synthesis
+  window.generateSmartCollectionName = function(variation = 0) {
+    const albums = (state.fusionAlbums || []).map(a => a.albumName).filter(Boolean);
+    if (!albums.length) return 'New Curated Collection';
 
-    const allTags = state.tags || [];
-    const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
-    const sourceAlbum = state.moveCopySourceAlbum || (window.t ? window.t('organize_current_photos') : 'Selected Photos');
+    const clean = name => {
+      return name
+        .replace(/\b(album|photos|pictures|pics|folder|collection)\b/gi, '')
+        .replace(/[,_\-\+]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
 
-    // Update active badge in toggle header
-    if (badge) {
-      if (validTags.length > 0) {
-        badge.style.display = 'inline-block';
-        badge.textContent = `${validTags.length} ${validTags.length === 1 ? 'tag active' : 'tags combined'}`;
+    const cleaned = albums.map(clean).filter(Boolean);
+    if (!cleaned.length) return 'Curated Highlights';
+
+    const mod = Math.abs(variation) % 5;
+
+    if (cleaned.length === 1) {
+      const a = cleaned[0];
+      const patterns = [
+        `${a} Highlights`,
+        `Best of ${a}`,
+        `${a} Curated`,
+        `${a} Memories`,
+        `${a} Favorites`
+      ];
+      return patterns[mod];
+    }
+
+    if (cleaned.length === 2) {
+      const [a, b] = cleaned;
+      const patterns = [
+        `${a} & ${b} Highlights`,
+        `${a} & ${b} Memories`,
+        `Best of ${a} & ${b}`,
+        `${a} + ${b} Fusion`,
+        `${a} & ${b} Collection`
+      ];
+      return patterns[mod];
+    }
+
+    // 3 or more albums
+    const [a, b, c] = cleaned;
+    const patterns = [
+      `${a}, ${b} & More Highlights`,
+      `${a} & ${b} Memories (${cleaned.length} Albums)`,
+      `Best of ${a}, ${b} & ${c || 'Friends'}`,
+      `Grand Fusion Collection`,
+      `Curated: ${a} & ${b}`
+    ];
+    return patterns[mod];
+  };
+
+  window.rerollFusionSmartName = function() {
+    state.fusionNameVariation = (state.fusionNameVariation || 0) + 1;
+    const name = window.generateSmartCollectionName(state.fusionNameVariation);
+    state.fusionCollectionName = name;
+    state.fusionUserEditedName = false;
+
+    const input = document.getElementById('fusionCollectionNameInput');
+    if (input) {
+      input.value = name;
+      input.classList.add('pulse-glow');
+      setTimeout(() => input.classList.remove('pulse-glow'), 600);
+    }
+    window.updateFusionActionFooter();
+    showToast(`✨ Suggested: "${name}"`);
+  };
+
+  window.handleFusionNameInput = function(val) {
+    state.fusionCollectionName = val;
+    state.fusionUserEditedName = !!val.trim();
+    window.updateFusionActionFooter();
+  };
+
+  window.selectFusionColor = function(colorHex) {
+    state.fusionCollectionColor = colorHex;
+    window.renderFusionColorSwatches();
+  };
+
+  // Main Fusion Studio Renderer
+  window.renderFusionStudio = function() {
+    const albums = state.fusionAlbums || [];
+    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+
+    // 1. Update Header Badge
+    const activeBadge = document.getElementById('fusionActiveBadge');
+    if (activeBadge) {
+      const totalSelected = albums.reduce((acc, a) => acc + (a.selectedPhotoIds ? a.selectedPhotoIds.length : 0), 0);
+      const albumCount = albums.length;
+      activeBadge.textContent = albumCount > 0
+        ? `${albumCount} ${albumCount === 1 ? 'Album' : 'Albums'} · ${totalSelected} Photos`
+        : 'Merge Albums';
+    }
+
+    // 2. Render Album Cards
+    const albumsList = document.getElementById('fusionAlbumsList');
+    if (albumsList) {
+      if (!albums.length) {
+        albumsList.innerHTML = `
+          <div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 12.5px;">
+            No albums added yet. Pick an album below to start merging!
+          </div>
+        `;
       } else {
-        badge.style.display = 'inline-block';
-        badge.textContent = '0 tags chosen';
+        albumsList.innerHTML = albums.map((albumObj, albumIdx) => {
+          const { albumName, color, allPhotoIds = [], selectedPhotoIds = [] } = albumObj;
+          const selectedSet = new Set(selectedPhotoIds);
+          const albumPhotos = allPhotoIds.map(id => validPhotos.find(p => p.id === id)).filter(Boolean);
+          const allSelected = albumPhotos.length > 0 && selectedPhotoIds.length === albumPhotos.length;
+
+          // Header action buttons
+          const selectAllLabel = allSelected ? 'Deselect All' : 'Select All';
+          const selectAllIcon = allSelected ? 'fa-solid fa-square-minus' : 'fa-solid fa-check-double';
+          const canRemoveAlbum = albums.length > 1;
+
+          // Render horizontal photo rail cards
+          const thumbsHtml = albumPhotos.length > 0 ? albumPhotos.map(p => {
+            const isSelected = selectedSet.has(p.id);
+            const cardClass = isSelected ? 'fusion-photo-thumb-card selected' : 'fusion-photo-thumb-card deselected';
+            const badgeIcon = isSelected ? '<i class="fa-solid fa-check"></i>' : '';
+            const photoTitle = escapeHtml(p.displayName || 'Photo');
+
+            return `
+              <div class="${cardClass}" onclick="window.toggleFusionPhotoSelection(${albumIdx}, '${p.id}')" title="${photoTitle} (${isSelected ? 'Selected' : 'Deselected - Click to include'})">
+                <img src="${p.dataUrl}" alt="${photoTitle}" loading="lazy">
+                <div class="fusion-photo-badge">${badgeIcon}</div>
+                <div class="fusion-photo-remove-btn" onclick="event.stopPropagation(); window.removeFusionPhoto(${albumIdx}, '${p.id}')" title="Remove photo from collection">
+                  <i class="fa-solid fa-xmark"></i>
+                </div>
+              </div>
+            `;
+          }).join('') : `<div style="padding: 10px; color: var(--text-muted); font-size: 11.5px;">No photos available in this album</div>`;
+
+          const countBadgeClass = selectedPhotoIds.length > 0 ? 'fusion-album-count-badge active-count' : 'fusion-album-count-badge';
+
+          return `
+            <div class="fusion-album-card" id="fusionAlbumCard_${albumIdx}">
+              <div class="fusion-album-header">
+                <div class="fusion-album-header-left">
+                  <span class="fusion-album-num-badge">#${albumIdx + 1}</span>
+                  <span class="fusion-album-dot" style="background: ${color}; color: ${color};"></span>
+                  <span class="fusion-album-name" title="${escapeHtml(albumName)}">${escapeHtml(albumName)}</span>
+                  <span class="${countBadgeClass}">${selectedPhotoIds.length} of ${albumPhotos.length} photos</span>
+                </div>
+                <div class="fusion-album-header-right">
+                  <button type="button" class="fusion-album-select-all-btn" onclick="window.toggleFusionAlbumSelectAll(${albumIdx})">
+                    <i class="${selectAllIcon}"></i> <span>${selectAllLabel}</span>
+                  </button>
+                  ${canRemoveAlbum ? `
+                    <button type="button" class="fusion-album-remove-btn" onclick="window.removeAlbumFromFusion(${albumIdx})" title="Remove this entire album from merge">
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="fusion-album-rail">
+                ${thumbsHtml}
+              </div>
+            </div>
+          `;
+        }).join('');
       }
     }
 
-    // Render tag chips
-    const chipsHtml = validTags.map((tagName, idx) => {
-      const tagObj = allTags.find(t => t.name.toLowerCase() === String(tagName).toLowerCase());
-      const dotColor = tagObj ? tagObj.color : '#fbbf24';
+    // 3. Render Candidate Album Chips
+    window.renderFusionCandidateChips();
 
-      return `
-        <div class="multitag-tag-chip" title="${escapeHtml(tagName)}">
-          <span class="multitag-tag-dot" style="background: ${dotColor}; color: ${dotColor};"></span>
-          <span class="multitag-tag-name">${escapeHtml(tagName)}</span>
-          <button type="button" class="multitag-tag-remove" onclick="event.stopPropagation(); window.removeMultiTagChainItem(${idx});" title="Remove tag" aria-label="Remove tag">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      `;
-    }).join('');
-
-    // Check if remaining unselected tags exist
-    const selectedSet = new Set(validTags.map(t => String(t).toLowerCase()));
-    const unselectedRemaining = allTags.filter(t => !selectedSet.has(t.name.toLowerCase()));
-
-    let extraSlotHtml = '';
-    if (validTags.length === 0) {
-      extraSlotHtml = `
-        <span class="multitag-waiting-slot empty-start" id="multiTagWaitingSlot">
-          <i class="fa-solid fa-arrow-down-long" style="font-size: 11px; color: #fbbf24;"></i>
-          <span>Pick destination tags for photos from '<strong>${escapeHtml(sourceAlbum)}</strong>'</span>
-        </span>
-      `;
-    } else if (validTags.length === 1 && unselectedRemaining.length > 0) {
-      extraSlotHtml = `
-        <span class="multitag-waiting-slot" id="multiTagWaitingSlot">
-          <i class="fa-solid fa-arrow-down-long" style="font-size: 10px; color: #fbbf24;"></i>
-          <span>Select second destination tag below</span>
-        </span>
-      `;
-    } else if (validTags.length >= 2 && unselectedRemaining.length > 0) {
-      extraSlotHtml = `
-        <button type="button" class="multitag-chain-plus-btn" onclick="document.getElementById('multiTagCandidatesSection')?.scrollIntoView({ behavior: 'smooth' })" title="Add another tag" aria-label="Add another tag">
-          <i class="fa-solid fa-plus"></i>
-          <span>Add ${validTags.length + 1}th Tag...</span>
-        </button>
-      `;
+    // 4. Render Collection Name & Jewel Color Swatches
+    const nameInput = document.getElementById('fusionCollectionNameInput');
+    if (nameInput) {
+      if (!state.fusionCollectionName) {
+        state.fusionCollectionName = window.generateSmartCollectionName(state.fusionNameVariation || 0);
+      }
+      nameInput.value = state.fusionCollectionName;
     }
 
-    chainRow.innerHTML = chipsHtml + extraSlotHtml;
+    window.renderFusionColorSwatches();
+    window.updateFusionActionFooter();
   };
 
-  window.handleMultiTagPickerSearch = function(query) {
-    window.renderMultiTagCandidateList(query);
-  };
-
-  window.renderMultiTagCandidateList = function(searchQuery) {
-    const listEl = document.getElementById('multiTagCandidateList');
-    const titleEl = document.getElementById('multiTagCandidatesTitle');
-    if (!listEl) return;
+  // Render candidate albums to add
+  window.renderFusionCandidateChips = function() {
+    const chipsContainer = document.getElementById('fusionCandidateChips');
+    if (!chipsContainer) return;
 
     const allTags = state.tags || [];
-    const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
-    const selectedSet = new Set(validTags.map(t => String(t).toLowerCase()));
-    const sourceAlbum = state.moveCopySourceAlbum || (window.t ? window.t('organize_current_photos') : 'Selected Photos');
+    const addedAlbumNames = new Set((state.fusionAlbums || []).map(a => a.albumName.toLowerCase()));
+    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+    const q = (state.fusionCandidateSearch || '').trim().toLowerCase();
 
-    // STRICT EXCLUSION: If a tag is already selected in the chain, it NEVER appears in the candidates list!
-    let candidates = allTags.filter(t => !selectedSet.has(t.name.toLowerCase()));
-
-    // Title explanation clearly linking to source album
-    if (titleEl) {
-      if (validTags.length === 0) {
-        titleEl.innerHTML = `<i class="fa-solid fa-layer-group" style="color: #fbbf24; margin-right: 5px;"></i> Choose destination tags to receive '<strong>${escapeHtml(sourceAlbum)}</strong>' photos:`;
-      } else if (validTags.length === 1) {
-        titleEl.innerHTML = `Combine destination '<strong>${escapeHtml(validTags[0])}</strong>' with another tag:`;
-      } else {
-        titleEl.innerHTML = `Combine with destination '<strong>${escapeHtml(validTags.join(' + '))}</strong>':`;
-      }
-    }
-
-    const q = (searchQuery !== undefined ? searchQuery : (document.getElementById('multiTagPickerSearchInput')?.value || '')).trim().toLowerCase();
+    // Filter candidate tags: exclude already added albums
+    let candidates = allTags.filter(t => !addedAlbumNames.has(t.name.toLowerCase()));
     if (q) {
       candidates = candidates.filter(t => t.name.toLowerCase().includes(q));
     }
 
-    if (candidates.length === 0) {
-      listEl.innerHTML = `
-        <div style="text-align: center; padding: 18px 10px; color: var(--text-muted); font-size: 12.5px;">
-          ${allTags.length === validTags.length ? 'All available tags are already selected in this combination!' : 'No matching tags found.'}
+    if (!candidates.length) {
+      chipsContainer.innerHTML = `
+        <div style="font-size: 11.5px; color: var(--text-muted); padding: 6px 4px;">
+          ${allTags.length === addedAlbumNames.size ? 'All your albums are already added to this merge!' : 'No matching albums found.'}
         </div>
       `;
       return;
     }
 
-    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
-
-    listEl.innerHTML = candidates.map(candidate => {
-      // Calculate intersection count of [current valid tags] + [this candidate]
-      const hypotheticalCombination = [...validTags, candidate.name];
-      const matchCount = validPhotos.filter(p =>
-        Array.isArray(p.tags) && hypotheticalCombination.every(vt =>
-          p.tags.some(pt => pt && String(pt).toLowerCase() === String(vt).toLowerCase())
-        )
-      ).length;
-
+    chipsContainer.innerHTML = candidates.map(candidate => {
+      const matchCount = validPhotos.filter(p => Array.isArray(p.tags) && p.tags.includes(candidate.name)).length;
       const countNoun = matchCount === 1 ? 'photo' : 'photos';
-
-      let badgeHtml;
-      if (validTags.length === 0) {
-        badgeHtml = matchCount > 0
-          ? `<span class="candidate-count-badge has-photos"><i class="fa-solid fa-images"></i> ${matchCount} ${countNoun}</span>`
-          : `<span class="candidate-count-badge zero-photos">0 photos</span>`;
-      } else {
-        badgeHtml = matchCount > 0
-          ? `<span class="candidate-count-badge has-photos"><i class="fa-solid fa-sparkles"></i> ${matchCount} ${countNoun} in common</span>`
-          : `<span class="candidate-count-badge zero-photos">0 common photos</span>`;
-      }
-
-      // Safe parameter passing using encodeURIComponent to avoid quote breakage in inline handlers
-      const safeCandidateName = encodeURIComponent(candidate.name);
+      const safeName = encodeURIComponent(candidate.name);
 
       return `
-        <div class="multitag-candidate-card" 
-             data-tag-name="${escapeHtml(candidate.name)}"
-             onmouseenter="window.hoverPreviewCandidate('${safeCandidateName}')" 
-             onclick="window.pickCandidateTag('${safeCandidateName}')"
-             title="Combine with ${escapeHtml(candidate.name)}">
-          <div class="candidate-left">
-            <span class="candidate-dot" style="background: ${candidate.color}; color: ${candidate.color};"></span>
-            <span class="candidate-name">${escapeHtml(candidate.name)}</span>
-          </div>
-          ${badgeHtml}
+        <div class="fusion-candidate-chip" onclick="window.addAlbumToFusion('${safeName}')" title="Add '${escapeHtml(candidate.name)}' to collection">
+          <span class="fusion-chip-dot" style="background: ${candidate.color}; color: ${candidate.color};"></span>
+          <span class="fusion-chip-name">${escapeHtml(candidate.name)}</span>
+          <span class="fusion-chip-count">${matchCount} ${countNoun}</span>
         </div>
       `;
     }).join('');
   };
 
-  // Rock-Solid Stable Hover Preview (Zero Layout Shift - No Flickering/Fluctuation)
-  window.hoverPreviewCandidate = function(encodedCandidateTagName) {
-    const candidateTagName = decodeURIComponent(encodedCandidateTagName);
-    const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
-    const hypothetical = [...validTags, candidateTagName];
+  window.handleFusionAlbumSearch = function(query) {
+    state.fusionCandidateSearch = query || '';
+    window.renderFusionCandidateChips();
+  };
 
-    // Highlight the hovered card with glowing cyan accent
-    document.querySelectorAll('.multitag-candidate-card').forEach(card => {
-      if (card.getAttribute('data-tag-name') === candidateTagName) {
-        card.classList.add('hover-active');
+  // Add album to the merge queue
+  window.addAlbumToFusion = function(encodedAlbumName) {
+    const albumName = decodeURIComponent(encodedAlbumName);
+    if (!Array.isArray(state.fusionAlbums)) state.fusionAlbums = [];
+
+    // Avoid duplicates
+    if (state.fusionAlbums.some(a => a.albumName.toLowerCase() === albumName.toLowerCase())) return;
+
+    const tagObj = (state.tags || []).find(t => t.name.toLowerCase() === albumName.toLowerCase());
+    const color = tagObj ? tagObj.color : '#3b82f6';
+    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
+    const albumPhotos = validPhotos.filter(p => Array.isArray(p.tags) && p.tags.includes(albumName));
+    const allPhotoIds = albumPhotos.map(p => p.id);
+
+    state.fusionAlbums.push({
+      albumName,
+      color,
+      allPhotoIds,
+      selectedPhotoIds: [...allPhotoIds] // default all selected for this new album
+    });
+
+    // Update smart name unless user explicitly typed a custom name
+    if (!state.fusionUserEditedName) {
+      state.fusionCollectionName = window.generateSmartCollectionName(state.fusionNameVariation || 0);
+    }
+
+    state.fusionCandidateSearch = '';
+    const searchInput = document.getElementById('fusionAlbumSearchInput');
+    if (searchInput) searchInput.value = '';
+
+    window.renderFusionStudio();
+
+    // Scroll smoothly to newly added album card
+    setTimeout(() => {
+      const newIdx = state.fusionAlbums.length - 1;
+      const card = document.getElementById(`fusionAlbumCard_${newIdx}`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+
+    showToast(`✨ Added album '${albumName}' (${allPhotoIds.length} photos) to collection!`);
+  };
+
+  // Remove album from the merge queue
+  window.removeAlbumFromFusion = function(albumIdx) {
+    if (!Array.isArray(state.fusionAlbums) || !state.fusionAlbums[albumIdx]) return;
+    const removedName = state.fusionAlbums[albumIdx].albumName;
+    state.fusionAlbums.splice(albumIdx, 1);
+
+    if (!state.fusionUserEditedName) {
+      state.fusionCollectionName = window.generateSmartCollectionName(state.fusionNameVariation || 0);
+    }
+
+    window.renderFusionStudio();
+    showToast(`Removed '${removedName}' from merge.`);
+  };
+
+  // Toggle selection of photo within an album
+  window.toggleFusionPhotoSelection = function(albumIdx, photoId) {
+    const album = (state.fusionAlbums || [])[albumIdx];
+    if (!album) return;
+    if (!Array.isArray(album.selectedPhotoIds)) album.selectedPhotoIds = [];
+
+    const idx = album.selectedPhotoIds.indexOf(photoId);
+    if (idx >= 0) {
+      album.selectedPhotoIds.splice(idx, 1);
+    } else {
+      album.selectedPhotoIds.push(photoId);
+    }
+
+    window.renderFusionStudio();
+  };
+
+  // Remove photo from album's pool
+  window.removeFusionPhoto = function(albumIdx, photoId) {
+    const album = (state.fusionAlbums || [])[albumIdx];
+    if (!album) return;
+
+    if (album.allPhotoIds) {
+      album.allPhotoIds = album.allPhotoIds.filter(id => id !== photoId);
+    }
+    if (album.selectedPhotoIds) {
+      album.selectedPhotoIds = album.selectedPhotoIds.filter(id => id !== photoId);
+    }
+
+    window.renderFusionStudio();
+  };
+
+  // Toggle Select All / Deselect All for an individual album
+  window.toggleFusionAlbumSelectAll = function(albumIdx) {
+    const album = (state.fusionAlbums || [])[albumIdx];
+    if (!album) return;
+
+    const allIds = album.allPhotoIds || [];
+    const selectedIds = album.selectedPhotoIds || [];
+
+    if (selectedIds.length === allIds.length && allIds.length > 0) {
+      album.selectedPhotoIds = [];
+    } else {
+      album.selectedPhotoIds = [...allIds];
+    }
+
+    window.renderFusionStudio();
+  };
+
+  // Color Swatch Selector
+  window.renderFusionColorSwatches = function() {
+    const swatchesContainer = document.getElementById('fusionColorSwatches');
+    if (!swatchesContainer) return;
+
+    const activeColor = (state.fusionCollectionColor || '#fbbf24').toLowerCase();
+
+    swatchesContainer.innerHTML = FUSION_JEWEL_COLORS.map(swatch => {
+      const isActive = swatch.hex.toLowerCase() === activeColor;
+      const activeClass = isActive ? 'fusion-color-swatch active' : 'fusion-color-swatch';
+      return `
+        <div class="${activeClass}" 
+             style="background: ${swatch.hex}; color: ${swatch.hex};" 
+             onclick="window.selectFusionColor('${swatch.hex}')" 
+             title="${swatch.name}">
+        </div>
+      `;
+    }).join('');
+  };
+
+  // Update summary & CTA Forge Button state
+  window.updateFusionActionFooter = function() {
+    const summary = document.getElementById('fusionTotalSummary');
+    const createBtn = document.getElementById('fusionCreateBtn');
+    const createBtnText = document.getElementById('fusionCreateBtnText');
+    const albums = state.fusionAlbums || [];
+
+    // Deduplicate selected photo IDs across all albums
+    const allSelectedPhotoIds = new Set();
+    albums.forEach(a => {
+      (a.selectedPhotoIds || []).forEach(id => allSelectedPhotoIds.add(id));
+    });
+
+    const totalSelectedCount = allSelectedPhotoIds.size;
+    const albumCount = albums.length;
+    const photoNoun = totalSelectedCount === 1 ? 'photo' : 'photos';
+    const albumNoun = albumCount === 1 ? 'album' : 'albums';
+
+    if (summary) {
+      summary.innerHTML = `<i class="fa-solid fa-sparkles" style="color: #fbbf24; margin-right: 4px;"></i> Total: <strong style="color: #ffffff;">${totalSelectedCount}</strong> curated ${photoNoun} from <strong style="color: #ffffff;">${albumCount}</strong> ${albumNoun}`;
+    }
+
+    const collectionName = (state.fusionCollectionName || '').trim();
+    const canCreate = totalSelectedCount > 0 && collectionName.length > 0;
+
+    if (createBtn) {
+      createBtn.disabled = !canCreate;
+    }
+    if (createBtnText) {
+      if (!collectionName) {
+        createBtnText.textContent = 'Enter Collection Name';
+      } else if (totalSelectedCount === 0) {
+        createBtnText.textContent = 'Select Photos to Forge';
       } else {
-        card.classList.remove('hover-active');
+        const shortName = collectionName.length > 20 ? collectionName.substring(0, 18) + '...' : collectionName;
+        createBtnText.textContent = `Forge Collection: "${shortName}" (${totalSelectedCount})`;
+      }
+    }
+  };
+
+  // Master Action: Create the new collection with all curated selections
+  window.executeCollectionFusion = function() {
+    const collectionName = (state.fusionCollectionName || '').trim();
+    if (!collectionName) {
+      showToast('Please provide a name for your new collection.');
+      document.getElementById('fusionCollectionNameInput')?.focus();
+      return;
+    }
+
+    const albums = state.fusionAlbums || [];
+    const allSelectedPhotoIds = new Set();
+    albums.forEach(a => {
+      (a.selectedPhotoIds || []).forEach(id => allSelectedPhotoIds.add(id));
+    });
+
+    const uniqueIds = Array.from(allSelectedPhotoIds);
+    if (!uniqueIds.length) {
+      showToast('Please select at least 1 photo across your chosen albums.');
+      return;
+    }
+
+    // Ensure tag exists in global tags list
+    let tag = (state.tags || []).find(t => t.name.toLowerCase() === collectionName.toLowerCase());
+    const now = Date.now();
+    if (!tag) {
+      tag = {
+        name: collectionName,
+        color: state.fusionCollectionColor || '#fbbf24',
+        createdAt: now,
+        lastModifiedAt: now,
+        lastViewedAt: now,
+        isFavorite: false
+      };
+      state.tags.push(tag);
+    } else {
+      // Update its color and timestamp
+      tag.color = state.fusionCollectionColor || tag.color || '#fbbf24';
+      tag.lastModifiedAt = now;
+    }
+
+    // Snapshot previous photo tags for undo
+    const previousSnapshots = uniqueIds.map(id => {
+      const p = (state.photos || []).find(item => item.id === id);
+      return p ? { id, tags: [...p.tags], category: p.category } : null;
+    }).filter(Boolean);
+
+    // Apply new collection tag to all selected photos
+    let taggedCount = 0;
+    uniqueIds.forEach(id => {
+      const photo = (state.photos || []).find(p => p.id === id);
+      if (!photo) return;
+      taggedCount++;
+
+      if (!Array.isArray(photo.tags)) photo.tags = [];
+      if (!photo.tags.includes(collectionName)) {
+        photo.tags.push(collectionName);
+      }
+      if (!photo.category || photo.category === 'Import') {
+        photo.category = collectionName;
       }
     });
 
-    // Calculate matching photos
-    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
-    const matchingPhotos = validPhotos.filter(p =>
-      Array.isArray(p.tags) && hypothetical.every(vt =>
-        p.tags.some(pt => pt && String(pt).toLowerCase() === String(vt).toLowerCase())
-      )
-    );
-    const matchCount = matchingPhotos.length;
-    const countNoun = matchCount === 1 ? 'photo' : 'photos';
+    saveState();
 
-    // 1. Update hint in candidates header (compact & fixed-width friendly)
-    const hoverHint = document.getElementById('multiTagHoverHint');
-    if (hoverHint) {
-      hoverHint.innerHTML = `<span class="multitag-hover-hint-active"><i class="fa-solid fa-eye"></i> ${matchCount} ${countNoun} match</span>`;
+    // Close the organize modal
+    window.closeMoveCopyModal(collectionName);
+
+    // If albums screen is active, refresh it and highlight new collection
+    if (typeof renderAlbumsScreen === 'function') {
+      renderAlbumsScreen();
+    }
+    if (typeof window.highlightReturnedAlbumCard === 'function') {
+      setTimeout(() => {
+        window.highlightReturnedAlbumCard(collectionName);
+      }, 100);
     }
 
-    // 2. Update destination value in Source-to-Destination Banner
-    const destVal = document.getElementById('multiTagDestVal');
-    if (destVal) {
-      destVal.innerHTML = `<span style="color: #38bdf8;"><i class="fa-solid fa-eye" style="font-size: 10px; margin-right: 4px;"></i>${escapeHtml(hypothetical.join(' + '))} (Preview)</span>`;
-    }
-
-    // 3. Update the formula row slot in-place (ZERO layout shift!)
-    const slot = document.getElementById('multiTagWaitingSlot');
-    if (slot) {
-      slot.className = 'multitag-waiting-slot preview-mode';
-      if (validTags.length === 0) {
-        slot.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 11px; color: #38bdf8;"></i> <span>Preview: <strong style="color: #38bdf8;">${escapeHtml(candidateTagName)}</strong> (${matchCount} ${countNoun})</span>`;
-      } else {
-        slot.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 11px; color: #38bdf8;"></i> <span>+ <strong style="color: #38bdf8;">${escapeHtml(candidateTagName)}</strong> (${matchCount} common)</span>`;
-      }
-    }
-
-    // 4. If 2+ tags are already confirmed, result card is already visible and we safely preview 3rd+ tag
-    if (validTags.length >= 2) {
-      const card = document.getElementById('multiTagResultCard');
-      const dotStack = document.getElementById('multiTagDotStack');
-      const label = document.getElementById('multiTagResultLabel');
-      const countEl = document.getElementById('multiTagResultCount');
-      const thumbsRail = document.getElementById('multiTagMatchingThumbs');
-      if (card) {
-        card.classList.add('hover-previewing');
-        if (dotStack) {
-          const allTags = state.tags || [];
-          dotStack.innerHTML = hypothetical.map(t => {
-            const tagObj = allTags.find(tag => tag.name.toLowerCase() === String(t).toLowerCase());
-            const color = tagObj ? tagObj.color : '#fbbf24';
-            return `<span class="multitag-stack-dot" style="background: ${color};" title="${escapeHtml(t)}"></span>`;
-          }).join('');
-        }
-        if (label) {
-          label.innerHTML = `<i class="fa-solid fa-eye" style="color: #38bdf8; margin-right: 4px;"></i> Preview adding: <strong>${escapeHtml(candidateTagName)}</strong> (Total: ${escapeHtml(hypothetical.join(' + '))})`;
-        }
-        if (countEl) {
-          countEl.textContent = `${matchCount} ${countNoun} match combination`;
-        }
-        if (thumbsRail) {
-          if (matchingPhotos.length > 0) {
-            thumbsRail.style.display = 'flex';
-            const maxThumbs = 6;
-            const displayThumbs = matchingPhotos.slice(0, maxThumbs);
-            const extraCount = matchingPhotos.length - displayThumbs.length;
-            let thumbsHtml = displayThumbs.map(p => `
-              <img src="${p.dataUrl}" alt="${escapeHtml(p.displayName || 'Photo')}" class="multitag-match-thumb" title="${escapeHtml(p.displayName || '')}">
-            `).join('');
-            if (extraCount > 0) {
-              thumbsHtml += `<div class="multitag-match-more">+${extraCount}</div>`;
+    // Push undo action
+    if (typeof pushUndoAction === 'function') {
+      pushUndoAction({
+        description: `Create Collection '${collectionName}'`,
+        undo: () => {
+          previousSnapshots.forEach(snap => {
+            const p = state.photos.find(item => item.id === snap.id);
+            if (p) {
+              p.tags = [...snap.tags];
+              p.category = snap.category;
             }
-            thumbsRail.innerHTML = thumbsHtml;
-          } else {
-            thumbsRail.style.display = 'none';
-            thumbsRail.innerHTML = '';
-          }
+          });
+          // Remove created tag if it didn't exist before
+          saveState();
+          if (typeof renderAlbumsScreen === 'function') renderAlbumsScreen();
+          showToast(`Reverted creation of collection '${collectionName}'`);
         }
-      }
-    }
-  };
-
-  window.clearCandidateHoverPreview = function() {
-    // Remove hover card highlight
-    document.querySelectorAll('.multitag-candidate-card').forEach(card => card.classList.remove('hover-active'));
-
-    const hoverHint = document.getElementById('multiTagHoverHint');
-    if (hoverHint) {
-      hoverHint.innerHTML = `<i class="fa-solid fa-arrow-pointer"></i> Hover to preview`;
+      });
     }
 
-    // Restore destination banner text
-    const destVal = document.getElementById('multiTagDestVal');
-    const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
-    if (destVal) {
-      destVal.textContent = validTags.length > 0 ? validTags.join(' + ') : 'Select tags below';
-    }
-
-    // Revert chain row waiting slot in place (ZERO layout shift / NO full chain DOM teardown)
-    const slot = document.getElementById('multiTagWaitingSlot');
-    if (slot) {
-      slot.className = validTags.length === 0 ? 'multitag-waiting-slot empty-start' : 'multitag-waiting-slot';
-      const sourceAlbum = state.moveCopySourceAlbum || (window.t ? window.t('organize_current_photos') : 'Selected Photos');
-      if (validTags.length === 0) {
-        slot.innerHTML = `
-          <i class="fa-solid fa-arrow-down-long" style="font-size: 11px; color: #fbbf24;"></i>
-          <span>Pick destination tags for photos from '<strong>${escapeHtml(sourceAlbum)}</strong>'</span>
-        `;
-      } else if (validTags.length === 1) {
-        slot.innerHTML = `
-          <i class="fa-solid fa-arrow-down-long" style="font-size: 10px; color: #fbbf24;"></i>
-          <span>Select second destination tag below</span>
-        `;
-      }
-    }
-
-    // Revert result card if 2+ tags selected
-    if (validTags.length >= 2) {
-      window.updateMultiTagIntersection();
-    }
-  };
-
-  window.pickCandidateTag = function(encodedCandidateTagName) {
-    const candidateTagName = decodeURIComponent(encodedCandidateTagName);
-    if (!Array.isArray(state.moveCopyMultiTags)) state.moveCopyMultiTags = [];
-
-    if (!state.moveCopyMultiTags.some(t => String(t).toLowerCase() === candidateTagName.toLowerCase())) {
-      state.moveCopyMultiTags.push(candidateTagName);
-    }
-
-    const validTags = state.moveCopyMultiTags.filter(t => t && String(t).trim().length > 0);
-
-    // If at least 2 tags are now chosen, automatically set as combined destination!
-    if (validTags.length >= 2) {
-      state.moveCopyIsMultiTagDest = true;
-      state.moveCopyDestinationTags = [...validTags];
-      state.moveCopyDestinationAlbum = validTags.join(' + ');
-      updateMoveCopyConfirmButton();
-      showToast(`✨ Combined '${state.moveCopyDestinationAlbum}' as destination!`);
-    } else {
-      state.moveCopyIsMultiTagDest = false;
-      state.moveCopyDestinationAlbum = null;
-      state.moveCopyDestinationTags = null;
-      updateMoveCopyConfirmButton();
-    }
-
-    // Capture scroll positions before re-rendering
-    const candidateList = document.getElementById('multiTagCandidateList');
-    const builderBody = document.getElementById('multiTagBuilderBody');
-    const prevListScroll = candidateList ? candidateList.scrollTop : 0;
-    const prevBodyScroll = builderBody ? builderBody.scrollTop : 0;
-
-    window.clearCandidateHoverPreview();
-    window.renderMultiTagStudio();
-    window.renderMoveCopyAlbumsList();
-
-    // Restore scroll positions to prevent any scroll jump or flicker
-    const newCandidateList = document.getElementById('multiTagCandidateList');
-    const newBuilderBody = document.getElementById('multiTagBuilderBody');
-    if (newCandidateList) newCandidateList.scrollTop = prevListScroll;
-    if (newBuilderBody) newBuilderBody.scrollTop = prevBodyScroll;
-  };
-
-  window.removeMultiTagChainItem = function(idx) {
-    if (!Array.isArray(state.moveCopyMultiTags)) return;
-    state.moveCopyMultiTags.splice(idx, 1);
-
-    const validTags = state.moveCopyMultiTags.filter(t => t && String(t).trim().length > 0);
-    if (validTags.length < 2) {
-      state.moveCopyIsMultiTagDest = false;
-      state.moveCopyDestinationAlbum = null;
-      state.moveCopyDestinationTags = null;
-      updateMoveCopyConfirmButton();
-    } else {
-      state.moveCopyIsMultiTagDest = true;
-      state.moveCopyDestinationTags = [...validTags];
-      state.moveCopyDestinationAlbum = validTags.join(' + ');
-      updateMoveCopyConfirmButton();
-    }
-
-    window.clearCandidateHoverPreview();
-    window.renderMultiTagStudio();
-    window.renderMoveCopyAlbumsList();
-  };
-
-  window.updateMultiTagIntersection = function() {
-    const card = document.getElementById('multiTagResultCard');
-    const dotStack = document.getElementById('multiTagDotStack');
-    const label = document.getElementById('multiTagResultLabel');
-    const countEl = document.getElementById('multiTagResultCount');
-    const selectDestBtn = document.getElementById('multiTagSelectDestBtn');
-    const selectBtnText = document.getElementById('multiTagSelectBtnText');
-    const thumbsRail = document.getElementById('multiTagMatchingThumbs');
-    const container = document.getElementById('moveCopyMultiTagContainer');
-
-    if (!card) return;
-
-    const validTags = (state.moveCopyMultiTags || []).filter(t => t && String(t).trim().length > 0);
-
-    if (validTags.length < 2) {
-      card.style.display = 'none';
-      if (container) container.classList.remove('highlighted-dest');
-      return;
-    }
-
-    card.style.display = 'block';
-
-    // Dot stack
-    if (dotStack) {
-      const allTags = state.tags || [];
-      dotStack.innerHTML = validTags.map(t => {
-        const tagObj = allTags.find(tag => tag.name.toLowerCase() === String(t).toLowerCase());
-        const color = tagObj ? tagObj.color : '#fbbf24';
-        return `<span class="multitag-stack-dot" style="background: ${color};" title="${escapeHtml(t)}"></span>`;
-      }).join('');
-    }
-
-    // Label
-    if (label) {
-      label.innerHTML = validTags.length === 2
-        ? `Both tags match: <strong>${escapeHtml(validTags.join(' + '))}</strong>`
-        : `All ${validTags.length} tags match: <strong>${escapeHtml(validTags.join(' + '))}</strong>`;
-    }
-
-    // Calculate intersection
-    const validPhotos = (state.photos || []).filter(p => !p.isPending && !p.deletedAt);
-    const matchingPhotos = validPhotos.filter(p =>
-      Array.isArray(p.tags) && validTags.every(vt =>
-        p.tags.some(pt => pt && String(pt).toLowerCase() === String(vt).toLowerCase())
-      )
-    );
-
-    if (countEl) {
-      if (matchingPhotos.length === 0) {
-        countEl.textContent = '0 photos currently match all tags';
-      } else {
-        const countNoun = matchingPhotos.length === 1 ? 'photo' : 'photos';
-        countEl.textContent = `${matchingPhotos.length} ${countNoun} match`;
-      }
-    }
-
-    // Thumbnails
-    if (thumbsRail) {
-      if (matchingPhotos.length > 0) {
-        thumbsRail.style.display = 'flex';
-        const maxThumbs = 6;
-        const displayThumbs = matchingPhotos.slice(0, maxThumbs);
-        const extraCount = matchingPhotos.length - displayThumbs.length;
-
-        let thumbsHtml = displayThumbs.map(p => `
-          <img src="${p.dataUrl}" alt="${escapeHtml(p.displayName || 'Photo')}" class="multitag-match-thumb" title="${escapeHtml(p.displayName || '')}">
-        `).join('');
-
-        if (extraCount > 0) {
-          thumbsHtml += `<div class="multitag-match-more">+${extraCount}</div>`;
-        }
-        thumbsRail.innerHTML = thumbsHtml;
-      } else {
-        thumbsRail.style.display = 'none';
-        thumbsRail.innerHTML = '';
-      }
-    }
-
-    // Destination button state
-    const isSelectedDest = !!state.moveCopyIsMultiTagDest;
-    if (card) card.classList.toggle('active-destination', isSelectedDest);
-    if (container) container.classList.toggle('highlighted-dest', isSelectedDest);
-    if (selectDestBtn) selectDestBtn.classList.toggle('selected', isSelectedDest);
-    if (selectBtnText) {
-      selectBtnText.textContent = isSelectedDest
-        ? 'Destination Selected'
-        : 'Select Combined Destination';
-    }
-  };
-
-  window.selectMultiTagAsDestination = function() {
-    const validTags = (state.moveCopyMultiTags || []).filter(t => t && t.trim().length > 0);
-    if (validTags.length < 2) {
-      showToast('Select at least 2 tags to create a combined destination!');
-      return;
-    }
-
-    state.moveCopyIsMultiTagDest = true;
-    state.moveCopyDestinationTags = [...validTags];
-    state.moveCopySelectedDestinations = [...validTags];
-    state.moveCopyDestinationAlbum = validTags.join(' + ');
-
-    window.updateMultiTagIntersection();
-    updateMoveCopyConfirmButton();
-    window.renderMoveCopyAlbumsList();
-
-    showToast(`✨ Selected combined destination: '${state.moveCopyDestinationAlbum}'`);
+    showToast(`✨ Forged new collection "${collectionName}" with ${taggedCount} curated photos from ${albums.length} albums!`, 4000);
   };
 
   window.executeMoveCopyAction = function() {

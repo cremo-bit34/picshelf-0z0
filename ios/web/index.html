@@ -2374,17 +2374,17 @@
             </button>
           </div>
 
-          <!-- Multi-Tag Album Intersection Studio (Luxury VIP Feature) -->
-          <div class="move-copy-multitag-container" id="moveCopyMultiTagContainer">
+          <!-- Multi-Album Merge / Collection Fusion Studio (Luxury VIP Feature) -->
+          <div class="move-copy-multitag-container move-copy-fusion-container" id="moveCopyMultiTagContainer">
             <!-- Header Toggle Bar -->
-            <button type="button" class="multitag-toggle-btn" id="multiTagToggleBtn" onclick="toggleMultiTagBuilder()" aria-expanded="false">
+            <button type="button" class="multitag-toggle-btn fusion-toggle-btn" id="multiTagToggleBtn" onclick="toggleFusionStudio()" aria-expanded="false">
               <div class="multitag-toggle-left">
-                <span class="multitag-icon-badge">
-                  <i class="fa-solid fa-layer-group"></i>
+                <span class="multitag-icon-badge fusion-icon-badge">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
                 </span>
                 <div class="multitag-title-wrap">
-                  <span class="multitag-title" id="multiTagHeaderTitle">Multi-Tag Studio</span>
-                  <span class="multitag-badge" id="multiTagActiveBadge" style="display: none;">0 tags</span>
+                  <span class="multitag-title" id="multiTagHeaderTitle">Collection Fusion Studio</span>
+                  <span class="multitag-badge fusion-active-badge" id="fusionActiveBadge">Merge Albums</span>
                 </div>
               </div>
               <div class="multitag-toggle-right">
@@ -2394,62 +2394,79 @@
             </button>
 
             <!-- Spacious Luxury Studio Body -->
-            <div class="multitag-builder-body" id="multiTagBuilderBody" style="display: none;">
-              <!-- Source to Destination Context Banner -->
-              <div class="multitag-source-context-banner" id="multiTagSourceBanner">
-                <div class="context-banner-item source-item">
-                  <span class="context-banner-label"><i class="fa-solid fa-box-archive" style="font-size: 10px; margin-right: 3px;"></i> Source Album</span>
-                  <span class="context-banner-val" id="multiTagSourceVal">Current Photos</span>
+            <div class="multitag-builder-body fusion-builder-body" id="multiTagBuilderBody" style="display: none;">
+              <!-- Luxury Studio Intro Banner -->
+              <div class="fusion-hero-banner">
+                <div class="fusion-hero-title">
+                  <i class="fa-solid fa-sparkles" style="color: #fbbf24;"></i> Hand-Pick & Merge Across Albums
                 </div>
-                <div class="context-banner-arrow">
-                  <i class="fa-solid fa-arrow-right-long"></i>
-                </div>
-                <div class="context-banner-item dest-item">
-                  <span class="context-banner-label"><i class="fa-solid fa-bullseye" style="font-size: 10px; margin-right: 3px;"></i> Target Destination</span>
-                  <span class="context-banner-val" id="multiTagDestVal">Choose below</span>
+                <div class="fusion-hero-subtitle">
+                  Select special photos from your source album, add Album 2 & 3, curate shots from each, and forge a brand new luxury collection.
                 </div>
               </div>
 
-              <!-- Formula Row: Selected Tags & Connectors -->
-              <div class="multitag-formula-section">
-                <div class="multitag-section-label" id="multiTagFormulaLabel">Active Destination Combination:</div>
-                <div class="multitag-chain-row" id="multiTagChainRow">
-                  <!-- Rendered by JS: Chips for Tag 1, Tag 2, Tag 3 + Plus Button -->
-                </div>
+              <!-- List of Merged Album Cards with Individual Photo Preview Rails -->
+              <div class="fusion-albums-list" id="fusionAlbumsList">
+                <!-- Rendered dynamically by JS:
+                     Each album card contains:
+                     - Header: Album dot, Album Name, "X of Y photos selected", Select/Deselect All button, Remove album [×] button
+                     - Photo preview rail: Swipeable horizontal cards with glowing checkmarks, recognizable deselected state, and ruby [×] buttons
+                -->
               </div>
 
-              <!-- Live Preview / Destination Summary Card -->
-              <div class="multitag-result-card" id="multiTagResultCard" style="display: none;">
-                <div class="multitag-result-header">
-                  <div class="multitag-result-info">
-                    <span class="multitag-result-dot-stack" id="multiTagDotStack"></span>
-                    <div>
-                      <div class="multitag-result-label" id="multiTagResultLabel">Both tags match:</div>
-                      <div class="multitag-result-count" id="multiTagResultCount">0 photos match</div>
-                    </div>
+              <!-- Add Another Album to Merge Section -->
+              <div class="fusion-add-album-section" id="fusionAddAlbumSection">
+                <div class="fusion-add-album-header">
+                  <div class="fusion-add-album-title">
+                    <i class="fa-solid fa-circle-plus" style="color: #fbbf24;"></i> Add Album to Merge (Album 2, 3...)
                   </div>
-                  <button type="button" class="multitag-select-btn" id="multiTagSelectDestBtn" onclick="selectMultiTagAsDestination()">
-                    <i class="fa-solid fa-check"></i> <span id="multiTagSelectBtnText" data-i18n="organize_multitag_select_dest">Select Destination</span>
+                  <span class="fusion-add-hint">Tap any album to add</span>
+                </div>
+                <!-- Search filter for candidate albums -->
+                <div class="multitag-picker-search-wrap fusion-search-wrap">
+                  <i class="fa-solid fa-magnifying-glass multitag-picker-search-icon"></i>
+                  <input type="text" class="multitag-picker-search-input" id="fusionAlbumSearchInput" placeholder="Filter albums to add to collection..." oninput="handleFusionAlbumSearch(this.value)">
+                </div>
+                <!-- Candidate Album Chips -->
+                <div class="fusion-candidate-chips" id="fusionCandidateChips">
+                  <!-- Rendered dynamically by JS: Clickable candidate chips -->
+                </div>
+              </div>
+
+              <!-- Forge Collection Settings Card -->
+              <div class="fusion-forge-card" id="fusionForgeCard">
+                <div class="fusion-forge-header">
+                  <span class="fusion-forge-title"><i class="fa-solid fa-gem" style="color: #fbbf24;"></i> New Collection Details</span>
+                </div>
+
+                <!-- Collection Name Input with Smart Auto-Name Generator -->
+                <div class="fusion-name-input-group">
+                  <div class="fusion-input-wrap">
+                    <i class="fa-solid fa-wand-magic-sparkles fusion-input-icon"></i>
+                    <input type="text" id="fusionCollectionNameInput" class="fusion-name-input" placeholder="Name your new collection..." oninput="handleFusionNameInput(this.value)">
+                  </div>
+                  <button type="button" class="fusion-autoname-btn" id="fusionAutoNameBtn" onclick="rerollFusionSmartName()" title="Generate smart name suggestion">
+                    <i class="fa-solid fa-sparkles"></i> <span>Auto-Name</span>
                   </button>
                 </div>
-                <!-- Thumbnail Rail of Matching Intersection Photos -->
-                <div class="multitag-matching-thumbs" id="multiTagMatchingThumbs" style="display: none;"></div>
-              </div>
 
-              <!-- Available Tags to Combine (Directly Visible - No Hidden Sub-Drawers) -->
-              <div class="multitag-candidates-section" id="multiTagCandidatesSection">
-                <div class="multitag-candidates-header">
-                  <span class="multitag-candidates-title" id="multiTagCandidatesTitle">Select Tag to Combine:</span>
-                  <span class="multitag-hover-hint" id="multiTagHoverHint"><i class="fa-solid fa-arrow-pointer"></i> Hover to preview</span>
+                <!-- Luxury Jewel Color Swatches -->
+                <div class="fusion-color-section">
+                  <div class="fusion-color-label">Collection Accent:</div>
+                  <div class="fusion-color-swatches" id="fusionColorSwatches">
+                    <!-- Rendered dynamically by JS: Swatches with glowing active state -->
+                  </div>
                 </div>
-                <!-- Search filter for tags -->
-                <div class="multitag-picker-search-wrap">
-                  <i class="fa-solid fa-magnifying-glass multitag-picker-search-icon"></i>
-                  <input type="text" class="multitag-picker-search-input" id="multiTagPickerSearchInput" placeholder="Filter available tags..." oninput="handleMultiTagPickerSearch(this.value)">
-                </div>
-                <!-- Scrollable Candidate Cards with Live Counts -->
-                <div class="multitag-candidate-list" id="multiTagCandidateList" onmouseleave="clearCandidateHoverPreview()">
-                  <!-- Rendered by JS: Candidates with photo counts & hover events -->
+
+                <!-- Master Summary & Create Collection CTA Button -->
+                <div class="fusion-action-footer">
+                  <div class="fusion-total-summary" id="fusionTotalSummary">
+                    0 photos selected from 0 albums
+                  </div>
+                  <button type="button" class="btn btn-primary fusion-create-btn" id="fusionCreateBtn" onclick="executeCollectionFusion()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span id="fusionCreateBtnText">Create Collection</span>
+                  </button>
                 </div>
               </div>
             </div>

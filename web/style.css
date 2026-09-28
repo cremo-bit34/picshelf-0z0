@@ -10973,6 +10973,9 @@ body.light-mode .album-cover-add-btn {
 
 /* Unified Sexy Golden Luxury Scrollbar Engine */
 .multitag-builder-body::-webkit-scrollbar,
+.fusion-builder-body::-webkit-scrollbar,
+.fusion-album-rail::-webkit-scrollbar,
+.fusion-candidate-chips::-webkit-scrollbar,
 #moveCopyModal .dialog-card::-webkit-scrollbar,
 .luxury-dialog::-webkit-scrollbar,
 .multitag-candidate-list::-webkit-scrollbar,
@@ -10985,6 +10988,9 @@ body.light-mode .album-cover-add-btn {
 }
 
 .multitag-builder-body::-webkit-scrollbar-button,
+.fusion-builder-body::-webkit-scrollbar-button,
+.fusion-album-rail::-webkit-scrollbar-button,
+.fusion-candidate-chips::-webkit-scrollbar-button,
 #moveCopyModal .dialog-card::-webkit-scrollbar-button,
 .luxury-dialog::-webkit-scrollbar-button,
 .multitag-candidate-list::-webkit-scrollbar-button,
@@ -10998,6 +11004,9 @@ body.light-mode .album-cover-add-btn {
 }
 
 .multitag-builder-body::-webkit-scrollbar-track,
+.fusion-builder-body::-webkit-scrollbar-track,
+.fusion-album-rail::-webkit-scrollbar-track,
+.fusion-candidate-chips::-webkit-scrollbar-track,
 #moveCopyModal .dialog-card::-webkit-scrollbar-track,
 .luxury-dialog::-webkit-scrollbar-track,
 .multitag-candidate-list::-webkit-scrollbar-track,
@@ -11011,6 +11020,9 @@ body.light-mode .album-cover-add-btn {
 }
 
 .multitag-builder-body::-webkit-scrollbar-thumb,
+.fusion-builder-body::-webkit-scrollbar-thumb,
+.fusion-album-rail::-webkit-scrollbar-thumb,
+.fusion-candidate-chips::-webkit-scrollbar-thumb,
 #moveCopyModal .dialog-card::-webkit-scrollbar-thumb,
 .luxury-dialog::-webkit-scrollbar-thumb,
 .multitag-candidate-list::-webkit-scrollbar-thumb,
@@ -11024,6 +11036,9 @@ body.light-mode .album-cover-add-btn {
 }
 
 .multitag-builder-body::-webkit-scrollbar-thumb:hover,
+.fusion-builder-body::-webkit-scrollbar-thumb:hover,
+.fusion-album-rail::-webkit-scrollbar-thumb:hover,
+.fusion-candidate-chips::-webkit-scrollbar-thumb:hover,
 #moveCopyModal .dialog-card::-webkit-scrollbar-thumb:hover,
 .luxury-dialog::-webkit-scrollbar-thumb:hover,
 .multitag-candidate-list::-webkit-scrollbar-thumb:hover,
@@ -11035,469 +11050,578 @@ body.light-mode .album-cover-add-btn {
   box-shadow: 0 0 14px rgba(251, 191, 36, 0.9);
 }
 
-/* Formula Row */
-.multitag-formula-section {
-  margin-bottom: 12px;
+/* ========================================================
+   COLLECTION FUSION STUDIO (LUXURY MULTI-ALBUM MERGE SYSTEM)
+   ======================================================== */
+.fusion-builder-body {
+  padding: 14px 12px 32px 12px;
+  max-height: min(520px, 60vh);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.multitag-section-label {
-  font-size: 11px;
+.fusion-hero-banner {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14) 0%, rgba(244, 63, 94, 0.08) 50%, rgba(30, 41, 59, 0.6) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.fusion-hero-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.fusion-hero-subtitle {
+  font-size: 11.5px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+/* List of Merged Albums */
+.fusion-albums-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+/* Individual Merged Album Card */
+.fusion-album-card {
+  background: linear-gradient(145deg, rgba(26, 35, 60, 0.85) 0%, rgba(15, 23, 42, 0.92) 100%);
+  border: 1.5px solid rgba(251, 191, 36, 0.3);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fusion-album-card:hover {
+  border-color: rgba(251, 191, 36, 0.55);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.42), 0 0 14px rgba(251, 191, 36, 0.15);
+}
+
+.fusion-album-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.fusion-album-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fusion-album-num-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.18);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 6px;
+  padding: 2px 5px;
+  flex-shrink: 0;
+}
+
+.fusion-album-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.fusion-album-name {
+  font-size: 13px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #94a3b8;
-  margin-bottom: 6px;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.2px;
 }
 
-.multitag-chain-row {
+.fusion-album-count-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fusion-album-count-badge.active-count {
+  background: rgba(251, 191, 36, 0.18);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.fusion-album-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.fusion-album-select-all-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.18s ease;
+}
+
+.fusion-album-select-all-btn:hover {
+  background: rgba(251, 191, 36, 0.2);
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.fusion-album-remove-btn {
+  background: rgba(244, 63, 94, 0.15);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #f43f5e;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  transition: all 0.18s ease;
+}
+
+.fusion-album-remove-btn:hover {
+  background: #f43f5e;
+  color: #ffffff;
+  transform: scale(1.1);
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
+}
+
+/* Horizontal Swipeable Photo Rail Per Album */
+.fusion-album-rail {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 2px 6px 2px;
+  scroll-behavior: smooth;
+  user-select: none;
+}
+
+/* Individual Photo Thumb Card */
+.fusion-photo-thumb-card {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #0f172a;
+}
+
+.fusion-photo-thumb-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+/* Selected Photo State: Full Brightness, 24K Gold Glowing Border */
+.fusion-photo-thumb-card.selected {
+  border: 2px solid #fbbf24;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.45);
+  transform: translateY(-1px);
+}
+
+.fusion-photo-thumb-card.selected img {
+  opacity: 1;
+  filter: none;
+}
+
+.fusion-photo-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  z-index: 2;
+  transition: all 0.18s ease;
+}
+
+.fusion-photo-thumb-card.selected .fusion-photo-badge {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Deselected Photo State: Frosted Glass Ring, recognizable opacity (no muddy grayscale) */
+.fusion-photo-thumb-card.deselected {
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+}
+
+.fusion-photo-thumb-card.deselected img {
+  opacity: 0.72;
+  filter: brightness(0.85);
+}
+
+.fusion-photo-thumb-card.deselected:hover img {
+  opacity: 0.92;
+  filter: brightness(0.95);
+}
+
+.fusion-photo-thumb-card.deselected .fusion-photo-badge {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Ruby Cross Button to Remove Photo from Curation */
+.fusion-photo-remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  cursor: pointer;
+  z-index: 3;
+  opacity: 0;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 6px rgba(244, 63, 94, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.fusion-photo-thumb-card:hover .fusion-photo-remove-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.fusion-photo-remove-btn:hover {
+  background: linear-gradient(135deg, #ff4d6d 0%, #e11d48 100%);
+  transform: scale(1.22) !important;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.85);
+}
+
+/* Add Album to Merge Section */
+.fusion-add-album-section {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px dashed rgba(251, 191, 36, 0.35);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 14px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.fusion-add-album-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.fusion-add-album-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fbbf24;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.2px;
+}
+
+.fusion-add-hint {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.fusion-search-wrap {
+  margin-bottom: 10px;
+}
+
+.fusion-candidate-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  align-items: center;
-  min-height: 40px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 2px 0;
 }
 
-.multitag-tag-chip {
+.fusion-candidate-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
-  border: 1.5px solid rgba(251, 191, 36, 0.45);
+  gap: 7px;
+  background: rgba(30, 41, 59, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
-  padding: 6px 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  padding: 5px 12px;
+  cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
 }
 
-.multitag-tag-chip:hover {
+.fusion-candidate-chip:hover {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(30, 41, 59, 0.95) 100%);
   border-color: #fbbf24;
-  box-shadow: 0 0 14px rgba(251, 191, 36, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 0 10px rgba(251, 191, 36, 0.3);
   transform: translateY(-1px);
 }
 
-.multitag-tag-dot {
-  width: 10px;
-  height: 10px;
+.fusion-chip-dot {
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   flex-shrink: 0;
   box-shadow: 0 0 6px currentColor;
 }
 
-.multitag-tag-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: #f8fafc;
-  letter-spacing: 0.2px;
-}
-
-.multitag-tag-remove {
-  background: rgba(255, 255, 255, 0.12);
-  border: none;
-  color: rgba(255, 255, 255, 0.7);
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  margin-left: 2px;
-}
-
-.multitag-tag-remove:hover {
-  background: #f43f5e;
-  color: #ffffff;
-  transform: scale(1.15);
-}
-
-.multitag-waiting-slot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: #fbbf24;
-  font-size: 12px;
-  font-weight: 600;
-  font-style: italic;
-  padding: 6px 12px;
-  background: rgba(251, 191, 36, 0.08);
-  border: 1px dashed rgba(251, 191, 36, 0.35);
-  border-radius: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  flex-basis: 100%;
-  box-sizing: border-box;
-}
-
-.multitag-waiting-slot.empty-start {
-  color: #f8fafc;
-  font-style: normal;
-  font-weight: 700;
-  font-size: 12px;
-  padding: 7px 14px;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.16) 0%, rgba(245, 158, 11, 0.08) 100%);
-  border: 1.5px dashed rgba(251, 191, 36, 0.55);
-  border-radius: 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.multitag-waiting-slot.empty-start i {
-  color: #fbbf24;
-  font-size: 11px;
-  animation: pulseSlotIcon 2s infinite ease-in-out;
-}
-
-@keyframes pulseSlotIcon {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50% { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.6)); }
-}
-
-.multitag-chain-plus-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.22) 0%, rgba(245, 158, 11, 0.18) 100%);
-  border: 1.5px dashed rgba(251, 191, 36, 0.7);
-  color: #fbbf24;
+.fusion-chip-name {
   font-size: 12px;
   font-weight: 700;
-  padding: 6px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: #f1f5f9;
 }
 
-.multitag-chain-plus-btn:hover {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-  color: #0f172a;
-  border-style: solid;
-  transform: scale(1.05);
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.6);
-}
-
-/* Candidate Tags Section (Directly Visible) */
-.multitag-candidates-section {
-  margin-top: 12px;
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(251, 191, 36, 0.25);
-  border-radius: 14px;
-  padding: 12px;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.multitag-candidates-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 24px;
-  max-height: 24px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.multitag-candidates-title {
-  font-size: 12px;
+.fusion-chip-count {
+  font-size: 10.5px;
   font-weight: 700;
-  color: #fbbf24;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
-}
-
-.multitag-hover-hint {
-  font-size: 11px;
   color: #94a3b8;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-.multitag-picker-search-wrap {
-  display: flex;
-  align-items: center;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
   border-radius: 8px;
-  padding: 0 10px;
-  height: 34px;
-  box-sizing: border-box;
-  margin-bottom: 8px;
+}
+
+/* Forge Collection Details Card */
+.fusion-forge-card {
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.96) 100%);
+  border: 1.5px solid rgba(251, 191, 36, 0.45);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.fusion-forge-header {
+  margin-bottom: 10px;
+}
+
+.fusion-forge-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Name input group */
+.fusion-name-input-group {
+  display: flex;
   gap: 8px;
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.multitag-picker-search-wrap:focus-within {
+.fusion-input-wrap {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(251, 191, 36, 0.4);
+  border-radius: 10px;
+  padding: 0 12px;
+  height: 38px;
+  flex: 1;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.fusion-input-wrap:focus-within {
   border-color: #fbbf24;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.35);
 }
 
-.multitag-picker-search-icon {
-  color: #94a3b8;
-  font-size: 12px;
+.fusion-input-icon {
+  color: #fbbf24;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
-.multitag-picker-search-input {
+.fusion-name-input {
   background: transparent;
   border: none;
-  color: #f8fafc;
-  font-size: 12px;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
   width: 100%;
   outline: none;
 }
 
-.multitag-candidate-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 180px;
-  overflow-y: auto;
-  padding-right: 4px;
+.fusion-name-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 500;
 }
 
-.multitag-candidate-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: rgba(30, 41, 59, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-  user-select: none;
-}
-
-.multitag-candidate-card > * {
-  pointer-events: none;
-}
-
-.multitag-candidate-card:hover,
-.multitag-candidate-card.hovered {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.22) 0%, rgba(30, 41, 59, 0.98) 100%);
-  border-color: rgba(251, 191, 36, 0.7);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 10px rgba(251, 191, 36, 0.25);
-}
-
-.candidate-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.candidate-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 6px currentColor;
-}
-
-.candidate-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: #f1f5f9;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.candidate-count-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.candidate-count-badge.has-photos {
-  background: rgba(16, 185, 129, 0.22);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.5);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
-}
-
-.candidate-count-badge.zero-photos {
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Result / Preview Card */
-.multitag-result-card {
-  margin: 10px 0 12px 0;
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(244, 63, 94, 0.1) 100%);
-  border: 1.5px solid rgba(251, 191, 36, 0.45);
-  border-radius: 12px;
-  padding: 10px 12px;
-  transition: all 0.22s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-}
-
-.multitag-result-card.hover-previewing {
-  border-color: #38bdf8;
-  box-shadow: 0 0 20px rgba(56, 189, 248, 0.35), inset 0 0 10px rgba(56, 189, 248, 0.08);
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(15, 23, 42, 0.95) 100%);
-  padding: 8px 12px;
-  animation: fadeInSlideDown 0.18s ease-out;
-}
-
-.multitag-result-card.hover-previewing .multitag-select-btn {
-  display: none !important;
-}
-
-.multitag-result-card.active-destination {
-  border-color: #fbbf24;
-  box-shadow: 0 0 22px rgba(251, 191, 36, 0.38);
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.18) 0%, rgba(244, 63, 94, 0.12) 100%);
-}
-
-.multitag-result-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.multitag-result-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.multitag-result-dot-stack {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 4px;
-}
-
-.multitag-stack-dot {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid #0f172a;
-  margin-right: -6px;
-  display: inline-block;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
-}
-
-.multitag-result-label {
-  font-size: 11.5px;
-  color: #cbd5e1;
-  font-weight: 600;
-}
-
-.multitag-result-count {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.multitag-select-btn {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(245, 158, 11, 0.2) 100%);
-  border: 1px solid rgba(251, 191, 36, 0.6);
+.fusion-autoname-btn {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.15) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.5);
   color: #fbbf24;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
-  padding: 7px 14px;
+  padding: 0 14px;
+  height: 38px;
   border-radius: 10px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s ease;
   white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
-.multitag-select-btn:hover {
+.fusion-autoname-btn:hover {
   background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   color: #0f172a;
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.55);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.5);
 }
 
-.multitag-select-btn.selected {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
-  border-color: #10b981;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
-}
-
-.multitag-matching-thumbs {
-  margin-top: 10px;
+/* Color Accent Swatches */
+.fusion-color-section {
   display: flex;
   align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 4px 0;
-  scrollbar-width: none;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 8px 10px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.multitag-match-thumb {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-  flex-shrink: 0;
-}
-
-.multitag-match-more {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  font-size: 11px;
+.fusion-color-label {
+  font-size: 11.5px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.12);
-  color: #cbd5e1;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.fusion-color-swatches {
   display: flex;
+  gap: 7px;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border: 1px dashed rgba(255, 255, 255, 0.3);
 }
 
-.move-copy-album-row.multitag-combined-row {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.14) 0%, rgba(244, 63, 94, 0.1) 100%);
-  border: 1.5px dashed rgba(251, 191, 36, 0.6);
+.fusion-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  border: 2px solid transparent;
 }
 
-.move-copy-album-row.multitag-combined-row.selected {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(244, 63, 94, 0.16) 100%);
-  border-style: solid;
-  border-color: #fbbf24;
-  box-shadow: 0 0 18px rgba(251, 191, 36, 0.32);
+.fusion-color-swatch:hover {
+  transform: scale(1.22);
 }
 
-.move-copy-album-row.multitag-combined-row .album-row-radio {
-  border-color: #fbbf24;
+.fusion-color-swatch.active {
+  transform: scale(1.22);
+  border-color: #ffffff;
+  box-shadow: 0 0 12px currentColor, 0 0 4px #ffffff;
 }
 
-.move-copy-album-row.multitag-combined-row.selected .album-row-radio {
-  background: #fbbf24;
-  border-color: #fbbf24;
-  color: #0f172a;
+/* Footer & Master Forge Button */
+.fusion-action-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fusion-total-summary {
+  font-size: 12px;
+  font-weight: 700;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.fusion-create-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%) !important;
+  border: 1.5px solid #fbbf24 !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  padding: 11px 18px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  gap: 8px !important;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+.fusion-create-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%) !important;
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  transform: translateY(-1px) scale(1.02) !important;
+}
+
+.fusion-create-btn:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
 }
 .move-copy-albums-list {
   display: flex;
