@@ -9496,8 +9496,8 @@ document.addEventListener('DOMContentLoaded', () => {
              onclick="${clickHandler}">
           <div class="album-row-left">
             <span class="album-row-dot" style="background: ${tag.color};"></span>
-            <div>
-              <div class="album-row-name">
+            <div class="album-row-info">
+              <div class="album-row-name" title="${escapeHtml(tag.name)}">
                 ${escapeHtml(tag.name)}
                 ${isSource ? `<span style="font-size: 10px; color: #fbbf24; margin-left: 6px; font-weight: 600;">(${escapeHtml(sourceTagLabel)})</span>` : ''}
               </div>
@@ -10153,8 +10153,8 @@ document.addEventListener('DOMContentLoaded', () => {
                title="Source album (non-selectable)">
             <div class="album-row-left">
               <span class="album-row-dot" style="background: ${tag.color};"></span>
-              <div>
-                <div class="album-row-name">
+              <div class="album-row-info">
+                <div class="album-row-name" title="${escapeHtml(tag.name)} (Source Album)">
                   ${escapeHtml(tag.name)}
                   <span style="font-size: 10px; color: #fbbf24; margin-left: 6px; font-weight: 600;">(Source Album)</span>
                 </div>
@@ -10172,8 +10172,8 @@ document.addEventListener('DOMContentLoaded', () => {
              title="Select destination: ${escapeHtml(tag.name)}">
           <div class="album-row-left">
             <span class="album-row-dot" style="background: ${tag.color};"></span>
-            <div>
-              <div class="album-row-name">${escapeHtml(tag.name)}</div>
+            <div class="album-row-info">
+              <div class="album-row-name" title="${escapeHtml(tag.name)}">${escapeHtml(tag.name)}</div>
               <div class="album-row-count">${count} ${countNoun}</div>
             </div>
           </div>
