@@ -3679,7 +3679,7 @@ async function downloadSinglePhoto(id) {
       showToast(`📥 Saved '${cleanName}.jpg' to Pictures/PhotoOrganizer/Collections/${dateStr}/${cleanAlbum}/`);
     } else {
       const batchFolder = getNextBrowserGalleryBatch(dateStr);
-      showToast(`📥 Saved '${cleanName}.jpg' to Pictures/PhotoOrganizer/Gallery/${dateStr}/${batchFolder}/`);
+      showToast(`📥 Saved '${cleanName}.jpg' to Pictures/PhotoOrganizer/Gallery Images/${dateStr}/${batchFolder}/`);
     }
   }
 }
@@ -5809,7 +5809,7 @@ async function downloadAlbumZip(tagName) {
     return;
   }
 
-  showToast(`Packaging '${tagName}' album (${albumPhotos.length} photos)... 📦`);
+  showToast(`Downloading '${tagName}' album (${albumPhotos.length} photos)... 📥`);
   await exportPhotosToZip(albumPhotos, `${tagName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Album`, true, tagName);
 }
 
@@ -5896,7 +5896,7 @@ async function downloadFavoritesAlbumZip() {
     showToast('No favorite photos to download!');
     return;
   }
-  showToast(`Packaging Favorites album (${favoritePhotos.length} photos)... 📦`);
+  showToast(`Downloading Favorites album (${favoritePhotos.length} photos)... 📥`);
   await exportPhotosToZip(favoritePhotos, 'Favorites_Album', true, 'Favorites');
 }
 
@@ -7132,54 +7132,31 @@ function openBatchTagModal(photoIds) {
   modal.style.display = 'flex';
 }
 
-// ZIP Export ("The Mom Feature") using JSZip
+// Multi-Photo Export directly in genuine JPG format (No ZIP)
 async function exportPhotosToZip(photoList, zipFilename, isAlbumMode = false, albumName = null) {
   if (!photoList || photoList.length === 0) {
     showToast('No photos to export!');
     return;
   }
-  showToast(`Packaging ${photoList.length} photos... 📦`);
+  showToast(`Downloading ${photoList.length} photos (.jpg)... 📥`);
 
   const dateStr = getTodayDDMMYY();
   const effectiveIsAlbum = isAlbumMode || (state.currentScreen === 'album-detail' && !!state.currentAlbumName);
   const effectiveAlbumName = albumName || (state.currentScreen === 'album-detail' ? state.currentAlbumName : null) || (effectiveIsAlbum ? zipFilename.replace(/_Album$|_Export$|_Collection$|_Filtered$/, '') : null);
 
   try {
-    const zip = new JSZip();
-    const folder = zip.folder(zipFilename);
+    const payload = photoList.map(p => ({
+      displayName: p.displayName || 'Photo',
+      dataUrl: p.dataUrl || (p.gradient ? generateGradientImage(p.displayName, p.category, p.gradient) : null)
+    })).filter(p => !!p.dataUrl);
 
-    let addedCount = 0;
-    for (let i = 0; i < photoList.length; i++) {
-      const p = photoList[i];
-      try {
-        const rawData = p.dataUrl || (p.gradient ? generateGradientImage(p.displayName, p.category, p.gradient) : null);
-        if (!rawData) continue;
-        const parts = rawData.split(',');
-        if (parts.length < 2) continue;
-        const base64Data = parts[1];
-        const rawTitle = (p.displayName || 'Photo').replace(/\.[^/.]+$/, '');
-        const cleanName = rawTitle.replace(/[^a-zA-Z0-9_\u0900-\u0D7F-]/g, '_').trim() || 'Photo';
-        const filename = `${cleanName}_${i + 1}.jpg`;
-        folder.file(filename, base64Data, { base64: true });
-        addedCount++;
-      } catch (itemErr) {
-        console.warn(`Skipped photo ${p.id} in zip packaging:`, itemErr);
-      }
-    }
-
-    if (addedCount === 0) {
-      showToast('Could not package photos into ZIP');
+    if (payload.length === 0) {
+      showToast('No valid photo data to download');
       return;
     }
 
-    const content = await zip.generateAsync({ type: 'blob' });
     if (window.AndroidApp) {
-      const payload = photoList.map(p => ({
-        displayName: p.displayName || 'Photo',
-        dataUrl: p.dataUrl || (p.gradient ? generateGradientImage(p.displayName, p.category, p.gradient) : null)
-      })).filter(p => !!p.dataUrl);
-
-      // 1. Direct Native Save: Save each photo directly into the Android Phone Gallery
+      // 1. Direct Native Save: Save each photo directly into the Android Phone Gallery / Collections in JPG format
       if (effectiveIsAlbum && effectiveAlbumName && typeof window.AndroidApp.downloadMultiplePhotosToGallery === 'function') {
         try {
           window.AndroidApp.downloadMultiplePhotosToGallery(JSON.stringify(payload), effectiveAlbumName);
@@ -7199,34 +7176,37 @@ async function exportPhotosToZip(photoList, zipFilename, isAlbumMode = false, al
           console.warn('downloadMultiplePhotosToGallery fallback failed:', galErr);
         }
       }
-
-      // 2. Also save ZIP archive to Downloads for backup/archiving
-      if (typeof window.AndroidApp.downloadZip === 'function') {
-        const reader = new FileReader();
-        reader.onloadend = function() {
-          window.AndroidApp.downloadZip(reader.result, `${zipFilename}.zip`);
-        };
-        reader.readAsDataURL(content);
-      }
+      // Note: Extra ZIP export is completely removed so files are never duplicated in Downloads folder
     } else {
-      // Fail-safe browser download using native Blob object URL and FileSaver fallback
-      if (typeof saveAs === 'function') {
-        saveAs(content, `${zipFilename}.zip`);
-      } else {
-        triggerBrowserDownload(content, `${zipFilename}.zip`);
+      // Direct browser JPG downloads without ZIP archive
+      for (let i = 0; i < payload.length; i++) {
+        const item = payload[i];
+        const rawTitle = (item.displayName || 'Photo').replace(/\.[^/.]+$/, '');
+        const cleanName = rawTitle.replace(/[^a-zA-Z0-9_\u0900-\u0D7F-]/g, '_').trim() || 'Photo';
+        const filename = `${cleanName}_${i + 1}.jpg`;
+        try {
+          const { blob, dataUrl: jpegDataUrl } = await convertToJpegBlob(item.dataUrl, 0.95);
+          if (blob) {
+            triggerBrowserDownload(blob, filename);
+          } else {
+            triggerBrowserDownload(jpegDataUrl || item.dataUrl, filename);
+          }
+        } catch (e) {
+          triggerBrowserDownload(item.dataUrl, filename);
+        }
       }
 
       if (effectiveIsAlbum && effectiveAlbumName) {
         const cleanAlbum = effectiveAlbumName.replace(/[^a-zA-Z0-9_-]/g, '_');
-        showToast(`📥 Saved ${photoList.length} photos (${zipFilename}.zip) to Pictures/PhotoOrganizer/Collections/${dateStr}/${cleanAlbum}/`);
+        showToast(`📥 Saved ${payload.length} photos to Pictures/PhotoOrganizer/Collections/${dateStr}/${cleanAlbum}/`);
       } else {
         const batchFolder = getNextBrowserGalleryBatch(dateStr);
-        showToast(`📥 Saved ${photoList.length} photos (${zipFilename}.zip) to Pictures/PhotoOrganizer/Gallery/${dateStr}/${batchFolder}/`);
+        showToast(`📥 Saved ${payload.length} photos to Pictures/PhotoOrganizer/Gallery Images/${dateStr}/${batchFolder}/`);
       }
     }
   } catch (err) {
     console.error(err);
-    showToast('Failed to generate ZIP');
+    showToast('Failed to download photos');
   }
 }
 

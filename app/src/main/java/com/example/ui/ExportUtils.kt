@@ -138,7 +138,7 @@ object ExportUtils {
 
     fun getGalleryRelativePath(context: Context, dateStr: String = getTodayDateString(), batchFolder: String? = null): String {
         val batch = batchFolder ?: getNextGalleryBatchFolder(context, dateStr)
-        return "$APP_FOLDER_NAME/Gallery/$dateStr/$batch"
+        return "$APP_FOLDER_NAME/Gallery Images/$dateStr/$batch"
     }
 
     suspend fun savePhotoToGallery(

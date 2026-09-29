@@ -315,14 +315,6 @@ fun GalleryScreen(
                         val selectedList = displayedGalleryPhotos.filter { selectedPhotoIds.contains(it.photo.id) }
                         coroutineScope.launch {
                             val res = ExportUtils.savePhotosToGallery(context, selectedList, isFromCollection = false)
-                            val zipFile = ExportUtils.createZipExport(
-                                context,
-                                selectedList,
-                                "Gallery_${System.currentTimeMillis()}"
-                            )
-                            if (zipFile != null) {
-                                ExportUtils.saveToDownloads(context, zipFile)
-                            }
                             if (res.success) {
                                 Toast.makeText(context, "Saved ${res.count} photos to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
                             } else {
@@ -712,14 +704,6 @@ fun GalleryScreen(
                         onClick = {
                             coroutineScope.launch {
                                 val res = ExportUtils.savePhotosToGallery(context, displayedGalleryPhotos, isFromCollection = false)
-                                val zipFile = ExportUtils.createZipExport(
-                                    context,
-                                    displayedGalleryPhotos,
-                                    "Gallery_${System.currentTimeMillis()}"
-                                )
-                                if (zipFile != null) {
-                                    ExportUtils.saveToDownloads(context, zipFile)
-                                }
                                 if (res.success) {
                                     Toast.makeText(context, "Saved ${res.count} photos to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
                                 } else {
@@ -2091,10 +2075,6 @@ fun AlbumsCardView(
                                                     coroutineScope.launch {
                                                         Toast.makeText(context, "Saving 'Favorites' album to Gallery...", Toast.LENGTH_SHORT).show()
                                                         val res = ExportUtils.savePhotosToGallery(context, favoritePhotos, isFromCollection = true, albumName = "Favorites")
-                                                        val zipFile = ExportUtils.createZipExport(context, favoritePhotos, "Favorites_Album")
-                                                        if (zipFile != null) {
-                                                            ExportUtils.saveToDownloads(context, zipFile)
-                                                        }
                                                         if (res.success) {
                                                             Toast.makeText(context, "Saved ${res.count} photos to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
                                                         } else {
@@ -2240,10 +2220,6 @@ fun AlbumsCardView(
                                                 coroutineScope.launch {
                                                     Toast.makeText(context, "Saving '${tag.name}' album to Gallery...", Toast.LENGTH_SHORT).show()
                                                     val res = ExportUtils.savePhotosToGallery(context, albumPhotos, isFromCollection = true, albumName = tag.name)
-                                                    val zipFile = ExportUtils.createZipExport(context, albumPhotos, "${tag.name}_Album")
-                                                    if (zipFile != null) {
-                                                        ExportUtils.saveToDownloads(context, zipFile)
-                                                    }
                                                     if (res.success) {
                                                         Toast.makeText(context, "Saved ${res.count} photos to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
                                                     } else {
@@ -2586,10 +2562,6 @@ fun FavoritesScreen(
                         IconButton(onClick = {
                             coroutineScope.launch {
                                 val res = ExportUtils.savePhotosToGallery(context, favoritePhotos, isFromCollection = true, albumName = "Favorites")
-                                val zipFile = ExportUtils.createZipExport(context, favoritePhotos, "Favorites_Album")
-                                if (zipFile != null) {
-                                    ExportUtils.saveToDownloads(context, zipFile)
-                                }
                                 if (res.success) {
                                     Toast.makeText(context, "Saved ${res.count} favorites to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
                                 } else {
@@ -2936,10 +2908,6 @@ fun PhotoDetailScreen(
                                 isFromCollection = isFromAlbum,
                                 albumName = primaryAlbum
                             )
-                            val zipFile = ExportUtils.createZipExport(context, listOf(currentPhoto), currentPhoto.photo.displayName)
-                            if (zipFile != null) {
-                                ExportUtils.saveToDownloads(context, zipFile)
-                            }
                             if (res.success) {
                                 Toast.makeText(context, "Saved '${res.fileName}' to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
                             } else {

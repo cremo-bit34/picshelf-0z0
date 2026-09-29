@@ -1065,7 +1065,7 @@ class MainActivity : FragmentActivity(), SensorEventListener {
 
         private fun getGallerySubFolder(dateStr: String = getTodayDateString(), batchFolder: String? = null): String {
             val batch = batchFolder ?: getNextGalleryBatchFolder(dateStr)
-            return "PhotoOrganizer/Gallery/$dateStr/$batch"
+            return "PhotoOrganizer/Gallery Images/$dateStr/$batch"
         }
 
         private fun saveImageToGallery(bytes: ByteArray, fileName: String, subFolder: String): Boolean {
