@@ -12439,6 +12439,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.isAppLocked) {
       return true;
     }
+    const moveCopyModal = document.getElementById('moveCopyModal');
+    if (moveCopyModal && moveCopyModal.style.display !== 'none') {
+      closeMoveCopyModal();
+      return true;
+    }
+    const vipMoveCopyModal = document.getElementById('vipMoveCopyModal');
+    if (vipMoveCopyModal && vipMoveCopyModal.style.display !== 'none') {
+      closeVipMoveCopyGateModal();
+      return true;
+    }
     const openDialog = document.querySelector('.modal-overlay:not(#appLockOverlay)[style*="display: flex"], .modal-overlay:not(#appLockOverlay)[style*="display: block"]');
     if (openDialog && openDialog.style.display !== 'none') {
       openDialog.style.display = 'none';
