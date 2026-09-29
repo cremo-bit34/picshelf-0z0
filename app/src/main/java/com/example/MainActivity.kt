@@ -438,16 +438,24 @@ class MainActivity : FragmentActivity(), SensorEventListener {
         launchGalleryInternal()
     }
 
-    // Biometric Auth Launcher (Keyguard device credential / fingerprint / face)
+    // Biometric & Device Credential Auth Launcher (Keyguard device credential / fingerprint / face)
+    private var authActionTarget = "unlock" // "unlock" or "reset"
     private val biometricAuthLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         val success = (result.resultCode == RESULT_OK)
         runOnUiThread {
-            webView?.evaluateJavascript(
-                "if (window.onNativeBiometricResult) { window.onNativeBiometricResult($success); }",
-                null
-            )
+            if (authActionTarget == "reset") {
+                webView?.evaluateJavascript(
+                    "if (window.onNativeResetAuthResult) { window.onNativeResetAuthResult($success); }",
+                    null
+                )
+            } else {
+                webView?.evaluateJavascript(
+                    "if (window.onNativeBiometricResult) { window.onNativeBiometricResult($success); }",
+                    null
+                )
+            }
         }
     }
 
@@ -631,6 +639,7 @@ class MainActivity : FragmentActivity(), SensorEventListener {
         fun authenticateBiometrics() {
             runOnUiThread {
                 try {
+                    authActionTarget = "unlock"
                     val biometricManager = BiometricManager.from(this@MainActivity)
                     val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
                     val canAuth = biometricManager.canAuthenticate(authenticators)
@@ -699,6 +708,108 @@ class MainActivity : FragmentActivity(), SensorEventListener {
                         "if (window.onNativeBiometricResult) { window.onNativeBiometricResult(false, 'auth_error'); }",
                         null
                     )
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun authenticateForPasscodeReset() {
+            runOnUiThread {
+                try {
+                    authActionTarget = "reset"
+                    val keyguardManager = getSystemService(android.content.Context.KEYGUARD_SERVICE) as? android.app.KeyguardManager
+                    val isDeviceSecure = keyguardManager?.isDeviceSecure == true
+                    val biometricManager = BiometricManager.from(this@MainActivity)
+                    val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                    val canAuth = biometricManager.canAuthenticate(authenticators)
+
+                    // If device has NO phone screen lock (no PIN, pattern, or password) AND no biometrics:
+                    if (!isDeviceSecure && canAuth != BiometricManager.BIOMETRIC_SUCCESS) {
+                        webView?.evaluateJavascript(
+                            "if (window.onNativeResetAuthResult) { window.onNativeResetAuthResult(false, 'no_device_security'); }",
+                            null
+                        )
+                        return@runOnUiThread
+                    }
+
+                    if (canAuth == BiometricManager.BIOMETRIC_SUCCESS) {
+                        val executor = ContextCompat.getMainExecutor(this@MainActivity)
+                        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                            .setTitle("Verify Identity to Reset Passcode")
+                            .setSubtitle("Enter your phone PIN, pattern, or biometric to verify identity")
+                            .setAllowedAuthenticators(authenticators)
+                            .build()
+
+                        val prompt = BiometricPrompt(this@MainActivity, executor, object : BiometricPrompt.AuthenticationCallback() {
+                            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                                super.onAuthenticationSucceeded(result)
+                                runOnUiThread {
+                                    webView?.evaluateJavascript(
+                                        "if (window.onNativeResetAuthResult) { window.onNativeResetAuthResult(true); }",
+                                        null
+                                    )
+                                }
+                            }
+
+                            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                                super.onAuthenticationError(errorCode, errString)
+                                runOnUiThread {
+                                    val escapedErr = JSONObject.quote(errString.toString())
+                                    webView?.evaluateJavascript(
+                                        "if (window.onNativeResetAuthResult) { window.onNativeResetAuthResult(false, $escapedErr); }",
+                                        null
+                                    )
+                                }
+                            }
+
+                            override fun onAuthenticationFailed() {
+                                super.onAuthenticationFailed()
+                            }
+                        })
+
+                        prompt.authenticate(promptInfo)
+                        return@runOnUiThread
+                    }
+
+                    // Fallback to KeyguardManager for device credential (PIN / Pattern / Password)
+                    if (isDeviceSecure) {
+                        @Suppress("DEPRECATION")
+                        val intent = keyguardManager?.createConfirmDeviceCredentialIntent(
+                            "Verify Identity to Reset Passcode",
+                            "Enter your phone PIN, pattern, or password to reset your app passcode"
+                        )
+                        if (intent != null) {
+                            biometricAuthLauncher.launch(intent)
+                            return@runOnUiThread
+                        }
+                    }
+
+                    webView?.evaluateJavascript(
+                        "if (window.onNativeResetAuthResult) { window.onNativeResetAuthResult(false, 'no_device_security'); }",
+                        null
+                    )
+                } catch (e: Exception) {
+                    webView?.evaluateJavascript(
+                        "if (window.onNativeResetAuthResult) { window.onNativeResetAuthResult(false, 'auth_error'); }",
+                        null
+                    )
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun openDeviceSecuritySettings() {
+            runOnUiThread {
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    try {
+                        val intent = Intent(android.provider.Settings.ACTION_SETTINGS)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        startActivity(intent)
+                    } catch (_: Exception) {}
                 }
             }
         }

@@ -7000,6 +7000,16 @@ body.native-app-mode #passcodeSetupModal {
   z-index: 1000006 !important;
 }
 
+html.native-app-mode #noDeviceSecurityModal,
+body.native-app-mode #noDeviceSecurityModal {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 1000007 !important;
+}
+
 /* -------------------------------------------------------------
    Rename Photo Modal Styles
    ------------------------------------------------------------- */

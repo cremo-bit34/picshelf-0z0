@@ -1604,7 +1604,7 @@ window.onNativeBiometricResult = function(success, errOrReason) {
     if (biometricAuthMode === 'recovery') {
       closeForgotPasscodeModal();
       hideAppLock();
-      showToast('🔓 Identity Verified! Set a new Passcode.');
+      showToast('🔓 Fingerprint Verified! Set a new Passcode.');
       setTimeout(() => {
         openPasscodeSetupScreen('reset');
       }, 350);
@@ -1616,12 +1616,71 @@ window.onNativeBiometricResult = function(success, errOrReason) {
     if (navigator.vibrate) try { navigator.vibrate([60, 50, 60]); } catch(_) {}
     if (text) text.textContent = 'Unlock with Biometrics';
     if (btn) btn.style.borderColor = '';
-    // If not a quiet user cancel, show helpful toast
-    if (errOrReason && errOrReason !== 'no_device_lock' && errOrReason !== 'canceled' && errOrReason !== '10' && errOrReason !== '13') {
+    if (biometricAuthMode === 'recovery' && errOrReason === 'no_device_lock') {
+      showToast('No fingerprint configured. Try "Reset via Phone Passcode / Pattern".');
+    } else if (errOrReason && errOrReason !== 'no_device_lock' && errOrReason !== 'canceled' && errOrReason !== '10' && errOrReason !== '13') {
       showToast(`Biometrics: ${errOrReason}`);
     }
   }
 };
+
+window.onNativeResetAuthResult = function(success, errOrReason) {
+  if (success) {
+    if (navigator.vibrate) try { navigator.vibrate([40, 60, 40]); } catch(_) {}
+    // Clear old forgotten passcode now that device ownership is verified
+    state.appLockPin = null;
+    state.biometricLock = false;
+    state.isAppLocked = false;
+    try {
+      localStorage.removeItem('photo_org_app_pin');
+      localStorage.setItem('photo_org_biometric_lock', 'false');
+    } catch (_) {}
+    saveStateImmediate();
+
+    const toggle = document.getElementById('biometricLockToggle');
+    if (toggle) toggle.checked = false;
+    const sub = document.getElementById('appLockSubControls');
+    if (sub) sub.style.display = 'none';
+
+    closeForgotPasscodeModal();
+    closeNoDeviceSecurityModal();
+    hideAppLock();
+    showToast('🔓 Identity Verified with Phone Lock! Set a new Passcode.');
+    setTimeout(() => {
+      openPasscodeSetupScreen('reset');
+    }, 300);
+  } else {
+    if (navigator.vibrate) try { navigator.vibrate([80, 50, 80]); } catch(_) {}
+    if (errOrReason === 'no_device_security' || errOrReason === 'no_device_lock') {
+      // Both options failed: no fingerprint AND no phone passcode/pattern
+      closeForgotPasscodeModal();
+      showNoDeviceSecurityModal();
+    } else if (errOrReason === 'canceled' || errOrReason === '10' || errOrReason === '13') {
+      showToast('Verification cancelled. Vault remains locked.');
+    } else {
+      showToast('❌ Device verification failed. Vault remains locked.');
+    }
+  }
+};
+
+function showNoDeviceSecurityModal() {
+  const modal = document.getElementById('noDeviceSecurityModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeNoDeviceSecurityModal() {
+  const modal = document.getElementById('noDeviceSecurityModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function openPhoneSecuritySettings() {
+  closeNoDeviceSecurityModal();
+  if (window.AndroidApp && typeof window.AndroidApp.openDeviceSecuritySettings === 'function') {
+    window.AndroidApp.openDeviceSecuritySettings();
+  } else {
+    showToast('Please open Settings > Security on your device to set a screen lock.');
+  }
+}
 
 function showAppLock() {
   const overlay = document.getElementById('appLockOverlay');
@@ -1742,8 +1801,20 @@ function recoverPasscodeWithBiometrics() {
 }
 
 function resetPasscodeSecurityVault() {
-  if (confirm('Reset your Vault Passcode? This will clear the forgotten passcode and let you set a new 4-digit passcode, or keep the lock disabled.')) {
-    // Clear old forgotten passcode and disable lock immediately so user is never locked out
+  // Option 2: Require verification of phone screen lock (PIN, Pattern, Password, or Biometric) before allowing reset
+  if (window.AndroidApp && typeof window.AndroidApp.authenticateForPasscodeReset === 'function') {
+    showToast('Verifying Phone Lock (PIN / Pattern / Fingerprint)... 🛡️');
+    try {
+      window.AndroidApp.authenticateForPasscodeReset();
+      return;
+    } catch (e) {
+      console.error('authenticateForPasscodeReset error:', e);
+    }
+  }
+
+  // Web Browser / Desktop preview fallback: Require deliberate verification challenge
+  const confirmText = prompt('SECURITY VERIFICATION: To reset your vault passcode in this browser, please type "RESET" to confirm:');
+  if (confirmText && confirmText.trim().toUpperCase() === 'RESET') {
     state.appLockPin = null;
     state.biometricLock = false;
     state.isAppLocked = false;
@@ -1760,10 +1831,12 @@ function resetPasscodeSecurityVault() {
 
     closeForgotPasscodeModal();
     hideAppLock();
-    showToast('Vault Passcode Cleared');
+    showToast('🔓 Identity Verified! Set a new Passcode.');
     setTimeout(() => {
       openPasscodeSetupScreen('reset');
     }, 250);
+  } else {
+    showToast('Passcode reset cancelled. Vault remains locked.');
   }
 }
 
@@ -12330,6 +12403,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.closeForgotPasscodeModal = closeForgotPasscodeModal;
   window.recoverPasscodeWithBiometrics = recoverPasscodeWithBiometrics;
   window.resetPasscodeSecurityVault = resetPasscodeSecurityVault;
+  window.showNoDeviceSecurityModal = showNoDeviceSecurityModal;
+  window.closeNoDeviceSecurityModal = closeNoDeviceSecurityModal;
+  window.openPhoneSecuritySettings = openPhoneSecuritySettings;
   window.flashReturnedPhotoCard = flashReturnedPhotoCard;
   window.handleNativeBackPressed = function() {
     const detailModal = document.getElementById('photoDetailModal');
@@ -12340,6 +12416,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const cropModal = document.getElementById('cropEditorModal');
     if (cropModal && cropModal.style.display !== 'none') {
       closeCropEditorModal();
+      return true;
+    }
+    const noSecModal = document.getElementById('noDeviceSecurityModal');
+    if (noSecModal && noSecModal.style.display !== 'none') {
+      closeNoDeviceSecurityModal();
       return true;
     }
     const setupModal = document.getElementById('passcodeSetupModal');
