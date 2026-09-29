@@ -106,4 +106,188 @@ object ExportUtils {
         }
         return@withContext false
     }
+
+    const val APP_FOLDER_NAME = "PhotoOrganizer"
+
+    data class SaveResult(
+        val success: Boolean,
+        val fullDisplayPath: String,
+        val fileName: String = "",
+        val count: Int = 1
+    )
+
+    fun getTodayDateString(): String {
+        return java.text.SimpleDateFormat("dd-MM-yy", java.util.Locale.US).format(java.util.Date())
+    }
+
+    @Synchronized
+    fun getNextGalleryBatchFolder(context: Context, dateStr: String = getTodayDateString()): String {
+        val prefs = context.getSharedPreferences("photo_organizer_export_prefs", Context.MODE_PRIVATE)
+        val key = "gallery_batch_$dateStr"
+        val nextNum = prefs.getInt(key, 0) + 1
+        prefs.edit().putInt(key, nextNum).apply()
+        return String.format(java.util.Locale.US, "%03d", nextNum)
+    }
+
+    fun getCollectionsRelativePath(albumName: String, dateStr: String = getTodayDateString()): String {
+        val cleanAlbum = albumName.trim()
+            .replace(Regex("[^a-zA-Z0-9_ -]"), "_")
+            .ifBlank { "Collection" }
+        return "$APP_FOLDER_NAME/Collections/$dateStr/$cleanAlbum"
+    }
+
+    fun getGalleryRelativePath(context: Context, dateStr: String = getTodayDateString(), batchFolder: String? = null): String {
+        val batch = batchFolder ?: getNextGalleryBatchFolder(context, dateStr)
+        return "$APP_FOLDER_NAME/Gallery/$dateStr/$batch"
+    }
+
+    suspend fun savePhotoToGallery(
+        context: Context,
+        photoWithTags: PhotoWithTags,
+        isFromCollection: Boolean = false,
+        albumName: String? = null,
+        batchFolder: String? = null
+    ): SaveResult = withContext(Dispatchers.IO) {
+        val nowMs = System.currentTimeMillis()
+        val nowSec = nowMs / 1000
+        val rawName = photoWithTags.photo.displayName.ifBlank { "Photo_$nowMs" }
+            .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+        val cleanFileName = "$rawName.jpg"
+        val mimeType = "image/jpeg"
+        val sourceUri = Uri.parse(photoWithTags.photo.localUri)
+
+        val dateStr = getTodayDateString()
+        val subPath = if (isFromCollection && !albumName.isNullOrBlank()) {
+            getCollectionsRelativePath(albumName, dateStr)
+        } else {
+            getGalleryRelativePath(context, dateStr, batchFolder)
+        }
+
+        val relativePath = "${Environment.DIRECTORY_PICTURES}/$subPath/"
+        val displayPath = "Pictures/$subPath/"
+
+        var saved = false
+        var scannedPath: String? = null
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                val resolver = context.contentResolver
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, cleanFileName)
+                    put(MediaStore.Images.Media.MIME_TYPE, mimeType)
+                    put(MediaStore.Images.Media.RELATIVE_PATH, relativePath)
+                    put(MediaStore.Images.Media.DATE_ADDED, nowSec)
+                    put(MediaStore.Images.Media.DATE_MODIFIED, nowSec)
+                    put(MediaStore.Images.Media.DATE_TAKEN, nowMs)
+                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
+
+                val itemUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                if (itemUri != null) {
+                    resolver.openOutputStream(itemUri)?.use { out ->
+                        resolver.openInputStream(sourceUri)?.use { input ->
+                            input.copyTo(out)
+                        }
+                        out.flush()
+                    }
+                    contentValues.clear()
+                    contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+                    resolver.update(itemUri, contentValues, null, null)
+                    saved = true
+
+                    try {
+                        val cursor = resolver.query(itemUri, arrayOf(MediaStore.Images.Media.DATA), null, null, null)
+                        cursor?.use {
+                            if (it.moveToFirst()) {
+                                val idx = it.getColumnIndex(MediaStore.Images.Media.DATA)
+                                if (idx != -1) scannedPath = it.getString(idx)
+                            }
+                        }
+                    } catch (_: Exception) {}
+
+                    if (!scannedPath.isNullOrBlank()) {
+                        android.media.MediaScannerConnection.scanFile(
+                            context,
+                            arrayOf(scannedPath),
+                            arrayOf(mimeType),
+                            null
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        if (!saved) {
+            try {
+                val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                val targetDir = File(picturesDir, subPath).apply { mkdirs() }
+                val file = File(targetDir, cleanFileName)
+                FileOutputStream(file).use { out ->
+                    context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                        input.copyTo(out)
+                    }
+                    out.flush()
+                }
+                android.media.MediaScannerConnection.scanFile(
+                    context,
+                    arrayOf(file.absolutePath),
+                    arrayOf(mimeType),
+                    null
+                )
+                saved = true
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        return@withContext SaveResult(
+            success = saved,
+            fullDisplayPath = displayPath,
+            fileName = cleanFileName,
+            count = if (saved) 1 else 0
+        )
+    }
+
+    suspend fun savePhotosToGallery(
+        context: Context,
+        photos: List<PhotoWithTags>,
+        isFromCollection: Boolean = false,
+        albumName: String? = null
+    ): SaveResult = withContext(Dispatchers.IO) {
+        if (photos.isEmpty()) {
+            return@withContext SaveResult(false, "", "", 0)
+        }
+
+        val dateStr = getTodayDateString()
+        // If from gallery, all photos in this batch share the SAME batch folder (e.g. 001)
+        val batchFolder = if (!isFromCollection) getNextGalleryBatchFolder(context, dateStr) else null
+        val subPath = if (isFromCollection && !albumName.isNullOrBlank()) {
+            getCollectionsRelativePath(albumName, dateStr)
+        } else {
+            getGalleryRelativePath(context, dateStr, batchFolder)
+        }
+        val displayPath = "Pictures/$subPath/"
+
+        var count = 0
+        photos.forEach { photo ->
+            val res = savePhotoToGallery(
+                context = context,
+                photoWithTags = photo,
+                isFromCollection = isFromCollection,
+                albumName = albumName,
+                batchFolder = batchFolder
+            )
+            if (res.success) {
+                count++
+            }
+        }
+
+        return@withContext SaveResult(
+            success = count > 0,
+            fullDisplayPath = displayPath,
+            count = count
+        )
+    }
 }

@@ -36,6 +36,7 @@ import android.hardware.SensorManager
 import android.media.MediaScannerConnection
 import android.os.Build
 import android.os.Environment
+import android.os.StatFs
 import android.location.Location
 import android.location.LocationManager
 import android.location.Geocoder
@@ -717,6 +718,57 @@ class MainActivity : FragmentActivity(), SensorEventListener {
         }
 
         @JavascriptInterface
+        fun getDeviceStorageInfo(): String {
+            return try {
+                val dataPath = Environment.getDataDirectory()
+                val stat = StatFs(dataPath.path)
+                val blockSize = stat.blockSizeLong
+                val totalBlocks = stat.blockCountLong
+                val availableBlocks = stat.availableBlocksLong
+
+                val totalBytes = totalBlocks * blockSize
+                val availableBytes = availableBlocks * blockSize
+                val usedBytes = totalBytes - availableBytes
+
+                val totalGiB = totalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+                val freeGiB = availableBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+                val usedGiB = usedBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+
+                // Match nominal standard consumer phone storage tiers (16, 32, 64, 128, 256, 512, 1024 GB)
+                val nominalTiers = longArrayOf(16, 32, 64, 128, 256, 512, 1024)
+                var nominalGb = Math.round(totalGiB)
+                for (tier in nominalTiers) {
+                    if (totalGiB >= tier * 0.78 && totalGiB <= tier * 1.05) {
+                        nominalGb = tier
+                        break
+                    }
+                }
+
+                val json = JSONObject()
+                json.put("totalBytes", totalBytes)
+                json.put("availableBytes", availableBytes)
+                json.put("usedBytes", usedBytes)
+                json.put("totalGb", nominalGb)
+                json.put("exactTotalGb", String.format(java.util.Locale.US, "%.1f", totalGiB))
+                json.put("freeGb", String.format(java.util.Locale.US, "%.1f", freeGiB))
+                json.put("usedGb", String.format(java.util.Locale.US, "%.1f", usedGiB))
+                json.toString()
+            } catch (e: Exception) {
+                "{}"
+            }
+        }
+
+        @JavascriptInterface
+        fun clearCache() {
+            runOnUiThread {
+                try {
+                    webView?.clearCache(true)
+                    cacheDir.deleteRecursively()
+                } catch (e: Exception) {}
+            }
+        }
+
+        @JavascriptInterface
         fun sharePhoto(base64DataUrl: String, title: String) {
             thread {
                 try {
@@ -880,133 +932,395 @@ class MainActivity : FragmentActivity(), SensorEventListener {
             }
         }
 
+        private fun getTodayDateString(): String {
+            return java.text.SimpleDateFormat("dd-MM-yy", java.util.Locale.US).format(java.util.Date())
+        }
+
+        @Synchronized
+        private fun getNextGalleryBatchFolder(dateStr: String): String {
+            val prefs = getSharedPreferences("photo_organizer_export_prefs", MODE_PRIVATE)
+            val key = "gallery_batch_$dateStr"
+            val nextNum = prefs.getInt(key, 0) + 1
+            prefs.edit().putInt(key, nextNum).apply()
+            return String.format(java.util.Locale.US, "%03d", nextNum)
+        }
+
+        private fun getCollectionsSubFolder(albumName: String, dateStr: String = getTodayDateString()): String {
+            val cleanAlbum = albumName.trim()
+                .replace(Regex("[^a-zA-Z0-9_ -]"), "_")
+                .ifBlank { "Collection" }
+            return "PhotoOrganizer/Collections/$dateStr/$cleanAlbum"
+        }
+
+        private fun getGallerySubFolder(dateStr: String = getTodayDateString(), batchFolder: String? = null): String {
+            val batch = batchFolder ?: getNextGalleryBatchFolder(dateStr)
+            return "PhotoOrganizer/Gallery/$dateStr/$batch"
+        }
+
+        private fun saveImageToGallery(bytes: ByteArray, fileName: String, subFolder: String): Boolean {
+            val rawName = fileName.substringBeforeLast(".")
+                .ifBlank { "Photo_${System.currentTimeMillis()}" }
+                .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+            val cleanFileName = if (fileName.endsWith(".png", ignoreCase = true)) "$rawName.png" else "$rawName.jpg"
+            val mimeType = if (cleanFileName.endsWith(".png", ignoreCase = true)) "image/png" else "image/jpeg"
+            val nowMs = System.currentTimeMillis()
+            val nowSec = nowMs / 1000
+
+            var saved = false
+            var scannedPath: String? = null
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                try {
+                    val resolver = contentResolver
+                    val relativePath = "${Environment.DIRECTORY_PICTURES}/$subFolder/"
+                    val contentValues = ContentValues().apply {
+                        put(MediaStore.Images.Media.DISPLAY_NAME, cleanFileName)
+                        put(MediaStore.Images.Media.MIME_TYPE, mimeType)
+                        put(MediaStore.Images.Media.RELATIVE_PATH, relativePath)
+                        put(MediaStore.Images.Media.DATE_ADDED, nowSec)
+                        put(MediaStore.Images.Media.DATE_MODIFIED, nowSec)
+                        put(MediaStore.Images.Media.DATE_TAKEN, nowMs)
+                        put(MediaStore.Images.Media.SIZE, bytes.size)
+                        put(MediaStore.Images.Media.IS_PENDING, 1)
+                    }
+
+                    val collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                    val itemUri = resolver.insert(collection, contentValues)
+
+                    if (itemUri != null) {
+                        resolver.openOutputStream(itemUri)?.use { out ->
+                            out.write(bytes)
+                            out.flush()
+                        }
+                        contentValues.clear()
+                        contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+                        resolver.update(itemUri, contentValues, null, null)
+                        saved = true
+
+                        try {
+                            val cursor = resolver.query(itemUri, arrayOf(MediaStore.Images.Media.DATA), null, null, null)
+                            cursor?.use {
+                                if (it.moveToFirst()) {
+                                    val idx = it.getColumnIndex(MediaStore.Images.Media.DATA)
+                                    if (idx != -1) scannedPath = it.getString(idx)
+                                }
+                            }
+                        } catch (_: Exception) {}
+
+                        if (!scannedPath.isNullOrBlank()) {
+                            MediaScannerConnection.scanFile(
+                                this@MainActivity,
+                                arrayOf(scannedPath),
+                                arrayOf(mimeType),
+                                null
+                            )
+                        } else {
+                            try {
+                                val scanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE).apply {
+                                    data = itemUri
+                                }
+                                sendBroadcast(scanIntent)
+                            } catch (_: Exception) {}
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    saved = false
+                }
+            }
+
+            if (!saved) {
+                try {
+                    val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                    val appDir = File(picturesDir, subFolder).apply { mkdirs() }
+                    val file = File(appDir, cleanFileName)
+                    FileOutputStream(file).use {
+                        it.write(bytes)
+                        it.flush()
+                    }
+
+                    MediaScannerConnection.scanFile(
+                        this@MainActivity,
+                        arrayOf(file.absolutePath),
+                        arrayOf(mimeType),
+                        null
+                    )
+                    saved = true
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            return saved
+        }
+
         @JavascriptInterface
         fun downloadPhoto(base64DataUrl: String, fileName: String) {
-            runOnUiThread {
+            // Default single photo download goes to Gallery with auto-incremented batch
+            downloadPhotoFromGallery(base64DataUrl, fileName)
+        }
+
+        @JavascriptInterface
+        fun downloadPhotoFromGallery(base64DataUrl: String, fileName: String) {
+            thread {
                 try {
-                    val base64 = base64DataUrl.substringAfter("base64,")
+                    val base64 = if (base64DataUrl.contains("base64,")) {
+                        base64DataUrl.substringAfter("base64,")
+                    } else {
+                        base64DataUrl
+                    }.trim()
                     val bytes = Base64.decode(base64, Base64.DEFAULT)
                     val rawName = fileName.substringBeforeLast(".")
                         .ifBlank { "Photo_${System.currentTimeMillis()}" }
                         .replace(Regex("[^a-zA-Z0-9_-]"), "_")
                     val cleanFileName = "$rawName.jpg"
 
-                    var saved = false
+                    val dateStr = getTodayDateString()
+                    val batch = getNextGalleryBatchFolder(dateStr)
+                    val subFolder = getGallerySubFolder(dateStr, batch)
+                    val displayPath = "Pictures/$subFolder/"
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        val resolver = contentResolver
-                        val contentValues = ContentValues().apply {
-                            put(MediaStore.Images.Media.DISPLAY_NAME, cleanFileName)
-                            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-                            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/AuraPhotoOrganizer")
-                            put(MediaStore.Images.Media.IS_PENDING, 1)
+                    val saved = saveImageToGallery(bytes, cleanFileName, subFolder)
+
+                    runOnUiThread {
+                        if (saved) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Photo saved! ($displayPath$cleanFileName)",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Failed to save photo to Gallery", Toast.LENGTH_SHORT).show()
                         }
-
-                        val collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                        val itemUri = resolver.insert(collection, contentValues)
-
-                        if (itemUri != null) {
-                            resolver.openOutputStream(itemUri)?.use { out ->
-                                out.write(bytes)
-                            }
-                            contentValues.clear()
-                            contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
-                            resolver.update(itemUri, contentValues, null, null)
-                            saved = true
-                        }
-                    } else {
-                        val picturesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-                        val appDir = File(picturesDir, "AuraPhotoOrganizer").apply { mkdirs() }
-                        val file = File(appDir, cleanFileName)
-                        FileOutputStream(file).use { it.write(bytes) }
-
-                        MediaScannerConnection.scanFile(
-                            this@MainActivity,
-                            arrayOf(file.absolutePath),
-                            arrayOf("image/jpeg"),
-                            null
-                        )
-                        saved = true
-                    }
-
-                    if (saved) {
-                        Toast.makeText(
-                            this@MainActivity,
-                            "Photo saved to Gallery! (Pictures/AuraPhotoOrganizer/$cleanFileName)",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } else {
-                        Toast.makeText(this@MainActivity, "Failed to save photo to Gallery", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun downloadPhotoFromAlbum(base64DataUrl: String, fileName: String, albumName: String) {
+            thread {
+                try {
+                    val base64 = if (base64DataUrl.contains("base64,")) {
+                        base64DataUrl.substringAfter("base64,")
+                    } else {
+                        base64DataUrl
+                    }.trim()
+                    val bytes = Base64.decode(base64, Base64.DEFAULT)
+                    val rawName = fileName.substringBeforeLast(".")
+                        .ifBlank { "Photo_${System.currentTimeMillis()}" }
+                        .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                    val cleanFileName = "$rawName.jpg"
+
+                    val dateStr = getTodayDateString()
+                    val subFolder = getCollectionsSubFolder(albumName, dateStr)
+                    val displayPath = "Pictures/$subFolder/"
+
+                    val saved = saveImageToGallery(bytes, cleanFileName, subFolder)
+
+                    runOnUiThread {
+                        if (saved) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Photo saved! ($displayPath$cleanFileName)",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Failed to save photo to Collections", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun downloadMultiplePhotosToGallery(photosJson: String, albumTitle: String) {
+            thread {
+                try {
+                    val dateStr = getTodayDateString()
+                    val subFolder = getCollectionsSubFolder(albumTitle, dateStr)
+                    val displayPath = "Pictures/$subFolder/"
+
+                    val jsonArr = JSONArray(photosJson)
+                    var savedCount = 0
+
+                    for (i in 0 until jsonArr.length()) {
+                        val item = jsonArr.getJSONObject(i)
+                        val dataUrl = item.optString("dataUrl", "")
+                        if (dataUrl.isBlank()) continue
+                        val displayName = item.optString("displayName", "Photo_${i + 1}")
+                            .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                        val base64 = if (dataUrl.contains("base64,")) dataUrl.substringAfter("base64,") else dataUrl
+                        val bytes = Base64.decode(base64.trim(), Base64.DEFAULT)
+                        val fileName = "${displayName}_${System.currentTimeMillis()}_$i.jpg"
+
+                        val ok = saveImageToGallery(bytes, fileName, subFolder)
+                        if (ok) savedCount++
+                    }
+
+                    runOnUiThread {
+                        if (savedCount > 0) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Saved $savedCount photos to $displayPath",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Failed to save photos to Collections", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun downloadMultiplePhotosFromGallery(photosJson: String) {
+            thread {
+                try {
+                    val dateStr = getTodayDateString()
+                    val batch = getNextGalleryBatchFolder(dateStr)
+                    val subFolder = getGallerySubFolder(dateStr, batch)
+                    val displayPath = "Pictures/$subFolder/"
+
+                    val jsonArr = JSONArray(photosJson)
+                    var savedCount = 0
+
+                    for (i in 0 until jsonArr.length()) {
+                        val item = jsonArr.getJSONObject(i)
+                        val dataUrl = item.optString("dataUrl", "")
+                        if (dataUrl.isBlank()) continue
+                        val displayName = item.optString("displayName", "Photo_${i + 1}")
+                            .replace(Regex("[^a-zA-Z0-9_-]"), "_")
+                        val base64 = if (dataUrl.contains("base64,")) dataUrl.substringAfter("base64,") else dataUrl
+                        val bytes = Base64.decode(base64.trim(), Base64.DEFAULT)
+                        val fileName = "${displayName}_${System.currentTimeMillis()}_$i.jpg"
+
+                        val ok = saveImageToGallery(bytes, fileName, subFolder)
+                        if (ok) savedCount++
+                    }
+
+                    runOnUiThread {
+                        if (savedCount > 0) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Saved $savedCount photos to $displayPath",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Failed to save photos to Gallery", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
 
         @JavascriptInterface
         fun downloadZip(base64ZipData: String, zipFileName: String) {
-            runOnUiThread {
+            thread {
                 try {
-                    val base64 = base64ZipData.substringAfter("base64,")
+                    val base64 = if (base64ZipData.contains("base64,")) {
+                        base64ZipData.substringAfter("base64,")
+                    } else {
+                        base64ZipData
+                    }.trim()
                     val bytes = Base64.decode(base64, Base64.DEFAULT)
                     val rawName = zipFileName.substringBeforeLast(".")
                         .ifBlank { "Archive_${System.currentTimeMillis()}" }
                         .replace(Regex("[^a-zA-Z0-9_-]"), "_")
                     val cleanFileName = "$rawName.zip"
+                    val nowMs = System.currentTimeMillis()
+                    val nowSec = nowMs / 1000
 
                     var saved = false
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        val resolver = contentResolver
-                        val contentValues = ContentValues().apply {
-                            put(MediaStore.Downloads.DISPLAY_NAME, cleanFileName)
-                            put(MediaStore.Downloads.MIME_TYPE, "application/zip")
-                            put(MediaStore.Downloads.RELATIVE_PATH, "Download/AuraPhotoOrganizer")
-                            put(MediaStore.Downloads.IS_PENDING, 1)
-                        }
-
-                        val collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI
-                        val itemUri = resolver.insert(collection, contentValues)
-
-                        if (itemUri != null) {
-                            resolver.openOutputStream(itemUri)?.use { out ->
-                                out.write(bytes)
+                        try {
+                            val resolver = contentResolver
+                            val contentValues = ContentValues().apply {
+                                put(MediaStore.Downloads.DISPLAY_NAME, cleanFileName)
+                                put(MediaStore.Downloads.MIME_TYPE, "application/zip")
+                                put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/AuraPhotoOrganizer/")
+                                put(MediaStore.Downloads.DATE_ADDED, nowSec)
+                                put(MediaStore.Downloads.DATE_MODIFIED, nowSec)
+                                put(MediaStore.Downloads.IS_PENDING, 1)
                             }
-                            contentValues.clear()
-                            contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
-                            resolver.update(itemUri, contentValues, null, null)
-                            saved = true
+
+                            val collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI
+                            val itemUri = resolver.insert(collection, contentValues)
+
+                            if (itemUri != null) {
+                                resolver.openOutputStream(itemUri)?.use { out ->
+                                    out.write(bytes)
+                                    out.flush()
+                                }
+                                contentValues.clear()
+                                contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+                                resolver.update(itemUri, contentValues, null, null)
+                                saved = true
+                            }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            saved = false
                         }
                     }
 
                     if (!saved) {
-                        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                        val appDir = File(downloadDir, "AuraPhotoOrganizer").apply { mkdirs() }
-                        val file = File(appDir, cleanFileName)
-                        FileOutputStream(file).use { it.write(bytes) }
-                        MediaScannerConnection.scanFile(
-                            this@MainActivity,
-                            arrayOf(file.absolutePath),
-                            arrayOf("application/zip"),
-                            null
-                        )
-                        saved = true
+                        try {
+                            val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                            val appDir = File(downloadDir, "AuraPhotoOrganizer").apply { mkdirs() }
+                            val file = File(appDir, cleanFileName)
+                            FileOutputStream(file).use {
+                                it.write(bytes)
+                                it.flush()
+                            }
+                            MediaScannerConnection.scanFile(
+                                this@MainActivity,
+                                arrayOf(file.absolutePath),
+                                arrayOf("application/zip"),
+                                null
+                            )
+                            saved = true
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
 
-                    if (saved) {
-                        Toast.makeText(
-                            this@MainActivity,
-                            "ZIP saved to Downloads! (Download/AuraPhotoOrganizer/$cleanFileName)",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    } else {
-                        Toast.makeText(this@MainActivity, "Failed to save ZIP", Toast.LENGTH_SHORT).show()
+                    runOnUiThread {
+                        if (saved) {
+                            Toast.makeText(
+                                this@MainActivity,
+                                "ZIP saved to Downloads! (Download/AuraPhotoOrganizer/$cleanFileName)",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(this@MainActivity, "Failed to save ZIP", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    Toast.makeText(this@MainActivity, "ZIP download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "ZIP download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

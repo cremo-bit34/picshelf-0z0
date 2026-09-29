@@ -314,16 +314,19 @@ fun GalleryScreen(
                     IconButton(onClick = {
                         val selectedList = displayedGalleryPhotos.filter { selectedPhotoIds.contains(it.photo.id) }
                         coroutineScope.launch {
+                            val res = ExportUtils.savePhotosToGallery(context, selectedList, isFromCollection = false)
                             val zipFile = ExportUtils.createZipExport(
                                 context,
                                 selectedList,
-                                "Collection_${System.currentTimeMillis()}"
+                                "Gallery_${System.currentTimeMillis()}"
                             )
                             if (zipFile != null) {
-                                val ok = ExportUtils.saveToDownloads(context, zipFile)
-                                if (ok) {
-                                    Toast.makeText(context, "Saved collection ZIP to Downloads folder!", Toast.LENGTH_LONG).show()
-                                }
+                                ExportUtils.saveToDownloads(context, zipFile)
+                            }
+                            if (res.success) {
+                                Toast.makeText(context, "Saved ${res.count} photos to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(context, "Failed to save photos to Gallery", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }) {
@@ -708,16 +711,19 @@ fun GalleryScreen(
                     TextButton(
                         onClick = {
                             coroutineScope.launch {
+                                val res = ExportUtils.savePhotosToGallery(context, displayedGalleryPhotos, isFromCollection = false)
                                 val zipFile = ExportUtils.createZipExport(
                                     context,
                                     displayedGalleryPhotos,
-                                    "Filtered_${System.currentTimeMillis()}"
+                                    "Gallery_${System.currentTimeMillis()}"
                                 )
                                 if (zipFile != null) {
-                                    val ok = ExportUtils.saveToDownloads(context, zipFile)
-                                    if (ok) {
-                                        Toast.makeText(context, "Saved ZIP to Downloads folder!", Toast.LENGTH_SHORT).show()
-                                    }
+                                    ExportUtils.saveToDownloads(context, zipFile)
+                                }
+                                if (res.success) {
+                                    Toast.makeText(context, "Saved ${res.count} photos to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to save photos to Gallery", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
@@ -811,16 +817,11 @@ fun GalleryScreen(
                         },
                         onDownload = {
                             coroutineScope.launch {
-                                val zipFile = ExportUtils.createZipExport(
-                                    context,
-                                    listOf(photoWithTags),
-                                    photoWithTags.photo.displayName
-                                )
-                                if (zipFile != null) {
-                                    val ok = ExportUtils.saveToDownloads(context, zipFile)
-                                    if (ok) {
-                                        Toast.makeText(context, "Downloaded '${photoWithTags.photo.displayName}' to Downloads!", Toast.LENGTH_SHORT).show()
-                                    }
+                                val res = ExportUtils.savePhotoToGallery(context, photoWithTags, isFromCollection = false)
+                                if (res.success) {
+                                    Toast.makeText(context, "Saved '${res.fileName}' to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to save photo to Gallery", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
@@ -2088,13 +2089,16 @@ fun AlbumsCardView(
                                             onClick = {
                                                 if (favoritePhotos.isNotEmpty()) {
                                                     coroutineScope.launch {
-                                                        Toast.makeText(context, "Packaging 'Favorites' album...", Toast.LENGTH_SHORT).show()
+                                                        Toast.makeText(context, "Saving 'Favorites' album to Gallery...", Toast.LENGTH_SHORT).show()
+                                                        val res = ExportUtils.savePhotosToGallery(context, favoritePhotos, isFromCollection = true, albumName = "Favorites")
                                                         val zipFile = ExportUtils.createZipExport(context, favoritePhotos, "Favorites_Album")
                                                         if (zipFile != null) {
-                                                            val ok = ExportUtils.saveToDownloads(context, zipFile)
-                                                            if (ok) {
-                                                                Toast.makeText(context, "Downloaded 'Favorites' album to Downloads!", Toast.LENGTH_LONG).show()
-                                                            }
+                                                            ExportUtils.saveToDownloads(context, zipFile)
+                                                        }
+                                                        if (res.success) {
+                                                            Toast.makeText(context, "Saved ${res.count} photos to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
+                                                        } else {
+                                                            Toast.makeText(context, "Failed to save photos to Gallery", Toast.LENGTH_SHORT).show()
                                                         }
                                                     }
                                                 } else {
@@ -2234,13 +2238,16 @@ fun AlbumsCardView(
                                         onClick = {
                                             if (albumPhotos.isNotEmpty()) {
                                                 coroutineScope.launch {
-                                                    Toast.makeText(context, "Packaging '${tag.name}' album...", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context, "Saving '${tag.name}' album to Gallery...", Toast.LENGTH_SHORT).show()
+                                                    val res = ExportUtils.savePhotosToGallery(context, albumPhotos, isFromCollection = true, albumName = tag.name)
                                                     val zipFile = ExportUtils.createZipExport(context, albumPhotos, "${tag.name}_Album")
                                                     if (zipFile != null) {
-                                                        val ok = ExportUtils.saveToDownloads(context, zipFile)
-                                                        if (ok) {
-                                                            Toast.makeText(context, "Downloaded '${tag.name}' album to Downloads!", Toast.LENGTH_LONG).show()
-                                                        }
+                                                        ExportUtils.saveToDownloads(context, zipFile)
+                                                    }
+                                                    if (res.success) {
+                                                        Toast.makeText(context, "Saved ${res.count} photos to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
+                                                    } else {
+                                                        Toast.makeText(context, "Failed to save photos to Gallery", Toast.LENGTH_SHORT).show()
                                                     }
                                                 }
                                             } else {
@@ -2578,10 +2585,15 @@ fun FavoritesScreen(
                     if (favoritePhotos.isNotEmpty()) {
                         IconButton(onClick = {
                             coroutineScope.launch {
+                                val res = ExportUtils.savePhotosToGallery(context, favoritePhotos, isFromCollection = true, albumName = "Favorites")
                                 val zipFile = ExportUtils.createZipExport(context, favoritePhotos, "Favorites_Album")
                                 if (zipFile != null) {
                                     ExportUtils.saveToDownloads(context, zipFile)
-                                    Toast.makeText(context, "Saved all favorites to Downloads!", Toast.LENGTH_SHORT).show()
+                                }
+                                if (res.success) {
+                                    Toast.makeText(context, "Saved ${res.count} favorites to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to save favorites to Gallery", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }) {
@@ -2650,10 +2662,11 @@ fun FavoritesScreen(
                         },
                         onDownload = {
                             coroutineScope.launch {
-                                val zipFile = ExportUtils.createZipExport(context, listOf(photoWithTags), photoWithTags.photo.displayName)
-                                if (zipFile != null) {
-                                    ExportUtils.saveToDownloads(context, zipFile)
-                                    Toast.makeText(context, "Saved to Downloads!", Toast.LENGTH_SHORT).show()
+                                val res = ExportUtils.savePhotoToGallery(context, photoWithTags, isFromCollection = true, albumName = "Favorites")
+                                if (res.success) {
+                                    Toast.makeText(context, "Saved '${res.fileName}' to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to save photo to Gallery", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
@@ -2915,12 +2928,22 @@ fun PhotoDetailScreen(
                     // Download to Public Downloads
                     IconButton(onClick = {
                         coroutineScope.launch {
+                            val primaryAlbum = currentPhoto.tags.firstOrNull()?.name
+                            val isFromAlbum = !primaryAlbum.isNullOrBlank()
+                            val res = ExportUtils.savePhotoToGallery(
+                                context = context,
+                                photoWithTags = currentPhoto,
+                                isFromCollection = isFromAlbum,
+                                albumName = primaryAlbum
+                            )
                             val zipFile = ExportUtils.createZipExport(context, listOf(currentPhoto), currentPhoto.photo.displayName)
                             if (zipFile != null) {
-                                val ok = ExportUtils.saveToDownloads(context, zipFile)
-                                if (ok) {
-                                    Toast.makeText(context, "Saved to device Downloads!", Toast.LENGTH_SHORT).show()
-                                }
+                                ExportUtils.saveToDownloads(context, zipFile)
+                            }
+                            if (res.success) {
+                                Toast.makeText(context, "Saved '${res.fileName}' to ${res.fullDisplayPath}", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(context, "Failed to save photo to Gallery", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }) {

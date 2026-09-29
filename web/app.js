@@ -3535,6 +3535,22 @@ function triggerBrowserDownload(blobOrUrl, filename) {
   }, 1500);
 }
 
+function getTodayDDMMYY() {
+  const d = new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice(-2);
+  return `${day}-${month}-${year}`;
+}
+
+function getNextBrowserGalleryBatch(dateStr) {
+  const key = 'gallery_batch_' + dateStr;
+  let cur = parseInt(localStorage.getItem(key) || '0', 10);
+  cur++;
+  localStorage.setItem(key, String(cur));
+  return String(cur).padStart(3, '0');
+}
+
 async function downloadSinglePhoto(id) {
   const photo = state.photos.find(p => p.id === id);
   if (!photo) {
@@ -3559,8 +3575,20 @@ async function downloadSinglePhoto(id) {
   const { blob, dataUrl: jpegDataUrl } = await convertToJpegBlob(srcDataUrl, 0.95);
   const finalDataUrl = jpegDataUrl || srcDataUrl;
 
-  if (window.AndroidApp && typeof window.AndroidApp.downloadPhoto === 'function') {
-    window.AndroidApp.downloadPhoto(finalDataUrl, fileName);
+  const dateStr = getTodayDDMMYY();
+  const isFromAlbum = (state.currentScreen === 'album-detail' && !!state.currentAlbumName) ||
+                      (photo.tags && photo.tags.length > 0);
+  const albumName = (state.currentScreen === 'album-detail' && state.currentAlbumName) ?
+                    state.currentAlbumName : (photo.tags && photo.tags[0] ? photo.tags[0] : null);
+
+  if (window.AndroidApp) {
+    if (isFromAlbum && albumName && typeof window.AndroidApp.downloadPhotoFromAlbum === 'function') {
+      window.AndroidApp.downloadPhotoFromAlbum(finalDataUrl, fileName, albumName);
+    } else if (typeof window.AndroidApp.downloadPhotoFromGallery === 'function') {
+      window.AndroidApp.downloadPhotoFromGallery(finalDataUrl, fileName);
+    } else if (typeof window.AndroidApp.downloadPhoto === 'function') {
+      window.AndroidApp.downloadPhoto(finalDataUrl, fileName);
+    }
   } else {
     // Fail-safe browser download: use FileSaver saveAs or native Blob download
     if (blob) {
@@ -3572,7 +3600,14 @@ async function downloadSinglePhoto(id) {
     } else {
       triggerBrowserDownload(finalDataUrl, fileName);
     }
-    showToast(`Downloaded '${cleanName}.jpg' to your device! 📥`);
+
+    if (isFromAlbum && albumName) {
+      const cleanAlbum = albumName.replace(/[^a-zA-Z0-9_-]/g, '_');
+      showToast(`📥 Saved '${cleanName}.jpg' to Pictures/PhotoOrganizer/Collections/${dateStr}/${cleanAlbum}/`);
+    } else {
+      const batchFolder = getNextBrowserGalleryBatch(dateStr);
+      showToast(`📥 Saved '${cleanName}.jpg' to Pictures/PhotoOrganizer/Gallery/${dateStr}/${batchFolder}/`);
+    }
   }
 }
 
@@ -5702,7 +5737,7 @@ async function downloadAlbumZip(tagName) {
   }
 
   showToast(`Packaging '${tagName}' album (${albumPhotos.length} photos)... 📦`);
-  await exportPhotosToZip(albumPhotos, `${tagName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Album`);
+  await exportPhotosToZip(albumPhotos, `${tagName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Album`, true, tagName);
 }
 
 async function shareAlbum(tagName) {
@@ -5789,7 +5824,7 @@ async function downloadFavoritesAlbumZip() {
     return;
   }
   showToast(`Packaging Favorites album (${favoritePhotos.length} photos)... 📦`);
-  await exportPhotosToZip(favoritePhotos, 'Favorites_Album');
+  await exportPhotosToZip(favoritePhotos, 'Favorites_Album', true, 'Favorites');
 }
 
 async function shareFavoritesAlbum() {
@@ -7025,12 +7060,16 @@ function openBatchTagModal(photoIds) {
 }
 
 // ZIP Export ("The Mom Feature") using JSZip
-async function exportPhotosToZip(photoList, zipFilename) {
+async function exportPhotosToZip(photoList, zipFilename, isAlbumMode = false, albumName = null) {
   if (!photoList || photoList.length === 0) {
     showToast('No photos to export!');
     return;
   }
-  showToast(`Packaging ${photoList.length} photos into ZIP... 📦`);
+  showToast(`Packaging ${photoList.length} photos... 📦`);
+
+  const dateStr = getTodayDDMMYY();
+  const effectiveIsAlbum = isAlbumMode || (state.currentScreen === 'album-detail' && !!state.currentAlbumName);
+  const effectiveAlbumName = albumName || (state.currentScreen === 'album-detail' ? state.currentAlbumName : null) || (effectiveIsAlbum ? zipFilename.replace(/_Album$|_Export$|_Collection$|_Filtered$/, '') : null);
 
   try {
     const zip = new JSZip();
@@ -7040,11 +7079,14 @@ async function exportPhotosToZip(photoList, zipFilename) {
     for (let i = 0; i < photoList.length; i++) {
       const p = photoList[i];
       try {
-        if (!p.dataUrl) continue;
-        const parts = p.dataUrl.split(',');
+        const rawData = p.dataUrl || (p.gradient ? generateGradientImage(p.displayName, p.category, p.gradient) : null);
+        if (!rawData) continue;
+        const parts = rawData.split(',');
         if (parts.length < 2) continue;
         const base64Data = parts[1];
-        const filename = `${p.displayName.replace(/[^a-zA-Z0-9_-]/g, '_')}_${i + 1}.jpg`;
+        const rawTitle = (p.displayName || 'Photo').replace(/\.[^/.]+$/, '');
+        const cleanName = rawTitle.replace(/[^a-zA-Z0-9_\u0900-\u0D7F-]/g, '_').trim() || 'Photo';
+        const filename = `${cleanName}_${i + 1}.jpg`;
         folder.file(filename, base64Data, { base64: true });
         addedCount++;
       } catch (itemErr) {
@@ -7059,18 +7101,29 @@ async function exportPhotosToZip(photoList, zipFilename) {
 
     const content = await zip.generateAsync({ type: 'blob' });
     if (window.AndroidApp) {
+      const payload = photoList.map(p => ({
+        displayName: p.displayName || 'Photo',
+        dataUrl: p.dataUrl || (p.gradient ? generateGradientImage(p.displayName, p.category, p.gradient) : null)
+      })).filter(p => !!p.dataUrl);
+
       // 1. Direct Native Save: Save each photo directly into the Android Phone Gallery
-      if (typeof window.AndroidApp.downloadMultiplePhotosToGallery === 'function') {
+      if (effectiveIsAlbum && effectiveAlbumName && typeof window.AndroidApp.downloadMultiplePhotosToGallery === 'function') {
         try {
-          const payload = photoList.map(p => ({
-            displayName: p.displayName || 'Photo',
-            dataUrl: p.dataUrl || (p.gradient ? generateGradientImage(p.displayName, p.category, p.gradient) : null)
-          })).filter(p => !!p.dataUrl);
-          if (payload.length > 0) {
-            window.AndroidApp.downloadMultiplePhotosToGallery(JSON.stringify(payload), zipFilename);
-          }
+          window.AndroidApp.downloadMultiplePhotosToGallery(JSON.stringify(payload), effectiveAlbumName);
         } catch (galErr) {
           console.warn('downloadMultiplePhotosToGallery failed:', galErr);
+        }
+      } else if (!effectiveIsAlbum && typeof window.AndroidApp.downloadMultiplePhotosFromGallery === 'function') {
+        try {
+          window.AndroidApp.downloadMultiplePhotosFromGallery(JSON.stringify(payload));
+        } catch (galErr) {
+          console.warn('downloadMultiplePhotosFromGallery failed:', galErr);
+        }
+      } else if (typeof window.AndroidApp.downloadMultiplePhotosToGallery === 'function') {
+        try {
+          window.AndroidApp.downloadMultiplePhotosToGallery(JSON.stringify(payload), zipFilename);
+        } catch (galErr) {
+          console.warn('downloadMultiplePhotosToGallery fallback failed:', galErr);
         }
       }
 
@@ -7089,7 +7142,14 @@ async function exportPhotosToZip(photoList, zipFilename) {
       } else {
         triggerBrowserDownload(content, `${zipFilename}.zip`);
       }
-      showToast(`Saved '${zipFilename}.zip' to Downloads! 📦`);
+
+      if (effectiveIsAlbum && effectiveAlbumName) {
+        const cleanAlbum = effectiveAlbumName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        showToast(`📥 Saved ${photoList.length} photos (${zipFilename}.zip) to Pictures/PhotoOrganizer/Collections/${dateStr}/${cleanAlbum}/`);
+      } else {
+        const batchFolder = getNextBrowserGalleryBatch(dateStr);
+        showToast(`📥 Saved ${photoList.length} photos (${zipFilename}.zip) to Pictures/PhotoOrganizer/Gallery/${dateStr}/${batchFolder}/`);
+      }
     }
   } catch (err) {
     console.error(err);
@@ -10905,7 +10965,9 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('No photos selected to export!');
       return;
     }
-    exportPhotosToZip(selected, `Export_${Date.now()}`);
+    const isAlbum = state.currentScreen === 'album-detail' && !!state.currentAlbumName;
+    const albumName = isAlbum ? state.currentAlbumName : null;
+    exportPhotosToZip(selected, isAlbum ? `${albumName}_Export` : `Export_${Date.now()}`, isAlbum, albumName);
   });
 
   document.getElementById('exportFilteredZipBtn')?.addEventListener('click', () => {
@@ -10919,7 +10981,9 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('No filtered photos to export!');
       return;
     }
-    exportPhotosToZip(photos, `Filtered_Photos_${Date.now()}`);
+    const isAlbum = state.currentScreen === 'album-detail' && !!state.currentAlbumName;
+    const albumName = isAlbum ? state.currentAlbumName : (state.selectedFilterTags.size === 1 ? Array.from(state.selectedFilterTags)[0] : null);
+    exportPhotosToZip(photos, isAlbum || albumName ? `${albumName || 'Filtered'}_Collection` : `Filtered_Photos_${Date.now()}`, !!(isAlbum || albumName), albumName);
   });
 
   document.getElementById('shareSelectedBtn')?.addEventListener('click', async () => {
@@ -10963,7 +11027,9 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('No photos selected to download!');
       return;
     }
-    exportPhotosToZip(selected, `Photo_Collection_${Date.now()}`);
+    const isAlbum = state.currentScreen === 'album-detail' && !!state.currentAlbumName;
+    const albumName = isAlbum ? state.currentAlbumName : null;
+    exportPhotosToZip(selected, isAlbum ? `${albumName}_Collection` : `Photo_Collection_${Date.now()}`, isAlbum, albumName);
   });
 
   document.getElementById('trashSelectedBtn')?.addEventListener('click', () => {
