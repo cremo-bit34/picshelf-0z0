@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - PicShelf</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(22, 30, 49, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #6366f1;
+      --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --table-header: rgba(99, 102, 241, 0.15);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      padding: 40px 20px;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.12) 0%, transparent 40%);
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 48px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .header {
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 28px;
+    }
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #c7d2fe;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    .meta-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.45rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 36px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: var(--primary-gradient);
+      border-radius: 4px;
+    }
+    h3 {
+      font-size: 1.1rem;
+      color: var(--accent);
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+    p {
+      color: #cbd5e1;
+      margin-bottom: 16px;
+      font-size: 1rem;
+    }
+    ul {
+      margin-left: 20px;
+      margin-bottom: 18px;
+      color: #cbd5e1;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    strong {
+      color: var(--text);
+    }
+    .highlight-card {
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .highlight-card p {
+      margin: 0;
+      color: #e0e7ff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+      font-size: 0.92rem;
+    }
+    th {
+      background: var(--table-header);
+      color: var(--text);
+      text-align: left;
+      padding: 14px 16px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--card-border);
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--card-border);
+      color: #cbd5e1;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    a:hover {
+      color: #7dd3fc;
+      text-decoration: underline;
+    }
+    .footer {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    @media (max-width: 640px) {
+      body {
+        padding: 16px 12px;
+      }
+      .container {
+        padding: 24px 20px;
+        border-radius: 18px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      table {
+        display: block;
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand-badge">🛡️ Official Privacy Statement</div>
+      <h1>Privacy Policy for PicShelf</h1>
+      <div class="meta-info">
+        <div class="meta-item">📅 <strong>Effective:</strong> October 5, 2026</div>
+        <div class="meta-item">📦 <strong>Package:</strong> com.aistudio.photoorganizer.xwylza</div>
+        <div class="meta-item">👤 <strong>Developer:</strong> cremo-bit34</div>
+      </div>
+    </div>
+
+    <div class="highlight-card">
+      <p><strong>🔒 100% On-Device Privacy Architecture:</strong> PicShelf is built from the ground up as a local-first application. All your photos, albums, edits, and face recognition processing remain securely on your personal device. We do not operate external media servers, and your pictures are never uploaded to the cloud.</p>
+    </div>
+
+    <h2>1. Introduction & Overview</h2>
+    <p>This Privacy Policy outlines how <strong>PicShelf</strong> ("the app", "we", "us", or "our") manages your data. We believe your memories are deeply personal. Our core principle is simple: your media belongs exclusively to you.</p>
+
+    <h2>2. Device Permissions & Purpose</h2>
+    <p>To provide offline photo organizing, AI subject isolation, duplicate cleanup, and geotagging features, PicShelf asks for the following Android system permissions:</p>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Permission</th>
+          <th>Android Identifier</th>
+          <th>Purpose in PicShelf</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Photos & Media</strong></td>
+          <td><code>READ_MEDIA_IMAGES</code><br><code>READ_EXTERNAL_STORAGE</code></td>
+          <td>Enables browsing your gallery, displaying photos, organizing albums, and performing on-device image editing.</td>
+        </tr>
+        <tr>
+          <td><strong>Photo Location Metadata</strong></td>
+          <td><code>ACCESS_MEDIA_LOCATION</code></td>
+          <td>Enables reading GPS tags embedded in your existing photos so you can view capture locations on the built-in world map.</td>
+        </tr>
+        <tr>
+          <td><strong>Camera</strong></td>
+          <td><code>CAMERA</code></td>
+          <td>Enables taking new photos directly into your organized albums.</td>
+        </tr>
+        <tr>
+          <td><strong>GPS Location (Optional)</strong></td>
+          <td><code>ACCESS_FINE_LOCATION</code><br><code>ACCESS_COARSE_LOCATION</code></td>
+          <td>Allows embedding geotags into photos taken with the in-app camera. Can be toggled on or off at any time in Settings.</td>
+        </tr>
+        <tr>
+          <td><strong>Google Play Billing</strong></td>
+          <td><code>com.android.vending.BILLING</code></td>
+          <td>Enables secure subscription purchases and lifetime licenses managed directly by Google Play.</td>
+        </tr>
+        <tr>
+          <td><strong>Notifications</strong></td>
+          <td><code>POST_NOTIFICATIONS</code></td>
+          <td>Displays real-time background progress bars during batch album exports and duplicate scans.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. Data Collection, Storage & Processing</h2>
+    <h3>A. Zero Server Uploads</h3>
+    <p>All AI neural networks (subject isolation, background blur, object removal), image adjustments (filters, curves, DPI resizing), and album duplicate detectors run strictly inside the local sandbox on your phone.</p>
+
+    <h3>B. Biometric & Passcode Security</h3>
+    <p>If you enable App Lock or Biometric Lock, verification is performed locally using Android's hardware security framework (<code>BiometricPrompt</code> / <code>KeyStore</code>). Biometric data never leaves your hardware security module.</p>
+
+    <h3>C. No Third-Party Tracking or Ads</h3>
+    <p>PicShelf contains zero advertising SDKs, zero behavioral analytics, and zero tracking cookies. We do not sell, rent, or monetize your personal information or media.</p>
+
+    <h2>4. In-App Purchases & Payments</h2>
+    <p>All financial transactions for PicShelf Pro are handled exclusively by <strong>Google Play In-App Billing</strong>. We never view, collect, or store your credit card, debit card, bank, or UPI details.</p>
+    <p>All billing terms, renewals, and refunds are governed by Google's official policies. You can cancel or manage subscriptions at any time via the <strong>Google Play Store app &gt; Payments &amp; Subscriptions</strong>.</p>
+
+    <h2>5. User Rights & Complete Data Erasure</h2>
+    <p>Because all data is stored on-device (in local storage and your phone's media gallery), you retain total control:</p>
+    <ul>
+      <li>You can delete any photo or album directly inside PicShelf.</li>
+      <li>To completely wipe all app cache, presets, and preferences, go to <strong>Settings &gt; Apps &gt; PicShelf &gt; Storage &gt; Clear Data</strong>, or uninstall the app.</li>
+    </ul>
+
+    <h2>6. Children's Privacy</h2>
+    <p>PicShelf does not knowingly collect any personal information from children under the age of 13. The application is a general-purpose offline utility.</p>
+
+    <h2>7. Policy Changes</h2>
+    <p>We may update this policy if app features evolve. Any updates will be published to our official GitHub repository and reflected inside the app's settings menu.</p>
+
+    <h2>8. Contact & Developer Information</h2>
+    <p>For inquiries, support, or privacy questions:</p>
+    <ul>
+      <li><strong>Developer:</strong> cremo-bit34</li>
+      <li><strong>GitHub Issues:</strong> <a href="https://github.com/cremo-bit34/picshelf-0z0/issues" target="_blank" rel="noopener">https://github.com/cremo-bit34/picshelf-0z0/issues</a></li>
+      <li><strong>Source Repository:</strong> <a href="https://github.com/cremo-bit34/picshelf-0z0" target="_blank" rel="noopener">https://github.com/cremo-bit34/picshelf-0z0</a></li>
+    </ul>
+
+    <div class="footer">
+      <div>&copy; 2026 PicShelf. Built with privacy-first architecture.</div>
+      <div><a href="https://github.com/cremo-bit34/picshelf-0z0" target="_blank">View on GitHub</a></div>
+    </div>
+  </div>
+</body>
+</html>

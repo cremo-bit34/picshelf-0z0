@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Aura Photos">
-  <title>Photo Organizer - Luxury Edition</title>
+  <meta name="apple-mobile-web-app-title" content="PicShelf">
+  <title>PicShelf - Photo Organizer</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="icon.png">
@@ -20,7 +20,8 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <!-- Google Play In-App Billing Bridge -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1/selfie_segmentation.js" crossorigin="anonymous"></script>
   <script>
     if (window.AndroidApp || navigator.userAgent.includes('wv') || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 850) {
       document.documentElement.classList.add('native-app-mode');
@@ -34,11 +35,11 @@
   <header class="preview-header">
     <div class="brand">
       <div class="brand-badge-icon" style="padding: 0; overflow: hidden; background: transparent; border: 1px solid rgba(255, 215, 0, 0.3);">
-        <img src="icon.png" alt="Aura Photos" style="width: 100%; height: 100%; object-fit: cover; border-radius: 13px;">
+        <img src="icon.png" alt="PicShelf" style="width: 100%; height: 100%; object-fit: cover; border-radius: 13px;">
       </div>
       <div>
-        <h1 class="brand-title">Aura Photos</h1>
-        <p class="brand-subtitle">Smart Photo Organizer · Luxury Mobile Preview</p>
+        <h1 class="brand-title">PicShelf</h1>
+        <p class="brand-subtitle">Smart Photo Organizer · Organize. Tag. Find. Edit. Fully Offline.</p>
       </div>
     </div>
     <div class="header-actions">
@@ -83,10 +84,18 @@
         <!-- TAB 0: LOADING DOCK SCREEN -->
         <section id="dockScreen" class="app-screen active">
           <div class="screen-header dock-screen-header">
-            <div>
-              <span class="screen-tagline" data-i18n="dock_tagline">STAGING AREA</span>
-              <h2 class="screen-title" data-i18n="dock_title">Loading Dock</h2>
-              <p class="screen-subtitle" id="dockSubtitle">3 photos pending review</p>
+            <div class="dock-header-content">
+              <div class="dock-sexy-tagline">
+                <div class="dock-sexy-brand-row">
+                  <span class="dock-sexy-glow-dot"></span>
+                  <span class="dock-sexy-brand" data-i18n="app_name">PicShelf</span>
+                </div>
+                <div class="dock-sexy-features" data-i18n="dock_tagline">Organize. Tag. Find. Edit. Fully Offline.</div>
+              </div>
+              <div class="dock-title-group">
+                <h2 class="screen-title" data-i18n="dock_title">Loading Dock</h2>
+                <p class="screen-subtitle" id="dockSubtitle" data-i18n="dock_subtitle_clear">All caught up</p>
+              </div>
             </div>
             <div class="dock-hero-actions">
               <button class="dock-hero-btn btn-camera-snap" id="cameraSnapBtn" title="Capture photo with camera" onclick="triggerCameraCapture()">
@@ -113,7 +122,7 @@
           </div>
 
           <!-- Ultra-Smart Fast-Tag Bar for Bulk Organization (Imagine 1000 Photos) -->
-          <div class="dock-quick-tag-bar" id="dockQuickTagBar">
+          <div class="dock-quick-tag-bar" id="dockQuickTagBar" style="display: none;">
             <div class="dock-quick-tag-header">
               <div class="dock-quick-tag-title">
                 <svg class="dock-title-sparkle" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -129,13 +138,14 @@
           </div>
 
           <!-- Dock Selection Toolbar (Glassmorphic) -->
-          <div class="dock-toolbar-card" id="dockActionStrip">
+          <div class="dock-toolbar-card" id="dockActionStrip" style="display: none;">
             <div class="dock-select-group">
               <button class="btn btn-xs btn-glass" id="dockSelectAllToggleBtn" onclick="toggleSelectAllDock()">
                 <i class="fa-solid fa-check-double"></i>
                 <span id="dockSelectAllBtnText" data-i18n="dock_select_all">Select All</span>
               </button>
               <span class="dock-selection-badge" id="dockSelectedCountBadge">0 Selected</span>
+              <span class="dock-limit-indicator" id="dockLimitIndicator" onclick="openVipSaveLimitModal()" style="display: none;"></span>
             </div>
             <div class="dock-batch-actions" id="dockBatchActions">
               <button class="btn btn-xs btn-primary" id="dockBatchTagBtn" onclick="openBatchTagModalFromDock()">
@@ -152,7 +162,7 @@
           </div>
 
           <!-- Empty Dock State (High-Aesthetic Studio) -->
-          <div class="empty-state dock-empty-state-luxury" id="dockEmptyState" style="display: none;">
+          <div class="empty-state dock-empty-state-luxury" id="dockEmptyState" style="display: flex;">
             <div class="dock-empty-visual">
               <div class="dock-empty-orb">
                 <svg class="dock-empty-hero-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -214,8 +224,8 @@
               <i class="fa-solid fa-ellipsis-vertical"></i>
               <span class="albums-menu-active-dot" id="albumsMenuActiveDot" style="display: none;"></span>
             </button>
-            <button class="phone-header-gear-btn" onclick="navigateToSettings()"
-              title="In-App Settings & Theme Switcher">
+            <button class="phone-header-gear-btn" id="gallerySettingsGearBtn" onclick="navigateToSettings()"
+              title="In-App Settings & Theme Switcher" aria-label="In-App Settings & Theme Switcher" data-i18n-title="gallery_header_settings_title" data-i18n-aria="gallery_header_settings_title">
               <i class="fa-solid fa-gear"></i>
             </button>
 
@@ -227,7 +237,7 @@
               </div>
               <!-- VIP 3D Effects Toggle Option (Item 11) -->
               <div class="dropdown-vip-3d-section" id="dropdown3DSection">
-                <button type="button" class="dropdown-vip-3d-card" id="dropdown3DEffectsBtn" onclick="toggle3DEffectsFromMenu(event)" title="Toggle 3D Holographic Parallax & Depth (Aura Pro VIP)">
+                <button type="button" class="dropdown-vip-3d-card" id="dropdown3DEffectsBtn" onclick="toggle3DEffectsFromMenu(event)" title="Toggle 3D Holographic Parallax & Depth (PicShelf Pro)">
                   <div class="dropdown-vip-3d-left">
                     <div class="dropdown-vip-3d-icon-box" id="dropdown3DIconBox">
                       <i class="fa-solid fa-cube"></i>
@@ -235,7 +245,7 @@
                     <div class="dropdown-vip-3d-info">
                       <div class="dropdown-vip-3d-title-row">
                         <span class="dropdown-vip-3d-title" data-i18n="gallery_3d_effects_title">3D Effects</span>
-                        <span class="dropdown-vip-crown-badge"><i class="fa-solid fa-crown"></i> VIP</span>
+                        <span class="dropdown-vip-crown-badge"><i class="fa-solid fa-crown"></i> PRO</span>
                       </div>
                       <div class="dropdown-vip-3d-desc" id="dropdown3DDesc" data-i18n="gallery_3d_effects_desc">Holographic Tilt & Depth</div>
                     </div>
@@ -292,9 +302,13 @@
                 data-i18n-title="detail_crop" style="display: none;">
                 <i class="fa-solid fa-crop-simple"></i>
               </button>
-              <button class="icon-btn vip-action-btn" id="moveCopySelectedBtn" onclick="openMoveCopyModal()" title="Move or Copy to Another Album (VIP)" aria-label="Move or Copy to Album">
+              <button class="icon-btn" id="resizeSelectedBtn" onclick="resizeSelectedGalleryPhoto()" title="Resize Image"
+                data-i18n-title="detail_resize" style="display: none;">
+                <i class="fa-solid fa-expand"></i>
+              </button>
+              <button class="icon-btn vip-action-btn" id="moveCopySelectedBtn" onclick="openMoveCopyModal()" title="Move or Copy to Another Album (Pro)" aria-label="Move or Copy to Album">
                 <i class="fa-solid fa-folder-tree"></i>
-                <span class="btn-vip-dot" title="Aura VIP Feature"><svg class="aura-luxury-crown" width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg></span>
+                <span class="btn-vip-dot" title="PicShelf Pro Feature"><svg class="aura-luxury-crown" width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg></span>
               </button>
               <button class="icon-btn" id="exportZipBtn" title="Export to ZIP" data-i18n-title="gallery_download_zip">
                 <i class="fa-solid fa-file-zipper"></i>
@@ -353,7 +367,7 @@
               <!-- Smart Sort Dropdown -->
               <div class="sort-dropdown-wrapper" id="sortDropdownWrapper">
                 <button type="button" class="gallery-sort-trigger-btn" id="sortTriggerBtn"
-                  onclick="toggleSortMenu(event)" title="Sort gallery photos">
+                  onclick="toggleSortMenu(event)" title="Sort gallery photos" aria-label="Sort gallery photos" data-i18n-title="gallery_sort_trigger_title" data-i18n-aria="gallery_sort_trigger_title">
                   <i class="fa-solid fa-arrow-down-short-wide" id="sortTriggerIcon"></i>
                   <span id="sortTriggerText">Newest</span>
                   <i class="fa-solid fa-chevron-down sort-chevron"></i>
@@ -407,10 +421,10 @@
 
               <div class="gallery-quick-actions">
                 <button class="text-link-btn primary" id="exportFilteredZipBtn"
-                  title="Download filtered collection as ZIP">
-                  <i class="fa-solid fa-file-zipper"></i> <span data-i18n="gallery_download_zip">Download ZIP</span>
+                  title="Download collection" aria-label="Download collection" data-i18n-title="gallery_download_zip" data-i18n-aria="gallery_download_zip">
+                  <i class="fa-solid fa-file-zipper"></i> <span data-i18n="gallery_download_zip">Download</span>
                 </button>
-                <button class="text-link-btn" id="shareFilteredBtn" title="Share filtered photos">
+                <button class="text-link-btn" id="shareFilteredBtn" title="Share filtered photos" aria-label="Share filtered photos" data-i18n-title="gallery_share_filtered_title" data-i18n-aria="gallery_share_filtered_title">
                   <i class="fa-solid fa-arrow-up-from-bracket"></i> <span data-i18n="detail_share">Share</span>
                 </button>
               </div>
@@ -433,14 +447,14 @@
               </div>
             </div>
             <div class="album-banner-actions" style="display: flex; align-items: center; gap: 8px;">
-              <button type="button" class="btn btn-sm album-banner-3d-toggle-btn" id="albumView3DToggleBtn" onclick="toggleAlbumPhoto3DEffects()" title="Toggle VIP 3D Card Effects on Album Photos">
+              <button type="button" class="btn btn-sm album-banner-3d-toggle-btn" id="albumView3DToggleBtn" onclick="toggleAlbumPhoto3DEffects()" title="3D Card FX Active (Click to disable)" data-i18n-title="album_3d_fx_active_title">
                 <i class="fa-solid fa-cube"></i>
-                <span class="toggle-3d-label">3D FX</span>
+                <span class="toggle-3d-label" data-i18n="album_3d_fx_on">3D FX ON</span>
               </button>
-              <button type="button" class="btn btn-sm btn-primary album-banner-add-btn" id="albumBannerAddBtn" onclick="triggerAlbumDirectImport(getActiveAlbumName())" title="Import photos directly from gallery into this album (VIP)" data-i18n-title="album_banner_import_title">
+              <button type="button" class="btn btn-sm btn-primary album-banner-add-btn" id="albumBannerAddBtn" onclick="triggerAlbumDirectImport(getActiveAlbumName())" title="Import photos directly from gallery into this album (Pro)" data-i18n-title="album_banner_import_title">
                 <i class="fa-solid fa-plus"></i>
                 <span data-i18n="album_banner_add_photos">Add Photos</span>
-                <span class="badge-vip-tiny"><svg class="aura-luxury-crown" width="9" height="9" viewBox="0 0 20 20" fill="currentColor"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> VIP</span>
+                <span class="badge-vip-tiny"><svg class="aura-luxury-crown" width="9" height="9" viewBox="0 0 20 20" fill="currentColor"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> PRO</span>
               </button>
             </div>
           </div>
@@ -454,7 +468,7 @@
             <p id="galleryEmptyDesc" data-i18n="gallery_empty_desc">Try switching tags, clearing date ranges, or moving new photos from the Loading Dock.</p>
             <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
               <button class="btn btn-primary" id="albumEmptyImportBtn" style="display: none;" onclick="triggerAlbumDirectImport(getActiveAlbumName())">
-                <i class="fa-solid fa-plus"></i> <span id="albumEmptyImportBtnText" data-i18n="album_banner_import_btn">Import Photos from Gallery (VIP)</span>
+                <i class="fa-solid fa-plus"></i> <span id="albumEmptyImportBtnText" data-i18n="album_banner_import_btn">Import Photos from Gallery (Pro)</span>
               </button>
               <button class="btn btn-outline" id="clearAllFiltersBtn" data-i18n="gallery_reset_filters">Reset All Filters</button>
             </div>
@@ -523,13 +537,13 @@
                 <button class="filter-chip" id="albumFilterWithPhotosBtn" onclick="setAlbumFilter('with_photos')">
                   <span><span data-i18n="albums_filter_with_photos">With Photos</span> (<span id="withPhotosAlbumsCount">0</span>)</span>
                 </button>
-                <button class="filter-chip active" id="album3DToggleBtn" onclick="toggleGlobal3DMode()" title="Toggle VIP 3D Holographic Parallax" data-i18n-title="albums_btn_3d_title">
+                <button class="filter-chip active" id="album3DToggleBtn" onclick="toggleGlobal3DMode()" title="Toggle Pro 3D Holographic Parallax" data-i18n-title="albums_btn_3d_title">
                   <i class="fa-solid fa-cube" style="color: #f59e0b"></i>
                   <span data-i18n="albums_filter_3d">3D Cards</span>
                 </button>
-                <button class="filter-chip" id="album3DStudioChipBtn" onclick="openAlbum3DSurfaceModal(state.tags[0]?.name || 'favorites')" title="Open 3D Album Surface Studio">
+                <button class="filter-chip" id="album3DStudioChipBtn" onclick="openAlbum3DSurfaceModal(state.tags[0]?.name || 'favorites')" title="Open 3D Album Surface Studio" aria-label="Open 3D Album Surface Studio" data-i18n-title="albums_btn_3d_studio_title" data-i18n-aria="albums_btn_3d_studio_title">
                   <i class="fa-solid fa-wand-magic-sparkles" style="color: #a855f7;"></i>
-                  <span>3D Studio</span>
+                  <span data-i18n="surface_3d_btn">3D Studio</span>
                 </button>
                 <button class="filter-chip" id="albumSortRecentBtn" onclick="toggleAlbumSort('recent')" title="Sort by Recent Activity" data-i18n-title="albums_sort_recent_title">
                   <i class="fa-solid fa-clock-rotate-left"></i>
@@ -608,12 +622,12 @@
             </div>
             <div class="header-actions" id="favoritesHeaderActions">
               <button class="btn btn-sm btn-glass favorites-3d-studio-btn" onclick="openAlbum3DSurfaceModal('favorites')"
-                title="Customize 3D Surface & Artwork for Favorites (VIP)" data-i18n-title="album_btn_surface_pro">
+                title="Customize 3D Surface & Artwork for Favorites (Pro)" data-i18n-title="album_btn_surface_pro">
                 <i class="fa-solid fa-wand-magic-sparkles" style="color: #c084fc;"></i> <span data-i18n="surface_3d_btn">3D Studio</span>
               </button>
               <button class="btn btn-sm btn-glass" onclick="downloadFavoritesAlbumZip()"
-                title="Download all favorites as ZIP" data-i18n-title="gallery_download_zip">
-                <i class="fa-solid fa-file-zipper"></i> <span data-i18n="gallery_download_zip">Export ZIP</span>
+                title="Download all favorites" data-i18n-title="gallery_download_zip">
+                <i class="fa-solid fa-file-zipper"></i> <span data-i18n="gallery_download_zip">Download</span>
               </button>
               <button class="btn btn-sm btn-glass" onclick="shareFavoritesAlbum()" title="Share favorites album" data-i18n-title="detail_share">
                 <i class="fa-solid fa-arrow-up-from-bracket"></i> <span data-i18n="detail_share">Share</span>
@@ -690,7 +704,7 @@
 
           <!-- Quick Navigation Category Chips Strip -->
           <div class="settings-quick-nav-strip" id="settingsQuickNavStrip">
-            <button type="button" class="settings-quick-chip active" onclick="scrollToSettingsSection('sectionVipDev')"><i class="fa-solid fa-crown" style="color: #f59e0b;"></i> <span>VIP Bypass</span></button>
+            <button type="button" class="settings-quick-chip active" onclick="scrollToSettingsSection('sectionVipDev')"><i class="fa-solid fa-crown" style="color: #f59e0b;"></i> <span>Pro Bypass</span></button>
             <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionTheme')"><i class="fa-solid fa-palette" style="color: #f43f5e;"></i> <span>Theme</span></button>
             <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionLang')"><i class="fa-solid fa-language" style="color: #38bdf8;"></i> <span>Languages</span></button>
             <button type="button" class="settings-quick-chip" onclick="scrollToSettingsSection('sectionSubscription')"><i class="fa-solid fa-gem" style="color: #a855f7;"></i> <span>Pro Perks</span></button>
@@ -702,13 +716,13 @@
           </div>
 
           <!-- User VIP & Membership Card (Secret 5-Tap Gesture to Toggle Developer VIP Mode) -->
-          <div class="settings-profile-card" id="sectionProfile" onclick="handleDevModeSecretTap()" title="Tap 5 times to toggle Developer VIP Mode anytime" style="cursor: pointer;">
+          <div class="settings-profile-card" id="sectionProfile" onclick="handleDevModeSecretTap()" title="Tap 5 times to toggle Developer Pro Mode anytime" style="cursor: pointer;">
             <div class="profile-avatar-box">
               <i class="fa-solid fa-user-astronaut"></i>
             </div>
             <div class="profile-meta">
               <div class="profile-name-row">
-                <h3 class="profile-name" data-i18n="settings_member_name">Aura Member</h3>
+                <h3 class="profile-name" data-i18n="settings_member_name">PicShelf Member</h3>
                 <span class="vip-sparkle-tag" id="profileVipTag" data-i18n="settings_starter">STARTER</span>
               </div>
               <p class="profile-status-desc" id="profileStatusDesc" data-i18n="settings_storage_private">Standard local storage · 100% private</p>
@@ -719,21 +733,21 @@
           <div class="vip-developer-master-card" id="sectionVipDev">
             <div class="vip-dev-header">
               <div class="vip-dev-badge">
-                <i class="fa-solid fa-flask-vial"></i> DEVELOPER &amp; VIP TESTER MODE
+                <i class="fa-solid fa-flask-vial"></i> DEVELOPER &amp; PRO TESTER MODE
               </div>
-              <span class="vip-dev-status-pill" id="vipBypassStatusPill">👑 VIP ACTIVE</span>
+              <span class="vip-dev-status-pill" id="vipBypassStatusPill">👑 PRO ACTIVE</span>
             </div>
             
             <p class="vip-dev-subtitle">Instant subscription bypass for testing all 3D albums, personal surfaces, RAW exports &amp; vault on native APK.</p>
             
             <div class="vip-dev-actions-grid">
               <button type="button" class="btn btn-vip-bypass active" id="vipBypassMasterBtn" onclick="toggleVip()">
-                <i class="fa-solid fa-bolt"></i> <span id="vipBypassBtnLabel">👑 VIP Access Active · Tap to Test Starter</span>
+                <i class="fa-solid fa-bolt"></i> <span id="vipBypassBtnLabel">👑 Pro Access Active · Tap to Test Starter</span>
               </button>
               
               <div class="vip-dev-switch-row">
-                <span class="vip-dev-switch-text"><i class="fa-solid fa-sliders"></i> Master VIP Switch</span>
-                <label class="switch-toggle" title="Toggle VIP Access for Testing">
+                <span class="vip-dev-switch-text"><i class="fa-solid fa-sliders"></i> Master Pro Switch</span>
+                <label class="switch-toggle" title="Toggle Pro Access for Testing">
                   <input type="checkbox" id="vipDeveloperToggle" onchange="toggleVipFromSettings(event.target.checked)">
                   <span class="switch-slider"></span>
                 </label>
@@ -759,6 +773,9 @@
               </button>
               <button type="button" class="btn-dev-tool" onclick="open3DAlbumAuditModal()" title="Run 3D Physics Integrity Audit">
                 <i class="fa-solid fa-microchip"></i> <span>3D Audit</span>
+              </button>
+              <button type="button" class="btn-dev-tool" id="downloadHistoryBtn" onclick="DownloadManager.openHistoryModal()" title="View Download & Export History">
+                <i class="fa-solid fa-clock-rotate-left"></i> <span>Export History</span>
               </button>
             </div>
           </div>
@@ -797,7 +814,7 @@
                 </div>
                 <div class="theme-card-info">
                   <span class="theme-name" data-i18n="settings_theme_dark">Midnight Dark</span>
-                  <span class="theme-sub" data-i18n="settings_theme_dark_sub">Obsidian Aura</span>
+                  <span class="theme-sub" data-i18n="settings_theme_dark_sub">Obsidian PicShelf</span>
                 </div>
                 <i class="fa-solid fa-circle-check theme-check-icon"></i>
               </button>
@@ -848,10 +865,35 @@
             </div>
             <div class="pro-membership-showcase" id="proMembershipCard">
               <div class="pro-card-header">
-                <div class="pro-badge-glow" data-i18n="settings_pro_vip"><i class="fa-solid fa-gem"></i> AURA PRO VIP</div>
-                <span class="pro-pricing-tag">₹299 <span>/ month</span></span>
+                <div class="pro-badge-glow" data-i18n="settings_pro_vip"><i class="fa-solid fa-gem"></i> PICSHELF PRO</div>
+                <span class="pro-pricing-tag" id="proActivePricingTag">₹299 <span>/ year</span></span>
               </div>
               <p class="pro-tagline" data-i18n="settings_pro_tagline">Unlock the ultimate AI organizer with unlimited albums, 100% private on-device storage & biometric vault.</p>
+
+              <!-- Dynamic 2-Plan Selector in Settings -->
+              <div class="settings-plan-grid" id="settingsPlanGrid">
+                <div class="settings-plan-card active" id="settingsPlanCardYearly" onclick="selectSubscriptionPlan('yearly')">
+                  <div class="settings-plan-badge" id="settingsPlanBadgeYearly">Save 45% · Best Value</div>
+                  <div class="settings-plan-name">Yearly Pro</div>
+                  <div class="settings-plan-price-wrap">
+                    <span class="settings-plan-amount" id="settingsPriceYearlyDisplay">₹299</span>
+                    <span class="settings-plan-unit">/ 12 mo</span>
+                  </div>
+                  <div class="settings-plan-subtext" id="settingsSubtextYearly">₹24.90 / month</div>
+                  <div class="settings-plan-check"><i class="fa-solid fa-circle-check"></i></div>
+                </div>
+
+                <div class="settings-plan-card" id="settingsPlanCardHalfYearly" onclick="selectSubscriptionPlan('half_yearly')">
+                  <div class="settings-plan-badge flexible" id="settingsPlanBadgeHalfYearly">Popular Choice</div>
+                  <div class="settings-plan-name">6 Months Pro</div>
+                  <div class="settings-plan-price-wrap">
+                    <span class="settings-plan-amount" id="settingsPriceHalfYearlyDisplay">₹170</span>
+                    <span class="settings-plan-unit">/ 6 mo</span>
+                  </div>
+                  <div class="settings-plan-subtext" id="settingsSubtextHalfYearly">₹28.30 / month</div>
+                  <div class="settings-plan-check"><i class="fa-solid fa-circle-check"></i></div>
+                </div>
+              </div>
 
               <div class="pro-features-list">
                 <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_1">Unlimited Smart Albums & Custom Tags</span>
@@ -861,7 +903,7 @@
                 <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_3">Encrypted Biometric Secret Vault</span>
                 </div>
                 <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_4">100% On-Device Privacy & Fast Local Backup</span></div>
-                <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_5">VIP 3D Holographic Album Cards &amp; Custom Surface Artwork</span>
+                <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_5">Pro 3D Holographic Album Cards &amp; Custom Surface Artwork</span>
                 </div>
                 <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_6">Zero Watermark & Priority AI Tagging</span>
                 </div>
@@ -869,15 +911,8 @@
 
               <div class="pro-action-box">
                 <button class="btn-pro-razorpay" id="startRazorpayBtn" onclick="initiateRazorpayPayment()">
-                  <i class="fa-solid fa-bolt"></i> <span data-i18n="settings_upgrade_btn">Upgrade with Razorpay (₹299)</span>
+                  <i class="fa-brands fa-google-play"></i> <span id="startRazorpayBtnText">Upgrade with Google Play (₹299 / Year)</span>
                 </button>
-                <div class="pro-support-links">
-                  <button class="text-link-btn" onclick="restoreProPurchases()" data-i18n="settings_restore_btn">Restore Purchases</button>
-                  <span>·</span>
-                  <button class="text-link-btn" onclick="openPaymentFaq()" data-i18n="settings_billing_faq">Billing FAQ</button>
-                  <span>·</span>
-                  <button class="text-link-btn" onclick="toggleVip()" style="color: #f59e0b; font-weight: 700;">⚡ Developer Bypass</button>
-                </div>
               </div>
             </div>
           </div>
@@ -1158,7 +1193,7 @@
                 </div>
                 <div class="settings-row-text">
                   <span class="settings-row-title" data-i18n="settings_feedback_title">Feedback &amp; Suggestions</span>
-                  <span class="settings-row-desc" data-i18n="settings_feedback_desc">Share your thoughts, feature ideas, or suggestions to improve Aura</span>
+                  <span class="settings-row-desc" data-i18n="settings_feedback_desc">Share your thoughts, feature ideas, or suggestions to improve PicShelf</span>
                 </div>
                 <button type="button" class="btn btn-outline" id="openFeedbackBtn" onclick="event.stopPropagation(); openFeedbackModal();" style="padding: 6px 12px; font-size: 12px; border-color: rgba(168,85,247,0.4); color: #c084fc;">
                   <i class="fa-solid fa-paper-plane"></i> <span data-i18n="settings_feedback_btn">Feedback</span>
@@ -1168,10 +1203,10 @@
           </div>
 
           <!-- SECTION 9: APP INFO -->
-          <div class="settings-footer-info" id="sectionAppInfo" onclick="handleDevModeSecretTap()" style="cursor: pointer;" title="Tap 5 times to toggle Developer VIP Mode">
-            <p class="app-version-text" data-i18n="settings_app_version">Aura Photo Organizer · v2.4.0 (Build 2026.09.15)</p>
+          <div class="settings-footer-info" id="sectionAppInfo" onclick="handleDevModeSecretTap()" style="cursor: pointer;" title="Tap 5 times to toggle Developer Pro Mode">
+            <p class="app-version-text" data-i18n="settings_app_version">PicShelf · v2.4.0 (Build 2026.09.15)</p>
             <p class="app-credits-text" data-i18n="settings_app_credits">100% Private On-Device AI · All Data Stored Locally</p>
-            <p style="font-size: 10px; color: #f59e0b; margin-top: 4px; opacity: 0.85;"><i class="fa-solid fa-flask"></i> Developer VIP Bypass Active · Tap 5x to Toggle</p>
+            <p style="font-size: 10px; color: #f59e0b; margin-top: 4px; opacity: 0.85;"><i class="fa-solid fa-flask"></i> Developer Pro Bypass Active · Tap 5x to Toggle</p>
           </div>
         </section>
 
@@ -1231,7 +1266,7 @@
         <div class="detail-container">
           <!-- Top Bar: Navigation, Title & Quick Heart / Rename -->
           <div class="detail-top-bar">
-            <button class="icon-btn-round detail-back-btn" id="closeDetailBtn" title="Back to Gallery" aria-label="Back">
+            <button class="icon-btn-round detail-back-btn" id="closeDetailBtn" title="Back to Gallery" data-i18n-title="detail_back" aria-label="Back" data-i18n-aria="detail_back">
               <i class="fa-solid fa-chevron-left"></i>
             </button>
             <div class="detail-title-block">
@@ -1244,10 +1279,10 @@
             <div class="detail-counter-badge" id="detailPhotoCounter" title="Photo position in album" style="display: none;">1 / 1</div>
             <div class="detail-top-actions">
               <button class="icon-btn-round" id="detailRenameBtn" onclick="openRenamePhotoModal(state.activePhotoId)"
-                title="Rename Photo" aria-label="Rename Photo">
+                title="Rename Photo" aria-label="Rename Photo" data-i18n-title="detail_rename" data-i18n-aria="detail_rename">
                 <i class="fa-solid fa-pen-to-square"></i>
               </button>
-              <button class="icon-btn-round" id="detailFavoriteBtn" title="Favorite Photo" aria-label="Favorite Photo">
+              <button class="icon-btn-round" id="detailFavoriteBtn" title="Favorite Photo" aria-label="Favorite Photo" data-i18n-title="detail_favorite" data-i18n-aria="detail_favorite">
                 <i class="fa-regular fa-heart"></i>
               </button>
             </div>
@@ -1258,7 +1293,45 @@
               <i class="fa-solid fa-chevron-left"></i>
             </button>
             <div class="detail-image-stage" id="detailImageStage">
+              <div class="detail-backdrop-layer" id="detailBackdropLayer"></div>
+              <canvas id="detailBackdropCanvas" class="detail-backdrop-canvas" style="display: none;"></canvas>
+              <canvas id="detailSubjectCanvas" class="detail-subject-canvas" style="display: none;"></canvas>
               <img id="detailImage" src="" alt="Photo Full View" draggable="false">
+              <div class="detail-ai-segment-badge" id="detailAiSegmentBadge" style="display: none !important;">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span id="detailAiSegmentText" data-i18n="detail_subject_detected">AI Subject Isolated</span>
+              </div>
+              <div class="detail-vignette-overlay" id="detailVignetteOverlay"></div>
+              <div class="detail-tiltshift-overlay" id="detailTiltShiftOverlay"></div>
+              <div class="detail-compare-badge" id="detailCompareBadge">ORIGINAL</div>
+              <!-- Floating NanoScope Loupe Magnifier -->
+              <div class="nanoscope-loupe" id="nanoScopeLoupe" style="display: none;">
+                <div class="nanoscope-loupe-grip" id="nanoLoupeGrip" title="Drag circle anywhere on screen">
+                  <i class="fa-solid fa-grip"></i> <span data-i18n="nanoscope_drag_grip">Drag</span>
+                </div>
+                <div class="nanoscope-glass-rim">
+                  <canvas class="nanoscope-canvas" id="nanoScopeCanvas" width="180" height="180"></canvas>
+                  <div class="nanoscope-reticle-crosshair"></div>
+                </div>
+                <div class="nanoscope-hud-tag" id="nanoScopeHudTag">X: 0 Y: 0 · 16x</div>
+              </div>
+              <!-- Floating NanoScope Drag Image Hint Indicator -->
+              <div class="nanoscope-drag-hint-pill" id="nanoDragHintPill" style="display: none;">
+                <i class="fa-solid fa-hand"></i> <span data-i18n="nanoscope_drag_image_active">Dragging Image · Pan anywhere on screen</span>
+              </div>
+              <!-- Floating NanoScope Target Marker on Subject -->
+              <div class="nanoscope-target-marker" id="nanoScopeTargetMarker" style="display: none;">
+                <div class="nanoscope-marker-ring"></div>
+                <div class="nanoscope-marker-dot"></div>
+              </div>
+              <!-- Floating NanoScope Boundary Curve Stage Canvas -->
+              <canvas class="nanoscope-curve-canvas" id="nanoCurveCanvas" style="display: none;"></canvas>
+              <div class="detail-stage-dropzone" id="detailStageDropzone" style="display: none;">
+                <div class="stage-dropzone-inner">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span data-i18n="detail_backdrop_drop_hint">Drop image here to set background</span>
+                </div>
+              </div>
             </div>
             <button type="button" class="detail-nav-btn detail-nav-next" id="detailNextBtn" title="Next Image (Swipe Left or Right Arrow)" aria-label="Next Image">
               <i class="fa-solid fa-chevron-right"></i>
@@ -1268,28 +1341,551 @@
             </div>
           </div>
 
+          <!-- Studio Editing Drawer (Photo Studio) -->
+          <div class="detail-edit-studio-drawer" id="detailEditStudioDrawer">
+            <!-- Studio Top Header -->
+            <div class="studio-drawer-header">
+              <button type="button" class="studio-header-btn studio-compare-btn" id="studioCompareBtn" title="Hold to Compare with Original" data-i18n-title="detail_edit_compare">
+                <i class="fa-solid fa-eye"></i>
+                <span data-i18n="detail_edit_compare">Compare</span>
+              </button>
+              
+              <div class="studio-header-title-wrap" id="studioHeaderTitleWrap" title="Filters">
+                <span class="studio-active-tool-title" id="studioActiveToolTitle" title="Filters">Filters</span>
+              </div>
+
+              <div class="studio-header-actions">
+                <button type="button" class="studio-header-btn studio-reset-btn" id="studioResetBtn" title="Reset all adjustments" data-i18n-title="detail_edit_reset">
+                  <i class="fa-solid fa-arrow-rotate-left"></i>
+                  <span data-i18n="detail_edit_reset">Reset</span>
+                </button>
+                <button type="button" class="studio-header-btn studio-save-btn" id="studioSaveBtn" title="Apply and Save edits to Photo" data-i18n-title="detail_edit_save">
+                  <i class="fa-solid fa-check"></i>
+                  <span data-i18n="detail_edit_save">Save</span>
+                </button>
+                <button type="button" class="studio-header-btn studio-close-btn" id="studioCloseBtn" title="Close editor" aria-label="Close">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tool Panel: Lux -->
+            <div class="studio-tool-panel" id="studioPanelLux" style="display: none;">
+              <div class="studio-slider-row">
+                <span class="studio-slider-label"><i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="detail_edit_lux">Lux</span> <span data-i18n="detail_strength">Strength</span></span>
+                <span class="studio-slider-value" id="studioLuxVal">0%</span>
+              </div>
+              <input type="range" class="studio-slider" id="studioLuxSlider" min="0" max="100" value="0">
+              <div class="studio-quick-chips">
+                <button type="button" class="studio-quick-chip" data-lux="0">Off</button>
+                <button type="button" class="studio-quick-chip" data-lux="35">Natural (+35%)</button>
+                <button type="button" class="studio-quick-chip active" data-lux="65">Balanced (+65%)</button>
+                <button type="button" class="studio-quick-chip" data-lux="100">Vivid (+100%)</button>
+              </div>
+            </div>
+
+            <!-- Tool Panel: Filters -->
+            <div class="studio-tool-panel" id="studioPanelFilters" style="display: none;">
+              <div class="studio-slider-row" id="filterIntensityRow">
+                <span class="studio-slider-label"><i class="fa-solid fa-sliders"></i> <span data-i18n="detail_filter_intensity">Filter Strength</span></span>
+                <span class="studio-slider-value" id="studioFilterIntensityVal">100%</span>
+              </div>
+              <input type="range" class="studio-slider" id="studioFilterIntensitySlider" min="0" max="100" value="100">
+              <div class="studio-filters-carousel" id="studioFiltersCarousel">
+                <!-- Dynamically populated or rendered filter swatches -->
+              </div>
+            </div>
+
+            <!-- Tool Panel: Light -->
+            <div class="studio-tool-panel" id="studioPanelLight" style="display: none;">
+              <div class="studio-subnav-pills" id="studioLightSubnav">
+                <button type="button" class="studio-subnav-btn active" data-sub="brightness" data-i18n="detail_sub_brightness" title="Brightness">Brightness</button>
+                <button type="button" class="studio-subnav-btn" data-sub="contrast" data-i18n="detail_sub_contrast" title="Contrast">Contrast</button>
+                <button type="button" class="studio-subnav-btn" data-sub="highlights" data-i18n="detail_sub_highlights" title="Highlights">Highlights</button>
+                <button type="button" class="studio-subnav-btn" data-sub="shadows" data-i18n="detail_sub_shadows" title="Shadows">Shadows</button>
+              </div>
+              <div class="studio-slider-row">
+                <span class="studio-slider-label" id="studioLightSubLabel" data-i18n="detail_sub_brightness">Brightness</span>
+                <span class="studio-slider-value" id="studioLightVal">0</span>
+              </div>
+              <input type="range" class="studio-slider bi-slider" id="studioLightSlider" min="-100" max="100" value="0">
+            </div>
+
+            <!-- Tool Panel: Color -->
+            <div class="studio-tool-panel" id="studioPanelColor" style="display: none;">
+              <div class="studio-subnav-pills" id="studioColorSubnav">
+                <button type="button" class="studio-subnav-btn active" data-sub="warmth" data-i18n="detail_sub_warmth" title="Warmth">Warmth</button>
+                <button type="button" class="studio-subnav-btn" data-sub="saturation" data-i18n="detail_sub_saturation" title="Saturation">Saturation</button>
+                <button type="button" class="studio-subnav-btn" data-sub="tint" data-i18n="detail_sub_tint" title="Tint">Tint</button>
+                <button type="button" class="studio-subnav-btn" data-sub="fade" data-i18n="detail_sub_fade" title="Fade">Fade</button>
+              </div>
+              <div class="studio-slider-row">
+                <span class="studio-slider-label" id="studioColorSubLabel" data-i18n="detail_sub_warmth">Warmth</span>
+                <span class="studio-slider-value" id="studioColorVal">0</span>
+              </div>
+              <input type="range" class="studio-slider bi-slider" id="studioColorSlider" min="-100" max="100" value="0">
+            </div>
+
+            <!-- Tool Panel: Optics -->
+            <div class="studio-tool-panel" id="studioPanelOptics" style="display: none;">
+              <div class="studio-subnav-pills" id="studioOpticsSubnav">
+                <button type="button" class="studio-subnav-btn active" data-sub="vignette" data-i18n="detail_sub_vignette" title="Vignette">Vignette</button>
+                <button type="button" class="studio-subnav-btn" data-sub="sharpen" data-i18n="detail_sub_sharpen" title="Sharpen">Sharpen</button>
+                <button type="button" class="studio-subnav-btn" data-sub="tiltshift" data-i18n="detail_sub_tiltshift" title="Tilt-Shift">Tilt-Shift</button>
+              </div>
+              <div class="studio-optics-content-wrap">
+                <div id="studioOpticsSliderWrap">
+                  <div class="studio-slider-row">
+                    <span class="studio-slider-label" id="studioOpticsSubLabel" data-i18n="detail_sub_vignette">Vignette</span>
+                    <span class="studio-slider-value" id="studioOpticsVal">0</span>
+                  </div>
+                  <input type="range" class="studio-slider" id="studioOpticsSlider" min="0" max="100" value="0">
+                </div>
+                <div class="studio-tiltshift-modes" id="studioTiltShiftModes" style="display: none;">
+                  <button type="button" class="studio-tilt-btn active" data-mode="off">Off</button>
+                  <button type="button" class="studio-tilt-btn" data-mode="radial">Radial Blur <span class="tilt-vip-crown">👑</span></button>
+                  <button type="button" class="studio-tilt-btn" data-mode="linear">Linear Tilt <span class="tilt-vip-crown">👑</span></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tool Panel: Backdrop / Background (iMovie & Studio Frame) -->
+            <div class="studio-tool-panel" id="studioPanelBackdrop" style="display: none;">
+              <div class="studio-subnav-pills" id="studioBackdropSubnav">
+                <button type="button" class="studio-subnav-btn active" data-sub="landmarks" data-i18n="detail_sub_popular_landmarks" data-i18n-title="detail_sub_popular_landmarks" title="Popular Landmarks"><i class="fa-solid fa-earth-americas"></i> Popular Landmarks</button>
+                <button type="button" class="studio-subnav-btn" data-sub="blur" data-i18n="detail_sub_backdrop_blur" data-i18n-title="detail_sub_backdrop_blur" title="Blur"><i class="fa-solid fa-water"></i> Blur</button>
+                <button type="button" class="studio-subnav-btn" data-sub="color" data-i18n="detail_sub_backdrop_color" data-i18n-title="detail_sub_backdrop_color" title="Colors"><i class="fa-solid fa-palette"></i> Colors</button>
+                <button type="button" class="studio-subnav-btn" data-sub="image" data-i18n="detail_sub_backdrop_image" data-i18n-title="detail_sub_backdrop_image" title="Custom"><i class="fa-solid fa-image"></i> Custom</button>
+                <button type="button" class="studio-subnav-btn" data-sub="nanoscope" id="studioBackdropSubNanoBtn" data-i18n="detail_sub_backdrop_nanoscope" data-i18n-title="detail_sub_backdrop_nanoscope" title="NanoScope"><i class="fa-solid fa-microscope"></i> NanoScope</button>
+              </div>
+
+              <!-- Subpanel: Popular Landmarks (World & US) -->
+              <div class="studio-backdrop-subpanel" id="studioBackdropSubLandmarks">
+                <div class="studio-landmark-cards-row" id="studioLandmarkCardsRow">
+                  <div class="studio-landmark-card active" data-landmark="eiffel_tower" title="Eiffel Tower, Paris (France)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/eiffel_tower.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_eiffel_tower">🗼 Eiffel Tower (FR)</span>
+                  </div>
+                  <div class="studio-landmark-card" data-landmark="taj_mahal" title="Taj Mahal, Agra (India)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/taj_mahal.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_taj_mahal">🕌 Taj Mahal (IN)</span>
+                  </div>
+                  <div class="studio-landmark-card" data-landmark="mount_fuji" title="Mount Fuji & Pagoda (Japan)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/mount_fuji.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_mount_fuji">⛩️ Mount Fuji (JP)</span>
+                  </div>
+                  <div class="studio-landmark-card" data-landmark="santorini" title="Santorini Coast (Greece)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/santorini.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_santorini">🏛️ Santorini (GR)</span>
+                  </div>
+                  <div class="studio-landmark-card" data-landmark="colosseum" title="Colosseum, Rome (Italy)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/colosseum.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_colosseum">⚔️ Colosseum (IT)</span>
+                  </div>
+                  <div class="studio-landmark-card" data-landmark="sydney_opera" title="Sydney Opera House (Australia)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/sydney_opera.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_sydney_opera">⛵ Sydney Opera (AU)</span>
+                  </div>
+                  <div class="studio-landmark-card" data-landmark="times_square" title="Times Square, NYC (US)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/times_square.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_times_square">🗽 Times Sq (US)</span>
+                  </div>
+                  <div class="studio-landmark-card" data-landmark="golden_gate" title="Golden Gate Bridge, SF (US)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/golden_gate.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_golden_gate">🌉 Golden Gate (US)</span>
+                  </div>
+                  <div class="studio-landmark-card" data-landmark="nyc_skyline" title="NYC Skyline (US)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/nyc_skyline.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_nyc_skyline">🌆 NYC Skyline (US)</span>
+                  </div>
+                  <div class="studio-landmark-card" data-landmark="miami_beach" title="Miami Beach (US)">
+                    <div class="landmark-thumb" style="background-image: url('assets/backdrops/miami_beach.jpg');"></div>
+                    <span class="landmark-name" data-i18n="detail_landmark_miami_beach">🌴 Miami Beach (US)</span>
+                  </div>
+                </div>
+                <div class="studio-slider-row" style="margin-top: 6px;">
+                  <span class="studio-slider-label"><i class="fa-solid fa-arrows-up-down-left-right"></i> <span data-i18n="detail_subject_scale">Subject Size</span></span>
+                  <span class="studio-slider-value studio-subject-scale-val" id="studioSubjectScaleVal">100%</span>
+                </div>
+                <input type="range" class="studio-slider studio-subject-scale-slider" id="studioSubjectScaleSlider" min="50" max="150" value="100">
+              </div>
+
+              <!-- Subpanel: Blur -->
+              <div class="studio-backdrop-subpanel" id="studioBackdropSubBlur" style="display: none;">
+                <div class="studio-slider-row">
+                  <span class="studio-slider-label"><i class="fa-solid fa-water"></i> <span data-i18n="detail_sub_backdrop_blur">Blur Room Background</span></span>
+                  <span class="studio-slider-value" id="studioBackdropBlurVal">35%</span>
+                </div>
+                <input type="range" class="studio-slider" id="studioBackdropBlurSlider" min="0" max="100" value="35">
+                <div class="studio-quick-chips" id="studioBackdropBlurChips">
+                  <button type="button" class="studio-quick-chip" data-blur="0">Off (0%)</button>
+                  <button type="button" class="studio-quick-chip" data-blur="15">Soft (15%)</button>
+                  <button type="button" class="studio-quick-chip active" data-blur="35">Medium (35%)</button>
+                  <button type="button" class="studio-quick-chip" data-blur="70">Dreamy (70%)</button>
+                  <button type="button" class="studio-quick-chip" data-blur="100">Max (100%)</button>
+                </div>
+                <div class="studio-slider-row" style="margin-top: 10px;">
+                  <span class="studio-slider-label"><i class="fa-solid fa-arrows-up-down-left-right"></i> <span data-i18n="detail_subject_scale">Subject Size</span></span>
+                  <span class="studio-slider-value studio-subject-scale-val">100%</span>
+                </div>
+                <input type="range" class="studio-slider studio-subject-scale-slider" min="50" max="150" value="100">
+              </div>
+
+              <!-- Subpanel: Color & Gradients -->
+              <div class="studio-backdrop-subpanel" id="studioBackdropSubColor" style="display: none;">
+                <!-- Curated Presets Category -->
+                <div class="palette-category-block" style="margin-bottom: 8px;">
+                  <div class="palette-category-header">
+                    <span class="palette-category-title"><i class="fa-solid fa-sparkles"></i> <span data-i18n="palette_curated_presets">Curated Presets</span></span>
+                  </div>
+                  <div class="studio-backdrop-swatches" id="studioBackdropSwatches">
+                    <button type="button" class="backdrop-swatch-chip active" data-color="none" title="Original / None"><i class="fa-solid fa-ban"></i></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="#ffffff" style="background:#ffffff;" title="Studio White"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="#0a0a0c" style="background:#0a0a0c;" title="Onyx Black"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="#f5ede4" style="background:#f5ede4;" title="Warm Cream"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="#e9d5ff" style="background:#e9d5ff;" title="Pastel Lavender"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="#d1fae5" style="background:#d1fae5;" title="Sage Green"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="grad-sunset" style="background:linear-gradient(135deg, #f43f5e, #fb923c);" title="Sunset Glow"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="grad-neon" style="background:linear-gradient(135deg, #8b5cf6, #06b6d4);" title="Cyber Neon"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="grad-aurora" style="background:linear-gradient(135deg, #10b981, #3b82f6);" title="Aurora Skies"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="grad-gold" style="background:linear-gradient(135deg, #f59e0b, #fbbf24);" title="24K Luxury Gold"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="#00ff00" style="background:#00ff00;" title="Chroma Green"></button>
+                    <button type="button" class="backdrop-swatch-chip" data-color="#0000ff" style="background:#0000ff;" title="Chroma Blue"></button>
+                  </div>
+                </div>
+
+                <!-- Your Color Palettes (Custom Colors & Palette Studio) -->
+                <div class="palette-category-block" style="margin-top: 10px; margin-bottom: 8px;">
+                  <div class="palette-category-header">
+                    <span class="palette-category-title"><i class="fa-solid fa-swatchbook"></i> <span data-i18n="palette_your_palettes">Your Color Palettes</span></span>
+                    <span class="palette-category-hint" data-i18n="palette_saved_custom">Saved & Custom</span>
+                  </div>
+                  <div class="palette-swatches-strip studio-backdrop-custom-strip" id="studioBackdropCustomPalettes">
+                    <!-- Populated dynamically: [+] Rainbow plus button + saved custom color chips -->
+                  </div>
+                </div>
+
+                <div class="studio-slider-row" style="margin-top: 8px;">
+                  <span class="studio-slider-label"><i class="fa-solid fa-arrows-up-down-left-right"></i> <span data-i18n="detail_subject_scale">Subject Size</span></span>
+                  <span class="studio-slider-value studio-subject-scale-val">100%</span>
+                </div>
+                <input type="range" class="studio-slider studio-subject-scale-slider" min="50" max="150" value="100">
+              </div>
+
+              <!-- Subpanel: Custom Image Drop / Gallery Picker -->
+              <div class="studio-backdrop-subpanel" id="studioBackdropSubImage" style="display: none;">
+                <input type="file" id="studioBackdropFileInput" accept="image/*" style="display: none;">
+                <div class="studio-backdrop-dropzone" id="studioBackdropDropzone" title="Drop image here or click to browse">
+                  <div class="dropzone-content" id="studioBackdropDropzonePrompt">
+                    <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+                    <span class="dropzone-text" data-i18n="detail_backdrop_drop_hint">Drop image here to set background</span>
+                    <span class="dropzone-sub">or click to browse file</span>
+                  </div>
+                  <div class="dropzone-preview" id="studioBackdropImagePreview" style="display: none;">
+                    <img id="studioBackdropPreviewThumb" src="" alt="Backdrop Thumbnail">
+                    <button type="button" class="dropzone-clear-btn" id="studioBackdropClearBtn" title="Clear Custom Background">✕</button>
+                  </div>
+                </div>
+
+                <div class="studio-slider-row" style="margin-top: 4px;">
+                  <span class="studio-slider-label"><i class="fa-solid fa-arrows-up-down-left-right"></i> <span data-i18n="detail_subject_scale">Subject Size</span></span>
+                  <span class="studio-slider-value studio-subject-scale-val">100%</span>
+                </div>
+                <input type="range" class="studio-slider studio-subject-scale-slider" min="50" max="150" value="100">
+
+                <!-- Recent Gallery Photos Quick Pick -->
+                <div class="studio-backdrop-gallery-section" style="margin-top: 4px;">
+                  <span class="studio-backdrop-gallery-title" data-i18n="detail_backdrop_choose_gallery">Choose from Gallery</span>
+                  <div class="studio-backdrop-gallery-list" id="studioBackdropGalleryList">
+                    <!-- Populated dynamically with user's gallery photos -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Subpanel: NanoScope Pixel-by-Pixel Picker & Eraser -->
+              <div class="studio-backdrop-subpanel" id="studioBackdropSubNano" style="display: none;">
+                <div class="nanoscope-header-info">
+                  <div class="nanoscope-title-row">
+                    <span class="nanoscope-panel-title"><i class="fa-solid fa-microscope"></i> <span data-i18n="nanoscope_panel_title">NanoScope Pixel Eraser</span></span>
+                    <div class="nanoscope-title-actions">
+                      <button type="button" class="nanoscope-lock-btn active" id="nanoLockTargetBtn" title="Pin reticle position so scrolling down or moving mouse never slips">
+                        <i class="fa-solid fa-thumbtack"></i> <span id="nanoLockTargetLabel" data-i18n="nanoscope_pin_reticle">Pin Reticle</span>
+                      </button>
+                      <span class="nanoscope-tip-badge" data-i18n="nanoscope_tip_badge">🔬 Handpick Pixel Removal</span>
+                    </div>
+                  </div>
+                  <p class="nanoscope-panel-desc" data-i18n="nanoscope_panel_desc">Inspect individual subject pixels under ultra-deep magnification. Nudge pixel-by-pixel with D-Pad or engineer a smooth boundary curve to trim neck/head edges.</p>
+
+                  <!-- Interactive Image Dragging & Position Reset Bar -->
+                  <div class="nanoscope-position-bar" id="nanoPositionBar">
+                    <button type="button" class="nanoscope-pos-btn" id="nanoDragImageBtn" onclick="toggleNanoImageDragMode()" title="Drag and move the picture on the screen">
+                      <i class="fa-solid fa-hand"></i>
+                      <span data-i18n="nanoscope_drag_image">Drag Image</span>
+                    </button>
+                    <button type="button" class="nanoscope-pos-btn reset-pos" id="nanoResetImagePosBtn" onclick="resetNanoImagePosition()" title="Reset photo back to original default center position">
+                      <i class="fa-solid fa-arrows-to-dot"></i>
+                      <span data-i18n="nanoscope_reset_image_pos">Reset Image</span>
+                    </button>
+                  </div>
+                  
+                  <!-- Mode Tabs: Single Pixel vs Boundary Curve -->
+                  <div class="nanoscope-mode-tabs" id="nanoModeTabs">
+                    <button type="button" class="nanoscope-mode-tab active" id="nanoTabPixelBtn">
+                      <i class="fa-solid fa-gamepad"></i> <span data-i18n="nanoscope_tab_pixel">Single Pixel Mover</span>
+                    </button>
+                    <button type="button" class="nanoscope-mode-tab" id="nanoTabCurveBtn">
+                      <i class="fa-solid fa-bezier-curve"></i> <span data-i18n="nanoscope_tab_curve">Boundary Curve Cutter</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="nanoscope-controls-grid">
+                  <!-- Brush Size (Pixel Mode) -->
+                  <div class="nanoscope-control-group" id="nanoPixelBrushGroup">
+                    <div class="studio-slider-row" style="margin-bottom: 4px;">
+                      <span class="studio-slider-label"><i class="fa-solid fa-paintbrush"></i> <span data-i18n="nanoscope_brush_size">Brush Size</span></span>
+                      <span class="studio-slider-value" id="nanoscopeBrushVal">1px</span>
+                    </div>
+                    <div class="studio-quick-chips" id="nanoscopeBrushChips">
+                      <button type="button" class="studio-quick-chip active" data-brush="1" data-i18n="nanoscope_brush_1px">1px (Single Pixel)</button>
+                      <button type="button" class="studio-quick-chip" data-brush="3">3px</button>
+                      <button type="button" class="studio-quick-chip" data-brush="6">6px</button>
+                      <button type="button" class="studio-quick-chip" data-brush="12">12px</button>
+                    </div>
+                  </div>
+
+                  <!-- Boundary Curve Controls (Curve Mode) -->
+                  <div class="nanoscope-control-group nanoscope-curve-group" id="nanoCurveGroup" style="display: none;">
+                    <div class="nanoscope-curve-desc">
+                      <span><i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="nanoscope_curve_desc">Plot anchor points along the neck/head contour. Nudge each point with D-Pad, then Trim outer fuzz in 1 click!</span></span>
+                    </div>
+
+                    <!-- Curve Anchor Points Manager -->
+                    <div class="nanoscope-curve-manager-row">
+                      <button type="button" class="nanoscope-curve-btn" id="nanoCurveAddPointBtn" title="Add curve anchor point at current cursor reticle">
+                        <i class="fa-solid fa-circle-plus"></i> <span data-i18n="nanoscope_curve_add_point">Add Point</span>
+                      </button>
+                      <button type="button" class="nanoscope-curve-btn secondary" id="nanoCurveCloseLoopBtn" title="Close or open curve loop for area trimming">
+                        <i class="fa-solid fa-draw-polygon"></i> <span id="nanoCurveCloseLoopLabel" data-i18n="nanoscope_curve_close_loop">Close Loop</span>
+                      </button>
+                      <div class="nanoscope-pt-navigator">
+                        <button type="button" class="nanoscope-pt-step-btn" id="nanoCurvePrevPtBtn" title="Select previous anchor point"><i class="fa-solid fa-chevron-left"></i></button>
+                        <span class="nanoscope-pt-badge" id="nanoCurvePtBadge">0 Points</span>
+                        <button type="button" class="nanoscope-pt-step-btn" id="nanoCurveNextPtBtn" title="Select next anchor point"><i class="fa-solid fa-chevron-right"></i></button>
+                      </div>
+                      <button type="button" class="nanoscope-curve-btn secondary" id="nanoCurveDelPointBtn" title="Remove selected anchor point">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                      <button type="button" class="nanoscope-curve-btn secondary danger" id="nanoCurveClearBtn" title="Clear all points" data-i18n="nanoscope_curve_clear">
+                        Clear
+                      </button>
+                    </div>
+
+                    <!-- Trim Reach Selector -->
+                    <div class="studio-slider-row" style="margin-top: 6px; margin-bottom: 4px;">
+                      <span class="studio-slider-label"><i class="fa-solid fa-ruler-combined"></i> <span data-i18n="nanoscope_curve_trim_bandwidth">Trim Bandwidth</span></span>
+                      <div class="nanoscope-step-chips" id="nanoCurveReachChips">
+                        <button type="button" class="nanoscope-step-chip" data-reach="10">10px</button>
+                        <button type="button" class="nanoscope-step-chip active" data-reach="25">25px</button>
+                        <button type="button" class="nanoscope-step-chip" data-reach="50">50px</button>
+                        <button type="button" class="nanoscope-step-chip" data-reach="999">Full</button>
+                      </div>
+                    </div>
+
+                    <!-- Directional Trim Buttons -->
+                    <div class="nanoscope-trim-actions-grid">
+                      <button type="button" class="nanoscope-trim-action-btn" id="nanoTrimLeftBtn" title="Trim unwanted pixels to the Left of the curve">
+                        <i class="fa-solid fa-arrow-left"></i> <span data-i18n="nanoscope_trim_left">Trim Left</span>
+                      </button>
+                      <button type="button" class="nanoscope-trim-action-btn" id="nanoTrimRightBtn" title="Trim unwanted pixels to the Right of the curve">
+                        <i class="fa-solid fa-arrow-right"></i> <span data-i18n="nanoscope_trim_right">Trim Right</span>
+                      </button>
+                      <button type="button" class="nanoscope-trim-action-btn" id="nanoTrimAboveBtn" title="Trim unwanted pixels Above the curve">
+                        <i class="fa-solid fa-arrow-up"></i> <span data-i18n="nanoscope_trim_above">Trim Above</span>
+                      </button>
+                      <button type="button" class="nanoscope-trim-action-btn" id="nanoTrimBelowBtn" title="Trim unwanted pixels Below the curve">
+                        <i class="fa-solid fa-arrow-down"></i> <span data-i18n="nanoscope_trim_below">Trim Below</span>
+                      </button>
+                    </div>
+
+                    <!-- Closed Loop Area Trimming -->
+                    <div class="nanoscope-loop-actions-row">
+                      <button type="button" class="nanoscope-loop-action-btn inside" id="nanoTrimInsideBtn" title="Erase all pixels inside closed curve loop (hollows, gaps between arm/body)">
+                        <i class="fa-solid fa-circle-dot"></i> <span data-i18n="nanoscope_trim_inside">Trim Inside Loop</span>
+                      </button>
+                      <button type="button" class="nanoscope-loop-action-btn outside" id="nanoTrimOutsideBtn" title="Erase everything outside closed curve (keep subject inside)">
+                        <i class="fa-solid fa-bullseye"></i> <span data-i18n="nanoscope_trim_outside">Trim Outside Loop</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Magnification Zoom -->
+                  <div class="nanoscope-control-group">
+                    <div class="studio-slider-row" style="margin-bottom: 4px;">
+                      <span class="studio-slider-label"><i class="fa-solid fa-magnifying-glass-plus"></i> <span data-i18n="nanoscope_deep_magnification">Deep Magnification</span></span>
+                      <span class="studio-slider-value" id="nanoscopeZoomVal">16x</span>
+                    </div>
+                    <div class="studio-quick-chips" id="nanoscopeZoomChips">
+                      <button type="button" class="studio-quick-chip" data-zoom="8">8x</button>
+                      <button type="button" class="studio-quick-chip active" data-zoom="16">16x</button>
+                      <button type="button" class="studio-quick-chip" data-zoom="24">24x</button>
+                      <button type="button" class="studio-quick-chip" data-zoom="32">32x</button>
+                    </div>
+                  </div>
+
+                  <!-- Contrast Backdrop Preview -->
+                  <div class="nanoscope-control-group">
+                    <div class="studio-slider-row" style="margin-bottom: 4px;">
+                      <span class="studio-slider-label"><i class="fa-solid fa-circle-half-stroke"></i> <span data-i18n="nanoscope_contrast_bg">Contrast Preview Background</span></span>
+                    </div>
+                    <div class="nanoscope-contrast-swatches" id="nanoscopeContrastSwatches">
+                      <button type="button" class="nanoscope-contrast-chip active" data-contrast="black" title="Onyx Black (Best to spot bright halos & cloud spots)" data-i18n="nanoscope_contrast_black">⚫ Onyx Black</button>
+                      <button type="button" class="nanoscope-contrast-chip" data-contrast="checker" title="Checkerboard (Best to spot transparent cutouts)" data-i18n="nanoscope_contrast_grid">🏁 Grid</button>
+                      <button type="button" class="nanoscope-contrast-chip" data-contrast="white" title="Studio White (Best to spot dark fuzz & fringes)" data-i18n="nanoscope_contrast_white">⚪ White</button>
+                      <button type="button" class="nanoscope-contrast-chip" data-contrast="active" title="Keep Active Backdrop" data-i18n="nanoscope_contrast_active">🖼️ Active Photo</button>
+                    </div>
+                  </div>
+
+                  <!-- Precision Pixel Mover & Directional Remover -->
+                  <div class="nanoscope-control-group nanoscope-mover-section">
+                    <div class="studio-slider-row" style="margin-bottom: 6px;">
+                      <span class="studio-slider-label" id="nanoMoverTitleLabel"><i class="fa-solid fa-gamepad"></i> <span data-i18n="nanoscope_mover_title">Precision Pixel Mover</span></span>
+                      <div class="nanoscope-step-chips" id="nanoscopeStepChips">
+                        <button type="button" class="nanoscope-step-chip active" data-step="1">1px</button>
+                        <button type="button" class="nanoscope-step-chip" data-step="5">5px</button>
+                        <button type="button" class="nanoscope-step-chip" data-step="10">10px</button>
+                      </div>
+                    </div>
+
+                    <div class="nanoscope-mover-wrapper">
+                      <!-- Mode Switch: Move Only vs Erase-on-Move (Hidden in Curve Mode) -->
+                      <div class="nanoscope-mover-mode-row" id="nanoMoverModeRow">
+                        <button type="button" class="nanoscope-mode-toggle active" id="nanoModeNavigateBtn" title="Navigate pixel-by-pixel, then tap Erase">
+                          <i class="fa-solid fa-arrows-up-down-left-right"></i> <span data-i18n="nanoscope_mode_move_only">Move Only</span>
+                        </button>
+                        <button type="button" class="nanoscope-mode-toggle" id="nanoModeEraseOnMoveBtn" title="Immediately erase pixel in direction of movement">
+                          <i class="fa-solid fa-eraser"></i> <span data-i18n="nanoscope_mode_erase_move">Erase on Move</span>
+                        </button>
+                      </div>
+
+                      <!-- Circular D-Pad Controller -->
+                      <div class="nanoscope-dpad-container">
+                        <div class="nanoscope-dpad">
+                          <button type="button" class="nanoscope-dpad-btn dpad-up" id="nanoDpadUpBtn" title="Move Up (ArrowUp)" aria-label="Up">
+                            <i class="fa-solid fa-chevron-up"></i>
+                          </button>
+                          <button type="button" class="nanoscope-dpad-btn dpad-left" id="nanoDpadLeftBtn" title="Move Left (ArrowLeft)" aria-label="Left">
+                            <i class="fa-solid fa-chevron-left"></i>
+                          </button>
+                          <button type="button" class="nanoscope-dpad-btn dpad-center" id="nanoDpadCenterEraseBtn" title="Erase Targeted Pixel (Space / Enter)" aria-label="Erase Pixel">
+                            <i id="nanoDpadCenterIcon" class="fa-solid fa-scissors"></i>
+                            <span id="nanoDpadCenterLabel" class="dpad-center-label" data-i18n="nanoscope_dpad_erase">Erase</span>
+                          </button>
+                          <button type="button" class="nanoscope-dpad-btn dpad-right" id="nanoDpadRightBtn" title="Move Right (ArrowRight)" aria-label="Right">
+                            <i class="fa-solid fa-chevron-right"></i>
+                          </button>
+                          <button type="button" class="nanoscope-dpad-btn dpad-down" id="nanoDpadDownBtn" title="Move Down (ArrowDown)" aria-label="Down">
+                            <i class="fa-solid fa-chevron-down"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="nanoscope-mover-hint" id="nanoMoverHint">
+                        <span class="hint-pill"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> <span data-i18n="nanoscope_hint_move">Move Pixel</span></span>
+                        <span class="hint-sep">•</span>
+                        <span class="hint-pill"><kbd>Space</kbd> <span data-i18n="nanoscope_hint_erase">Erase</span></span>
+                        <span class="hint-sep">•</span>
+                        <span class="hint-pill"><kbd>Shift</kbd> 5px <span data-i18n="nanoscope_hint_fast">Fast</span></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons: Undo & Reset -->
+                  <div class="nanoscope-action-row">
+                    <button type="button" class="nanoscope-action-btn" id="nanoscopeUndoBtn" title="Undo Last Erased Pixels (Ctrl+Z)" disabled>
+                      <i class="fa-solid fa-rotate-left"></i> <span data-i18n="nanoscope_undo">Undo</span>
+                    </button>
+                    <button type="button" class="nanoscope-action-btn danger" id="nanoscopeRestoreBtn" title="Revert to Initial Clean Cutout">
+                      <i class="fa-solid fa-arrow-rotate-right"></i> <span data-i18n="nanoscope_reset_ai">Reset Cutout</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NanoScope Collapsible Tools Handle & Fold Bar -->
+          <div class="nanoscope-dock-fold-bar" id="nanoscopeDockFoldBar" onclick="toggleNanoDockFold()" title="Tap to expand / collapse tools">
+            <div class="nanoscope-dock-drag-handle"></div>
+            <div class="nanoscope-dock-fold-info">
+              <span class="nanoscope-dock-fold-label">
+                <i class="fa-solid fa-sliders"></i>
+                <span data-i18n="nanoscope_foldable_tools">Tools & Actions</span>
+              </span>
+              <span class="nanoscope-dock-fold-chevron"><i class="fa-solid fa-chevron-up"></i></span>
+            </div>
+          </div>
+
+          <!-- Quick Photo Editing Buttons Bar directly above the dock -->
+          <div class="detail-photo-edit-bar" id="detailPhotoEditBar">
+            <button type="button" class="detail-edit-tool-btn action-lux" id="detailEditLuxBtn" data-tool="lux" title="Lux" data-i18n-title="detail_edit_lux" aria-label="Lux" data-i18n-aria="detail_edit_lux">
+              <span class="edit-tool-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+              <span class="edit-tool-label" data-i18n="detail_edit_lux">Lux</span>
+              <span class="edit-tool-active-dot"></span>
+            </button>
+            <button type="button" class="detail-edit-tool-btn action-filters" id="detailEditFiltersBtn" data-tool="filters" title="Filters" data-i18n-title="detail_edit_filters" aria-label="Filters" data-i18n-aria="detail_edit_filters">
+              <span class="edit-tool-icon"><i class="fa-solid fa-palette"></i></span>
+              <span class="edit-tool-label" data-i18n="detail_edit_filters">Filters</span>
+              <span class="edit-tool-active-dot"></span>
+            </button>
+            <button type="button" class="detail-edit-tool-btn action-light" id="detailEditLightBtn" data-tool="light" title="Light" data-i18n-title="detail_edit_light" aria-label="Light" data-i18n-aria="detail_edit_light">
+              <span class="edit-tool-icon"><i class="fa-solid fa-sun"></i></span>
+              <span class="edit-tool-label" data-i18n="detail_edit_light">Light</span>
+              <span class="edit-tool-active-dot"></span>
+            </button>
+            <button type="button" class="detail-edit-tool-btn action-color" id="detailEditColorBtn" data-tool="color" title="Color" data-i18n-title="detail_edit_color" aria-label="Color" data-i18n-aria="detail_edit_color">
+              <span class="edit-tool-icon"><i class="fa-solid fa-sliders"></i></span>
+              <span class="edit-tool-label" data-i18n="detail_edit_color">Color</span>
+              <span class="edit-tool-active-dot"></span>
+            </button>
+            <button type="button" class="detail-edit-tool-btn action-optics" id="detailEditOpticsBtn" data-tool="optics" title="Optics" data-i18n-title="detail_edit_optics" aria-label="Optics" data-i18n-aria="detail_edit_optics">
+              <span class="edit-tool-icon"><i class="fa-solid fa-circle-dot"></i></span>
+              <span class="edit-tool-label" data-i18n="detail_edit_optics">Optics</span>
+              <span class="edit-tool-active-dot"></span>
+            </button>
+            <button type="button" class="detail-edit-tool-btn action-backdrop" id="detailEditBackdropBtn" data-tool="backdrop" title="Backdrop" data-i18n-title="detail_edit_backdrop" aria-label="Backdrop" data-i18n-aria="detail_edit_backdrop">
+              <span class="edit-tool-icon"><i class="fa-solid fa-layer-group"></i></span>
+              <span class="edit-tool-label" data-i18n="detail_edit_backdrop">Backdrop</span>
+              <span class="edit-tool-active-dot"></span>
+            </button>
+          </div>
+
           <!-- Bottom Floating Action Dock (Crop, Move/Copy, Share, Download, Trash) -->
           <div class="detail-floating-dock" id="detailFloatingDock">
-            <button type="button" class="detail-dock-btn action-crop" id="detailCropBtn" onclick="openCropEditorModal(state.activePhotoId)" title="Crop & Orient Photo" aria-label="Crop Photo">
+            <button type="button" class="detail-dock-btn action-crop" id="detailCropBtn" onclick="openCropEditorModal(state.activePhotoId)" title="Crop" data-i18n-title="detail_crop" aria-label="Crop Photo" data-i18n-aria="detail_crop">
               <span class="dock-btn-icon"><i class="fa-solid fa-crop-simple"></i></span>
               <span class="dock-btn-label" data-i18n="detail_crop">Crop</span>
             </button>
-            <button type="button" class="detail-dock-btn action-organize vip-action-btn" id="detailMoveCopyBtn" onclick="openMoveCopyModal([state.activePhotoId])" title="Move or Copy to Album (VIP)" aria-label="Move or Copy">
+            <button type="button" class="detail-dock-btn action-resize" id="detailResizeBtn" onclick="openResizeEditorModal(state.activePhotoId)" title="Resize" data-i18n-title="detail_resize" aria-label="Resize Photo" data-i18n-aria="detail_resize">
+              <span class="dock-btn-icon"><i class="fa-solid fa-expand"></i></span>
+              <span class="dock-btn-label" data-i18n="detail_resize">Resize</span>
+            </button>
+            <button type="button" class="detail-dock-btn action-organize vip-action-btn" id="detailMoveCopyBtn" onclick="openMoveCopyModal([state.activePhotoId])" title="Collections" data-i18n-title="albums_tagline" aria-label="Collections" data-i18n-aria="albums_tagline">
               <span class="dock-btn-icon">
                 <i class="fa-solid fa-folder-tree"></i>
-                <span class="btn-vip-dot" title="Aura VIP Feature"><svg class="aura-luxury-crown" width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg></span>
+                <span class="btn-vip-dot"><svg class="aura-luxury-crown" width="10" height="10" viewBox="0 0 20 20" fill="currentColor"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg></span>
               </span>
               <span class="dock-btn-label" data-i18n="albums_tagline">Organize</span>
             </button>
-            <button type="button" class="detail-dock-btn action-share" id="detailShareBtn" onclick="if (state.activePhotoId) shareSinglePhoto(state.activePhotoId);" title="Share Photo" aria-label="Share Photo">
+            <button type="button" class="detail-dock-btn action-share" id="detailShareBtn" onclick="if (state.activePhotoId) shareSinglePhoto(state.activePhotoId);" title="Share" data-i18n-title="detail_share" aria-label="Share Photo" data-i18n-aria="detail_share">
               <span class="dock-btn-icon"><i class="fa-solid fa-arrow-up-from-bracket"></i></span>
               <span class="dock-btn-label" data-i18n="detail_share">Share</span>
             </button>
-            <button type="button" class="detail-dock-btn action-download" id="detailDownloadBtn" onclick="if (state.activePhotoId) downloadSinglePhoto(state.activePhotoId);" title="Download High-Res" aria-label="Download Photo">
+            <button type="button" class="detail-dock-btn action-download" id="detailDownloadBtn" onclick="if (state.activePhotoId) downloadSinglePhoto(state.activePhotoId);" title="Download" data-i18n-title="detail_download" aria-label="Download Photo" data-i18n-aria="detail_download">
               <span class="dock-btn-icon"><i class="fa-solid fa-download"></i></span>
               <span class="dock-btn-label" data-i18n="detail_download">Download</span>
             </button>
-            <button type="button" class="detail-dock-btn action-delete danger" id="detailDeleteBtn" onclick="deleteActivePhoto()" title="Move to Trash" aria-label="Move to Trash">
+            <button type="button" class="detail-dock-btn action-delete danger" id="detailDeleteBtn" onclick="deleteActivePhoto()" title="Delete" data-i18n-title="detail_trash" aria-label="Move to Trash" data-i18n-aria="detail_trash">
               <span class="dock-btn-icon"><i class="fa-solid fa-trash-can"></i></span>
               <span class="dock-btn-label" data-i18n="detail_trash">Trash</span>
             </button>
@@ -1343,7 +1939,7 @@
         <div class="dialog-card">
           <div class="dialog-header">
             <h3 data-i18n="dock_bulk_tag_title">Organize into Albums</h3>
-            <button class="close-dialog-btn" id="closeBatchTagBtn"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" id="closeBatchTagBtn" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <p class="dialog-desc" data-i18n="dock_hint_default">Select tags to apply to selected photos and move them to the Gallery.</p>
           
@@ -1386,7 +1982,7 @@
               <span class="dialog-eyebrow" data-i18n="albums_tagline">COLLECTION CREATOR</span>
               <h3 class="dialog-title" data-i18n="albums_new_btn">Create New Album</h3>
             </div>
-            <button class="close-dialog-btn" id="closeCreateAlbumBtn" title="Close"><i
+            <button class="close-dialog-btn" id="closeCreateAlbumBtn" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i
                 class="fa-solid fa-xmark"></i></button>
           </div>
           <p class="dialog-desc" data-i18n="create_album_desc">Give your album an editorial title and signature accent hue.</p>
@@ -1412,9 +2008,9 @@
                 <i class="fa-solid fa-check" style="flex-shrink: 0;"></i> <span data-i18n="create_album_create_empty" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;">Create Album</span>
               </button>
             </div>
-            <button class="btn btn-outline" id="createAndImportAlbumBtn" onclick="createAlbumAndPickPhotos()" style="width: 100%; max-width: 100%; min-height: 44px; height: auto; padding: 10px 14px; border-radius: 14px; border-color: rgba(244, 63, 94, 0.45); color: #ff7a90; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; overflow: hidden; text-align: center;" title="Create album and immediately import photos from phone gallery (VIP)">
+            <button class="btn btn-outline" id="createAndImportAlbumBtn" onclick="createAlbumAndPickPhotos()" style="width: 100%; max-width: 100%; min-height: 44px; height: auto; padding: 10px 14px; border-radius: 14px; border-color: rgba(244, 63, 94, 0.45); color: #ff7a90; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; overflow: hidden; text-align: center;" title="Create album and immediately import photos from phone gallery (Pro)">
               <svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="flex-shrink: 0;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg>
-              <span data-i18n="create_album_import_vip" style="display: block; max-width: 100%; white-space: normal; line-height: 1.25; overflow: hidden; text-overflow: ellipsis;">Create & Import Photos (VIP)</span>
+              <span data-i18n="create_album_import_vip" style="display: block; max-width: 100%; white-space: normal; line-height: 1.25; overflow: hidden; text-overflow: ellipsis;">Create & Import Photos (Pro)</span>
             </button>
           </div>
         </div>
@@ -1430,7 +2026,7 @@
                 <span class="dialog-eyebrow" data-i18n="albums_delete_step1_eyebrow">STEP 1 OF 2 · ALBUM DELETION</span>
                 <h3 class="dialog-title" id="deleteAlbumTitle" data-i18n="albums_delete_title">Delete Album</h3>
               </div>
-              <button class="close-dialog-btn" onclick="closeDeleteAlbumModal()" title="Close"><i
+              <button class="close-dialog-btn" onclick="closeDeleteAlbumModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i
                   class="fa-solid fa-xmark"></i></button>
             </div>
 
@@ -1507,7 +2103,7 @@
                 <span class="dialog-eyebrow" id="deleteAlbumStep2Eyebrow" data-i18n="albums_delete_step2_eyebrow">STEP 2 OF 2 · DOUBLE CONFIRMATION</span>
                 <h3 class="dialog-title" id="deleteAlbumStep2Title" data-i18n="albums_delete_step2_title">Confirm Album Removal</h3>
               </div>
-              <button class="close-dialog-btn" onclick="closeDeleteAlbumModal()" title="Close"><i
+              <button class="close-dialog-btn" onclick="closeDeleteAlbumModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i
                   class="fa-solid fa-xmark"></i></button>
             </div>
 
@@ -1534,7 +2130,7 @@
               <span class="dialog-eyebrow" data-i18n="date_dialog_eyebrow">TIME CAPSULE</span>
               <h3 class="dialog-title" data-i18n="date_dialog_title">Filter by Date</h3>
             </div>
-            <button class="close-dialog-btn" id="closeDatePickerBtn" title="Close"><i
+            <button class="close-dialog-btn" id="closeDatePickerBtn" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i
                 class="fa-solid fa-xmark"></i></button>
           </div>
           <p class="dialog-desc" data-i18n="date_dialog_desc">Filter your gallery to moments captured within a specific timeframe.</p>
@@ -1583,7 +2179,7 @@
               <span class="dialog-eyebrow" data-i18n="tags_edit_eyebrow">EDIT ALBUM</span>
               <h3 class="dialog-title" data-i18n="tags_edit_title">Edit Category</h3>
             </div>
-            <button class="close-dialog-btn" id="closeRenameTagBtn" title="Close"><i
+            <button class="close-dialog-btn" id="closeRenameTagBtn" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i
                 class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="dialog-field-group">
@@ -1612,7 +2208,7 @@
               <span class="dialog-eyebrow" data-i18n="color_modal_eyebrow">PALETTE STUDIO</span>
               <h3 class="dialog-title" data-i18n="color_modal_title">Custom Color</h3>
             </div>
-            <button class="close-dialog-btn" onclick="closeCustomColorPickerModal()" title="Close"><i
+            <button class="close-dialog-btn" onclick="closeCustomColorPickerModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i
                 class="fa-solid fa-xmark"></i></button>
           </div>
           <p class="dialog-desc" data-i18n="color_modal_desc">Craft your signature hue with precision live preview.</p>
@@ -1698,7 +2294,7 @@
               <span class="dialog-eyebrow">EDITORIAL PLEDGE</span>
               <h3 class="dialog-title">Privacy Policy</h3>
             </div>
-            <button class="close-dialog-btn" id="closePrivacyModalBtn" onclick="closePrivacyPolicyModal()"><i
+            <button class="close-dialog-btn" id="closePrivacyModalBtn" onclick="closePrivacyPolicyModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i
                 class="fa-solid fa-xmark"></i></button>
           </div>
 
@@ -1706,7 +2302,7 @@
             <div class="privacy-section">
               <h4><i class="fa-solid fa-microchip" style="color:#10b981;margin-right:6px;"></i> 1. Complete On-Device
                 Autonomy</h4>
-              <p>Aura Photos was architected with a fundamental privacy premise: your personal memories belong strictly
+              <p>PicShelf was architected with a fundamental privacy premise: your personal memories belong strictly
                 to you. All tagging, indexing, search embeddings, and photo metadata generation occur directly within
                 your device's browser memory and sandboxed local cache.</p>
             </div>
@@ -1720,9 +2316,9 @@
 
             <div class="privacy-section">
               <h4><i class="fa-solid fa-credit-card" style="color:#0284c7;margin-right:6px;"></i> 3. Secure Payments
-                Powered by Razorpay</h4>
-              <p>When you subscribe to Aura Pro, payment processing is encrypted with bank-grade 256-bit SSL encryption
-                via Razorpay. We do not store credit card credentials, CVV codes, or UPI pins.</p>
+                Powered by Google Play</h4>
+              <p>When you subscribe to PicShelf Pro, payment processing is encrypted and managed directly
+                via Google Play Store Billing. We do not store credit card credentials, CVV codes, or UPI pins.</p>
             </div>
 
             <div class="privacy-section">
@@ -1734,54 +2330,79 @@
           </div>
 
           <div class="dialog-buttons" style="margin-top: 20px;">
-            <button class="btn btn-primary" onclick="closePrivacyPolicyModal()">I Understand & Accept</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Razorpay Payment Dialog (Simulation & Live Gateway) -->
+            <button class=      <!-- Google Play Payment Dialog (Simulation & Live Gateway) -->
       <div class="modal-overlay dialog-mode" id="razorpayModal" style="display: none;">
         <div class="dialog-card luxury-dialog" style="max-width: 420px;">
           <div class="dialog-header">
             <div>
-              <span class="dialog-eyebrow">RAZORPAY CHECKOUT</span>
-              <h3 class="dialog-title">Aura Pro Upgrade</h3>
+              <span class="dialog-eyebrow">GOOGLE PLAY STORE BILLING</span>
+              <h3 class="dialog-title">PicShelf Pro Upgrade</h3>
             </div>
-            <button class="close-dialog-btn" onclick="closeRazorpayModal()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" onclick="closeRazorpayModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
           <div class="razorpay-sheet-body">
             <div class="razorpay-merchant-row">
-              <div class="rzp-brand-badge">
-                <i class="fa-solid fa-gem"></i>
+              <div class="rzp-brand-badge" style="background: rgba(52, 168, 83, 0.15); border-color: rgba(52, 168, 83, 0.35);">
+                <i class="fa-brands fa-google-play" style="color: #34a853;"></i>
               </div>
-              <div class="rzp-merchant-info">
-                <span class="rzp-title">Aura Photos Inc.</span>
-                <span class="rzp-subtitle">Verified Razorpay Business</span>
+              <div class="razorpay-merchant-info">
+                <span class="rzp-title">Google Play Store</span>
+                <span class="rzp-subtitle">Official Google Play In-App Billing · Cloud Synced</span>
               </div>
-              <div class="rzp-amount-badge">₹299.00</div>
+              <div class="rzp-amount-badge" id="rzpSelectedAmountBadge">₹299.00</div>
+            </div>
+
+            <!-- Dynamic 2-Plan Selector in Google Play Modal -->
+            <div class="rzp-plan-selector" id="rzpPlanSelector">
+              <div class="rzp-plan-card active" id="rzpPlanCardYearly" onclick="selectSubscriptionPlan('yearly')">
+                <div class="rzp-plan-header">
+                  <span class="rzp-plan-name">Yearly Pro</span>
+                  <span class="rzp-plan-badge" id="rzpModalBadgeYearly">Save 45%</span>
+                </div>
+                <div class="rzp-plan-cost">
+                  <span class="rzp-plan-price" id="rzpModalPriceYearly">₹299</span>
+                  <span class="rzp-plan-tenure">/ 12 mo</span>
+                </div>
+                <div class="rzp-plan-subtext" id="rzpModalSubtextYearly">₹24.90 / month</div>
+                <i class="fa-solid fa-circle-check rzp-plan-check-icon"></i>
+              </div>
+
+              <div class="rzp-plan-card" id="rzpPlanCardHalfYearly" onclick="selectSubscriptionPlan('half_yearly')">
+                <div class="rzp-plan-header">
+                  <span class="rzp-plan-name">6 Months Pro</span>
+                  <span class="rzp-plan-badge flexible" id="rzpModalBadgeHalfYearly">Popular</span>
+                </div>
+                <div class="rzp-plan-cost">
+                  <span class="rzp-plan-price" id="rzpModalPriceHalfYearly">₹170</span>
+                  <span class="rzp-plan-tenure">/ 6 mo</span>
+                </div>
+                <div class="rzp-plan-subtext" id="rzpModalSubtextHalfYearly">₹28.30 / month</div>
+                <i class="fa-solid fa-circle-check rzp-plan-check-icon"></i>
+              </div>
             </div>
 
             <div class="rzp-plan-highlight">
-              <span class="plan-badge">Aura Pro Unlimited · Monthly Plan</span>
+              <span class="plan-badge" id="rzpSelectedPlanTitle">PicShelf Pro Unlimited · Yearly Pro Plan</span>
               <ul class="rzp-perks-mini">
                 <li><i class="fa-solid fa-check"></i> Unlimited Smart Albums & Custom Tags</li>
                 <li><i class="fa-solid fa-check"></i> Ultra-HD RAW Export & Secret Vault</li>
-                <li><i class="fa-solid fa-check"></i> 100% Money-Back Guarantee</li>
+                <li><i class="fa-solid fa-check"></i> Pro 3D Holographic Album Cards &amp; Custom Art</li>
+                <li><i class="fa-solid fa-check"></i> 100% Google Play Purchase Protection</li>
               </ul>
             </div>
 
             <div class="rzp-payment-modes">
-              <div class="rzp-mode active"><i class="fa-solid fa-bolt"></i> UPI / QR</div>
-              <div class="rzp-mode"><i class="fa-solid fa-credit-card"></i> Cards</div>
-              <div class="rzp-mode"><i class="fa-solid fa-building-columns"></i> Netbanking</div>
+              <div class="rzp-mode active"><i class="fa-brands fa-google-play"></i> Google Play</div>
+              <div class="rzp-mode"><i class="fa-solid fa-bolt"></i> UPI / GPay</div>
+              <div class="rzp-mode"><i class="fa-solid fa-credit-card"></i> Play Balance</div>
             </div>
 
             <div class="dialog-buttons" style="margin-top: 18px;">
               <button class="btn btn-outline" onclick="closeRazorpayModal()">Cancel</button>
               <button class="btn btn-primary" id="confirmPaymentBtn"
-                onclick="processSuccessfulPayment('rzp_sim_' + Date.now())">
-                <i class="fa-solid fa-lock"></i> Pay ₹299.00 Securely
+                onclick="processSelectedPlanPayment()">
+                <i class="fa-brands fa-google-play"></i> <span id="confirmPaymentBtnText">Continue with Google Play</span>
               </button>
             </div>
 
@@ -1790,14 +2411,53 @@
               <div style="font-size: 11px; font-weight: 700; color: #f59e0b; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                 <i class="fa-solid fa-flask-vial"></i> DEVELOPER &amp; TESTER MODE
               </div>
-              <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px 0;">Bypass payment to test 100% of all VIP 3D albums, RAW export, personal surface art, and vault features.</p>
+              <p style="font-size: 11px; color: var(--text-muted); margin: 0 0 10px 0;">Bypass payment to test 100% of all Pro 3D albums, RAW export, personal surface art, and vault features.</p>
               <button type="button" class="btn" onclick="enableVip(); closeRazorpayModal();" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-weight: 700; font-size: 12px; padding: 10px 14px; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);">
-                <i class="fa-solid fa-bolt"></i> ⚡ Free Developer Bypass (Instant VIP Unlock)
+                <i class="fa-solid fa-bolt"></i> ⚡ Free Developer Bypass (Instant Pro Unlock)
               </button>
             </div>
 
-            <p class="rzp-security-note"><i class="fa-solid fa-shield-check"></i> Secured by Razorpay 256-Bit SSL
-              Encryption</p>
+            <p class="rzp-security-note"><i class="fa-brands fa-google-play"></i> Secured by Google Play Store Billing</p>
+            <div style="text-align: center; margin-top: 8px;">
+              <a href="javascript:void(0)" onclick="openPrivacyPolicyModal()" style="font-size: 11px; color: var(--accent); text-decoration: underline;">Privacy Policy &amp; Terms</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Privacy Policy Modal Dialog -->
+      <div class="modal-overlay dialog-mode" id="privacyPolicyModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 520px; max-height: 85vh; display: flex; flex-direction: column;">
+          <div class="dialog-header">
+            <div>
+              <span class="dialog-eyebrow">PRIVACY &amp; DATA SAFETY</span>
+              <h3 class="dialog-title">PicShelf Privacy Policy</h3>
+            </div>
+            <button class="close-dialog-btn" onclick="closePrivacyPolicyModal()" title="Close" aria-label="Close">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div style="overflow-y: auto; padding-right: 4px; font-size: 12.5px; line-height: 1.6; color: var(--text-muted); margin: 12px 0;">
+            <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 12px; padding: 12px; margin-bottom: 14px; color: var(--text);">
+              <strong>🔒 100% On-Device Privacy Architecture:</strong> All your photos, albums, edits, and AI subject segmentation run purely on your device. Your photos are never uploaded to any remote server or cloud database.
+            </div>
+            <h4 style="color: var(--text); margin: 10px 0 4px 0; font-size: 13px;">1. Permissions &amp; Data Access</h4>
+            <p style="margin-bottom: 8px;">• <strong>Photos &amp; Storage:</strong> Required to display, organize, compress, duplicate-detect, and edit photos on your phone.<br>
+            • <strong>Location Metadata:</strong> Used to display photo capture places on the built-in world map.<br>
+            • <strong>Camera:</strong> Allows taking new photos directly into custom albums.<br>
+            • <strong>Google Play Billing:</strong> Securely processes in-app subscriptions and lifetime purchases through Google Play.</p>
+            
+            <h4 style="color: var(--text); margin: 10px 0 4px 0; font-size: 13px;">2. Zero Tracking &amp; Advertising</h4>
+            <p style="margin-bottom: 8px;">PicShelf does not collect, sell, or rent your personal information. There are no tracking cookies, analytics SDKs, or third-party advertising brokers.</p>
+
+            <h4 style="color: var(--text); margin: 10px 0 4px 0; font-size: 13px;">3. Data Deletion</h4>
+            <p style="margin-bottom: 8px;">You can wipe all app data and cache at any time via Android App Info &gt; Clear Storage or by uninstalling the app.</p>
+          </div>
+          <div class="dialog-buttons" style="margin-top: 10px; display: flex; gap: 10px;">
+            <a href="https://cremo-bit34.github.io/picshelf-0z0/privacy-policy.html" target="_blank" class="btn btn-outline" style="flex: 1; text-align: center; text-decoration: none; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              <i class="fa-solid fa-up-right-from-square"></i> Open Full Web Policy
+            </a>
+            <button class="btn btn-primary" onclick="closePrivacyPolicyModal()" style="flex: 1; font-size: 12px;">Close</button>
           </div>
         </div>
       </div>
@@ -1810,7 +2470,7 @@
               <span class="dialog-eyebrow" data-i18n="rename_modal_eyebrow">PHOTO DETAILS</span>
               <h3 class="dialog-title" data-i18n="detail_rename">Rename Photo</h3>
             </div>
-            <button class="close-dialog-btn" id="closeRenameModalBtn" onclick="closeRenamePhotoModal()" title="Close">
+            <button class="close-dialog-btn" id="closeRenameModalBtn" onclick="closeRenamePhotoModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
@@ -1862,10 +2522,10 @@
           <!-- Fixed Header -->
           <div class="surface-3d-dialog-header">
             <div>
-              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> <span data-i18n="surface_3d_eyebrow">VIP EXCLUSIVE · 3D CARD STUDIO</span></span>
+              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> <span data-i18n="surface_3d_eyebrow">PRO EXCLUSIVE · 3D CARD STUDIO</span></span>
               <h3 class="dialog-title" id="album3DModalTitle" data-i18n="surface_3d_title">3D Card Surface Studio</h3>
             </div>
-            <button class="close-dialog-btn" onclick="closeAlbum3DSurfaceModal()" title="Close">
+            <button class="close-dialog-btn" onclick="closeAlbum3DSurfaceModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
@@ -1877,7 +2537,7 @@
               <!-- Dynamic JS: VIP active pill or starter test-drive notice -->
             </div>
 
-            <!-- Live 3D Interactive Tilt Preview Stage -->
+            <!-- Live 3D Interactive Tilt Preview Stage (Full Width) -->
             <div class="stage-3d-preview-wrapper" id="stage3DPreviewWrapper">
               <div class="card-3d-preview" id="album3DPreviewCard">
                 <div class="card-3d-preview-inner" id="album3DPreviewInner">
@@ -1890,7 +2550,7 @@
                         <span id="album3DPreviewTagText" data-i18n="surface_3d_tag_album">Album</span>
                       </span>
                       <span class="album-3d-vip-pill">
-                        <i class="fa-solid fa-cube"></i> 3D VIP
+                        <i class="fa-solid fa-cube"></i> 3D PRO
                       </span>
                     </div>
                     <div class="card-3d-overlay-bottom">
@@ -1900,23 +2560,69 @@
                   </div>
                 </div>
               </div>
-              <div class="stage-3d-hint">
-                <i class="fa-solid fa-hand-pointer"></i> <span data-i18n="surface_3d_hint">Move cursor or tilt screen to experience 3D depth</span>
-                <button type="button" class="test-shake-btn browser-only" onclick="Aura3DMotionPhysics.triggerShakeWave()" title="Test Phone Shake & Resonance Wave (Browser Preview Only)" style="margin-left: auto; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.4); color: #ff7a90; border-radius: 6px; padding: 2px 8px; font-size: 10px; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
-                  <i class="fa-solid fa-bolt"></i> Test Shake Wave (Press S)
-                </button>
+            </div>
+
+            <!-- Stage Controls Moved Downward Beneath Preview Image -->
+            <div class="stage-controls-bar">
+              <div class="stage-controls-left">
+                <label class="switch-toggle sm" title="Toggle 3D card tilt effect on/off" data-i18n-title="surface_3d_tilt_title" aria-label="Toggle 3D card tilt effect on/off" data-i18n-aria="surface_3d_tilt_title">
+                  <input type="checkbox" id="cardTiltToggleCheckbox" onchange="toggleCardTiltEffect(this.checked)">
+                  <span class="switch-slider"></span>
+                </label>
+                <span class="stage-controls-label">
+                  <i class="fa-solid fa-cube"></i>
+                  <span data-i18n="surface_3d_tilt_toggle">3D Gyro Tilt</span>
+                </span>
+              </div>
+              <button type="button" class="test-shake-stage-btn" onclick="Aura3DMotionPhysics.triggerShakeWave()" title="Test 3D Shake Wave" data-i18n-title="surface_3d_test_wave_title" aria-label="Test 3D Shake Wave" data-i18n-aria="surface_3d_test_wave_title">
+                <i class="fa-solid fa-bolt"></i> <span data-i18n="surface_3d_test_wave">Test Shake Wave</span>
+              </button>
+            </div>
+
+            <!-- Kinetic Shake & Collision Wave Glow -->
+            <div class="surface-section" id="sectionShakeWave">
+              <div class="surface-section-header">
+                <span class="surface-section-title">
+                  <i class="fa-solid fa-bolt" style="color: #fbbf24;"></i>
+                  <span data-i18n="surface_3d_sec3_title">Kinetic Shake & Collision Wave</span>
+                </span>
+                <label class="switch-toggle sm" title="Toggle collision wave flash on/off" data-i18n-title="surface_3d_wave_toggle_title" aria-label="Toggle collision wave flash on/off" data-i18n-aria="surface_3d_wave_toggle_title">
+                  <input type="checkbox" id="shakeWaveToggleCheckbox" onchange="toggleShakeWaveFlash(this.checked)">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <p class="surface-section-desc" data-i18n="surface_3d_sec3_desc">
+                Customize the dynamic resonance shockwave and gleam color triggered when shaking your device or bumping 3D album cards. Turn off if you prefer cards to move without the color flash.
+              </p>
+
+              <!-- Shake Motion Style Selector (10 Sexy Modes) -->
+              <div id="shakeWaveMotionStyleSection" style="margin-top: 10px; margin-bottom: 12px;">
+                <label class="dialog-field-label" style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">
+                  <span data-i18n="surface_3d_shake_motion_label">Shake Motion Style (10 Modes):</span>
+                </label>
+                <div class="shake-motion-grid" id="shakeMotionStylesGrid">
+                  <!-- Rendered dynamically by updateShakeMotionStyleChips -->
+                </div>
+              </div>
+
+              <!-- Color Palette Container (identical to Tag Manager) -->
+              <div id="shakeWaveColorSection" style="margin-top: 10px; transition: opacity 0.2s ease, filter 0.2s ease;">
+                <label class="dialog-field-label" style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;" data-i18n="surface_3d_wave_palette_label">Wave Color Palette:</label>
+                <div class="color-palette luxury-palette" id="shakeWaveColorPalette">
+                  <!-- Rendered dynamically by buildCategorizedPaletteHtml -->
+                </div>
               </div>
             </div>
 
             <!-- Section 1: Choose Personal Image or Studio Texture on Card Surface -->
             <div class="surface-section">
               <div class="surface-section-header">
-                <span class="surface-section-title"><i class="fa-solid fa-image"></i> <span data-i18n="surface_3d_sec1_title">Personal & VIP Studio Surfaces</span></span>
+                <span class="surface-section-title"><i class="fa-solid fa-image"></i> <span data-i18n="surface_3d_sec1_title">Personal & Pro Studio Surfaces</span></span>
                 <button type="button" class="surface-reset-btn" id="surfaceResetImgBtn" onclick="removeAlbumCustomSurface()" title="Revert to dynamic album photo" data-i18n-title="surface_3d_default_cover_title">
                   <i class="fa-solid fa-rotate-left"></i> <span data-i18n="surface_3d_default_cover">Default Cover</span>
                 </button>
               </div>
-              <p class="surface-section-desc" data-i18n="surface_3d_sec1_desc">Select a personal photo or one of 12 handcrafted <strong>VIP Studio Artworks</strong>. Tap again to deselect.</p>
+              <p class="surface-section-desc" data-i18n="surface_3d_sec1_desc">Select a personal photo or one of 12 handcrafted <strong>Pro Studio Artworks</strong>. Tap again to deselect.</p>
 
               <!-- Personal Image & Studio Texture Selection Strip -->
               <div class="surface-photo-picker-strip" id="surfacePhotoPickerStrip">
@@ -2259,7 +2965,7 @@
               <span class="dialog-eyebrow"><i class="fa-solid fa-shield-halved" style="color: #0ea5e9; margin-right: 4px;"></i> SYSTEM AUDIT</span>
               <h3 class="dialog-title">3D Album Integrity</h3>
             </div>
-            <button class="close-dialog-btn" onclick="close3DAlbumAuditModal()" title="Close">
+            <button class="close-dialog-btn" onclick="close3DAlbumAuditModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close">
               <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
@@ -2277,47 +2983,80 @@
         </div>
       </div>
 
-      <!-- VIP Direct Album Import Modal (Item 3) -->
+      <!-- VIP Direct Album Import Modal (Full 2-Plan Paywall with 6mo & 1yr Options) -->
       <div class="modal-overlay dialog-mode" id="vipDirectImportModal" style="display: none;">
-        <div class="dialog-card luxury-dialog" style="max-width: 440px;">
-          <div class="dialog-header">
+        <div class="dialog-card luxury-dialog" style="max-width: 440px; max-height: 92vh; overflow-y: auto; padding: 18px; border-radius: 26px;">
+          <div class="dialog-header" style="margin-bottom: 12px;">
             <div>
-              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> AURA PRO VIP FEATURE</span>
+              <span class="dialog-eyebrow"><i class="fa-solid fa-crown" style="color: #38bdf8; margin-right: 6px;"></i><span data-i18n="settings_subscription_section">SUBSCRIPTION &amp; MEMBERSHIP</span></span>
               <h3 class="dialog-title">Direct Gallery Import</h3>
             </div>
-            <button class="close-dialog-btn" onclick="closeVipAlbumImportModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" onclick="closeVipAlbumImportModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
-          <div style="margin: 16px 0; text-align: center;">
-            <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.05)); border: 1.5px solid #fbbf24; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; color: #fbbf24; margin-bottom: 12px; box-shadow: 0 0 20px rgba(245,158,11,0.3);">
-              <i class="fa-solid fa-images"></i>
+
+          <div class="pro-membership-showcase" id="vipImportProMembershipCard" style="box-shadow: none; border-color: rgba(244, 63, 94, 0.45); padding: 18px 16px;">
+            <div class="pro-card-header">
+              <div class="pro-badge-glow" data-i18n="settings_pro_vip"><i class="fa-solid fa-gem"></i> PICSHELF PRO</div>
+              <span class="pro-pricing-tag" id="vipImportProActivePricingTag">₹299 <span>/ year</span></span>
             </div>
-            <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">Import Multiple Photos Directly</h4>
-            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 10px;">
-              Skip the staging dock! Import photos directly from your phone gallery straight into <strong id="vipImportModalAlbumName" style="color: #fbbf24;">this album</strong> with multi-selection support.
-            </p>
-          </div>
-          <div class="dialog-buttons" style="flex-direction: column; gap: 8px;">
-            <button class="btn btn-primary" onclick="initiateRazorpayPayment()" style="width: 100%; justify-content: center;">
-              <i class="fa-solid fa-bolt"></i> Upgrade to Aura Pro VIP (₹299)
-            </button>
-            <button class="btn btn-outline" id="vipTesterImportUnlockBtn" onclick="enableVip(); closeVipAlbumImportModal(); triggerAlbumDirectImport(window._pendingVipImportAlbum);" style="border-color: #f59e0b; color: #f59e0b; width: 100%; justify-content: center;">
-              <i class="fa-solid fa-flask"></i> Instant VIP Tester Unlock
-            </button>
-            <button class="btn btn-outline" onclick="closeVipAlbumImportModal()" style="width: 100%; justify-content: center;">Cancel</button>
+            <p class="pro-tagline">Import photos directly into <strong id="vipImportModalAlbumName" style="color: #38bdf8;">this album</strong> and unlock unlimited private storage, 4K export &amp; biometric vault.</p>
+
+            <!-- Dynamic 2-Plan Selector in Modal -->
+            <div class="settings-plan-grid" id="vipImportSettingsPlanGrid">
+              <div class="settings-plan-card active" id="vipImportPlanCardYearly" onclick="selectSubscriptionPlan('yearly')">
+                <div class="settings-plan-badge" id="vipImportPlanBadgeYearly">Save 45% · Best Value</div>
+                <div class="settings-plan-name">Yearly Pro</div>
+                <div class="settings-plan-price-wrap">
+                  <span class="settings-plan-amount" id="vipImportPriceYearlyDisplay">₹299</span>
+                  <span class="settings-plan-unit">/ 12 mo</span>
+                </div>
+                <div class="settings-plan-subtext" id="vipImportSubtextYearly">₹24.90 / month</div>
+                <div class="settings-plan-check"><i class="fa-solid fa-circle-check"></i></div>
+              </div>
+
+              <div class="settings-plan-card" id="vipImportPlanCardHalfYearly" onclick="selectSubscriptionPlan('half_yearly')">
+                <div class="settings-plan-badge flexible" id="vipImportPlanBadgeHalfYearly">Popular Choice</div>
+                <div class="settings-plan-name">6 Months Pro</div>
+                <div class="settings-plan-price-wrap">
+                  <span class="settings-plan-amount" id="vipImportPriceHalfYearlyDisplay">₹170</span>
+                  <span class="settings-plan-unit">/ 6 mo</span>
+                </div>
+                <div class="settings-plan-subtext" id="vipImportSubtextHalfYearly">₹28.30 / month</div>
+                <div class="settings-plan-check"><i class="fa-solid fa-circle-check"></i></div>
+              </div>
+            </div>
+
+            <div class="pro-features-list">
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_1">Unlimited Smart Albums &amp; Custom Tags</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_2">Original Ultra-HD RAW &amp; 4K Export</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_3">Encrypted Biometric Secret Vault</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_4">100% On-Device Privacy &amp; Fast Local Backup</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_5">Pro 3D Holographic Album Cards &amp; Custom Surface Artwork</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_6">Zero Watermark &amp; Priority AI Tagging</span></div>
+            </div>
+
+            <div class="pro-action-box" style="margin-top: 6px;">
+              <button class="btn-pro-razorpay" id="vipImportStartRazorpayBtn" onclick="initiateRazorpayPayment()">
+                <i class="fa-brands fa-google-play"></i> <span id="vipImportStartRazorpayBtnText" data-i18n="settings_upgrade_btn">Upgrade with Google Play (₹299)</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- VIP Move / Copy Photos to Album Modal (Item 6) -->
-      <div class="modal-overlay dialog-mode" id="moveCopyModal" style="display: none;">
-        <div class="dialog-card luxury-dialog" style="max-width: 480px; max-height: 90vh; overflow-y: auto; overflow-x: hidden;">
+      <div class="modal-overlay dialog-mode" id="moveCopyModal" style="display: none;" onclick="if(event.target === this) closeMoveCopyModal()">
+        <div class="dialog-card luxury-dialog move-copy-dialog">
           <div class="dialog-header">
             <div>
-              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> <span data-i18n="organize_vip_eyebrow">AURA PRO VIP FEATURE</span></span>
+              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> <span data-i18n="organize_vip_eyebrow">PICSHELF PRO FEATURE</span></span>
               <h3 class="dialog-title" id="moveCopyModalTitle" data-i18n="organize_photos_title">Organize Photos</h3>
             </div>
-            <button class="close-dialog-btn" onclick="closeMoveCopyModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" onclick="closeMoveCopyModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
+
+          <!-- Scrollable Body with Clean Luxury Scrollbar -->
+          <div class="move-copy-dialog-body" id="moveCopyDialogBody">
 
           <!-- Folder 1: Multi-Album Merge / Collection Fusion Studio (Luxury VIP Feature, Collapsed by Default) -->
           <div class="move-copy-multitag-container move-copy-fusion-container" id="moveCopyMultiTagContainer" style="margin-top: 4px; margin-bottom: 12px;">
@@ -2328,12 +3067,11 @@
                   <i class="fa-solid fa-wand-magic-sparkles"></i>
                 </span>
                 <div class="multitag-title-wrap">
-                  <span class="multitag-title" id="multiTagHeaderTitle">Collection Fusion Studio</span>
-                  <span class="multitag-badge fusion-active-badge" id="fusionActiveBadge">Merge Albums</span>
+                  <span class="multitag-title" id="multiTagHeaderTitle" data-i18n="organize_fusion_studio_title">Collection Fusion Studio</span>
+                  <span class="multitag-badge fusion-active-badge" id="fusionActiveBadge" data-i18n="organize_merge_albums_badge">Merge Albums</span>
                 </div>
               </div>
               <div class="multitag-toggle-right">
-                <span class="multitag-pro-pill"><i class="fa-solid fa-crown" style="color: #fbbf24; font-size: 10px;"></i> VIP</span>
                 <i class="fa-solid fa-chevron-down multitag-chevron" id="multiTagChevron"></i>
               </div>
             </button>
@@ -2343,9 +3081,9 @@
               <!-- Luxury Studio Intro Banner -->
               <div class="fusion-hero-banner">
                 <div class="fusion-hero-title">
-                  <i class="fa-solid fa-sparkles" style="color: #fbbf24;"></i> Hand-Pick &amp; Merge Across Albums
+                  <i class="fa-solid fa-sparkles fusion-hero-icon"></i> <span data-i18n="fusion_hero_title">Hand-Pick &amp; Merge Across Albums</span>
                 </div>
-                <div class="fusion-hero-subtitle">
+                <div class="fusion-hero-subtitle" data-i18n="fusion_hero_subtitle">
                   Select special photos from your source album, add Album 2 &amp; 3, curate shots from each, and forge a brand new luxury collection.
                 </div>
               </div>
@@ -2359,14 +3097,14 @@
               <div class="fusion-add-album-section" id="fusionAddAlbumSection">
                 <div class="fusion-add-album-header">
                   <div class="fusion-add-album-title">
-                    <i class="fa-solid fa-circle-plus" style="color: #fbbf24;"></i> Add Album to Merge (Album 2, 3...)
+                    <i class="fa-solid fa-circle-plus fusion-add-icon"></i> <span data-i18n="fusion_add_album_title">Add Album to Merge (Album 2, 3...)</span>
                   </div>
-                  <span class="fusion-add-hint">Tap any album to add</span>
+                  <span class="fusion-add-hint" data-i18n="fusion_add_album_hint">Tap any album to add</span>
                 </div>
                 <!-- Search filter for candidate albums -->
                 <div class="multitag-picker-search-wrap fusion-search-wrap">
                   <i class="fa-solid fa-magnifying-glass multitag-picker-search-icon"></i>
-                  <input type="text" class="multitag-picker-search-input" id="fusionAlbumSearchInput" placeholder="Filter albums to add to collection..." oninput="handleFusionAlbumSearch(this.value)">
+                  <input type="text" class="multitag-picker-search-input" id="fusionAlbumSearchInput" placeholder="Filter albums to add to collection..." data-i18n-placeholder="fusion_search_placeholder" oninput="handleFusionAlbumSearch(this.value)">
                 </div>
                 <!-- Candidate Album Chips -->
                 <div class="fusion-candidate-chips" id="fusionCandidateChips">
@@ -2376,37 +3114,37 @@
 
               <!-- Output Mode Switcher: Forge New Collection vs Merge into Existing Album(s) -->
               <div class="fusion-output-mode-tabs" id="fusionOutputModeTabs">
-                <button type="button" class="fusion-mode-tab active" id="fusionTabForge" onclick="setFusionOutputMode('forge')" title="Forge Collection">
+                <button type="button" class="fusion-mode-tab active" id="fusionTabForge" onclick="setFusionOutputMode('forge')" title="Forge Collection" data-i18n-title="fusion_tab_forge_title">
                   <i class="fa-solid fa-wand-magic-sparkles"></i>
-                  <span>Forge Collection</span>
+                  <span data-i18n="fusion_tab_forge">Forge Collection</span>
                 </button>
-                <button type="button" class="fusion-mode-tab" id="fusionTabExisting" onclick="setFusionOutputMode('existing')" title="Add to Existing Album(s)">
+                <button type="button" class="fusion-mode-tab" id="fusionTabExisting" onclick="setFusionOutputMode('existing')" title="Add to Existing Album(s)" data-i18n-title="fusion_tab_existing_title">
                   <i class="fa-solid fa-folder-tree"></i>
-                  <span>Add to Existing</span>
+                  <span data-i18n="fusion_tab_existing">Add to Existing</span>
                 </button>
               </div>
 
               <!-- Option A: Forge New Collection Settings Card -->
               <div class="fusion-forge-card" id="fusionForgeCard">
                 <div class="fusion-forge-header">
-                  <span class="fusion-forge-title"><i class="fa-solid fa-gem" style="color: #fbbf24;"></i> New Collection Details</span>
+                  <span class="fusion-forge-title"><i class="fa-solid fa-gem fusion-gem-icon"></i> <span data-i18n="fusion_forge_details">New Collection Details</span></span>
                 </div>
 
                 <!-- Collection Name Input with Smart Auto-Name Generator -->
                 <div class="fusion-name-input-group">
                   <div class="fusion-input-wrap">
                     <i class="fa-solid fa-wand-magic-sparkles fusion-input-icon"></i>
-                    <input type="text" id="fusionCollectionNameInput" class="fusion-name-input" placeholder="Name your new collection..." oninput="handleFusionNameInput(this.value)">
+                    <input type="text" id="fusionCollectionNameInput" class="fusion-name-input" placeholder="Name your new collection..." data-i18n-placeholder="fusion_name_placeholder" oninput="handleFusionNameInput(this.value)">
                   </div>
-                  <button type="button" class="fusion-autoname-btn" id="fusionAutoNameBtn" onclick="rerollFusionSmartName()" title="Generate smart name suggestion">
-                    <i class="fa-solid fa-sparkles"></i> <span>Auto-Name</span>
+                  <button type="button" class="fusion-autoname-btn" id="fusionAutoNameBtn" onclick="rerollFusionSmartName()" title="Generate smart name suggestion" data-i18n-title="fusion_autoname_tooltip">
+                    <i class="fa-solid fa-sparkles"></i> <span data-i18n="fusion_autoname_btn">Auto-Name</span>
                   </button>
                 </div>
 
                 <!-- Exact Same Color Picker Kit as Tag System -->
                 <div class="fusion-color-section">
                   <div class="fusion-color-label">
-                    <i class="fa-solid fa-palette" style="color: #fbbf24; margin-right: 4px;"></i> Palette Color:
+                    <i class="fa-solid fa-palette fusion-palette-icon" style="margin-right: 4px;"></i> <span data-i18n="fusion_color_label">Palette Color:</span>
                   </div>
                   <div id="fusionColorPickerContainer" class="fusion-palette-container">
                     <!-- Rendered dynamically by buildCategorizedPaletteHtml -->
@@ -2428,7 +3166,7 @@
               <!-- Option B: Add to Existing Album(s) Card -->
               <div class="fusion-forge-card fusion-existing-card" id="fusionExistingAlbumsCard" style="display: none;">
                 <div class="fusion-forge-header">
-                  <span class="fusion-forge-title"><i class="fa-solid fa-folder-tree" style="color: #fbbf24;"></i> Add to Existing Album(s)</span>
+                  <span class="fusion-forge-title"><i class="fa-solid fa-folder-tree fusion-folder-icon"></i> <span data-i18n="fusion_existing_title">Add to Existing Album(s)</span></span>
                 </div>
 
                 <!-- Mode Segmented Control (Copy vs Move) -->
@@ -2442,7 +3180,7 @@
                     <span data-i18n="organize_move_photos">Move Photos</span>
                   </button>
                 </div>
-                <div class="move-copy-mode-hint" id="fusionModeHint" style="margin-bottom: 12px;">
+                <div class="move-copy-mode-hint" id="fusionModeHint" data-i18n="fusion_mode_hint_copy" style="margin-bottom: 12px;">
                   Duplicates curated photos into destination album(s). They will also remain in their source albums.
                 </div>
 
@@ -2454,7 +3192,7 @@
 
                 <!-- Destination Albums Header with Count Pill -->
                 <div class="move-copy-destinations-header" style="margin-bottom: 8px;">
-                  <span class="move-copy-dest-title">SELECT DESTINATION ALBUM(S):</span>
+                  <span class="move-copy-dest-title" data-i18n="fusion_select_dest_header">SELECT DESTINATION ALBUM(S):</span>
                   <span class="move-copy-dest-pill" id="fusionDestSelectionPill" style="display: none;">0 Selected</span>
                 </div>
 
@@ -2486,8 +3224,8 @@
                   <i class="fa-solid fa-folder-tree"></i>
                 </span>
                 <div class="multitag-title-wrap">
-                  <span class="multitag-title" id="singleTagHeaderTitle">Single Album Organize</span>
-                  <span class="multitag-badge single-tag-active-badge" id="singleTagActiveBadge">Copy &amp; Move</span>
+                  <span class="multitag-title" id="singleTagHeaderTitle" data-i18n="organize_single_album_title">Single Album Organize</span>
+                  <span class="multitag-badge single-tag-active-badge" id="singleTagActiveBadge" data-i18n="organize_single_album_badge">Copy &amp; Move</span>
                 </div>
               </div>
               <div class="multitag-toggle-right">
@@ -2554,7 +3292,7 @@
 
               <!-- Destination Album Selection List -->
               <div class="move-copy-destinations-header" id="moveCopyDestinationsHeader" style="margin-top: 12px;">
-                <span class="move-copy-dest-title">Select Destination Album(s):</span>
+                <span class="move-copy-dest-title" data-i18n="fusion_select_dest_header">Select Destination Album(s):</span>
                 <span class="move-copy-dest-pill" id="moveCopyDestSelectionPill" style="display: none;">0 Selected</span>
               </div>
               <div class="move-copy-albums-list" id="moveCopyAlbumsList">
@@ -2562,9 +3300,10 @@
               </div>
             </div>
           </div>
+          </div>
 
           <!-- Footer Action Buttons -->
-          <div class="dialog-buttons" style="margin-top: 14px; gap: 10px;">
+          <div class="dialog-buttons" style="gap: 10px;">
             <button class="btn btn-outline" onclick="closeMoveCopyModal()" data-i18n="crop_cancel" style="flex: 0 0 auto; min-width: 90px; min-height: 48px;">Cancel</button>
             <button class="btn btn-primary" id="confirmMoveCopyBtn" onclick="executeMoveCopyAction()" disabled style="flex: 1 1 140px; min-width: 0; min-height: 48px; justify-content: center;">
               <i class="fa-solid fa-copy" id="confirmMoveCopyIcon"></i>
@@ -2574,33 +3313,67 @@
         </div>
       </div>
 
-      <!-- VIP Move / Copy Feature Gate Modal -->
-      <div class="modal-overlay dialog-mode" id="vipMoveCopyModal" style="display: none;">
-        <div class="dialog-card luxury-dialog" style="max-width: 440px;">
-          <div class="dialog-header">
+      <!-- VIP Move / Copy Feature Gate Modal (Legacy) -->
+      <div class="modal-overlay dialog-mode" id="vipMoveCopyModal" style="display: none !important;">
+      </div>
+
+      <!-- VIP Save Limit Feature Gate Modal (Full 2-Plan Paywall with 6mo & 1yr Options) -->
+      <div class="modal-overlay dialog-mode" id="vipSaveLimitModal" style="display: none;">
+        <div class="dialog-card luxury-dialog" style="max-width: 440px; max-height: 92vh; overflow-y: auto; padding: 18px; border-radius: 26px;">
+          <div class="dialog-header" style="margin-bottom: 12px;">
             <div>
-              <span class="dialog-eyebrow"><svg class="aura-luxury-crown" width="13" height="13" viewBox="0 0 20 20" fill="currentColor" style="color: #ff7a90; margin-right: 5px;"><path d="M3.2 15.6h13.6a.7.7 0 0 0 .7-.7v-.2a.7.7 0 0 0-.7-.7H3.2a.7.7 0 0 0-.7.7v.2a.7.7 0 0 0 .7.7zm-.9-3.7a.7.7 0 0 0 .66.45h14.08a.7.7 0 0 0 .66-.45l1.6-4.6a.7.7 0 0 0-1.05-.82l-3.8 2.45-3.15-5.1a.7.7 0 0 0-1.2 0l-3.15 5.1-3.8-2.45a.7.7 0 0 0-1.05.82l1.6 4.6z"/></svg> AURA PRO VIP FEATURE</span>
-              <h3 class="dialog-title">Move & Copy Photos</h3>
+              <span class="dialog-eyebrow"><i class="fa-solid fa-crown" style="color: #38bdf8; margin-right: 6px;"></i><span data-i18n="settings_subscription_section">SUBSCRIPTION &amp; MEMBERSHIP</span></span>
+              <h3 class="dialog-title" id="vipSaveLimitModalTitle" data-i18n="settings_subscription_section">Subscription &amp; Membership</h3>
             </div>
-            <button class="close-dialog-btn" onclick="closeVipMoveCopyGateModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" onclick="closeVipSaveLimitModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
-          <div style="margin: 16px 0; text-align: center;">
-            <div style="width: 58px; height: 58px; border-radius: 50%; background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.05)); border: 1.5px solid #fbbf24; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; color: #fbbf24; margin-bottom: 12px; box-shadow: 0 0 20px rgba(245,158,11,0.3);">
-              <i class="fa-solid fa-folder-tree"></i>
+
+          <div class="pro-membership-showcase" id="modalProMembershipCard" style="box-shadow: none; border-color: rgba(244, 63, 94, 0.45); padding: 18px 16px;">
+            <div class="pro-card-header">
+              <div class="pro-badge-glow" data-i18n="settings_pro_vip"><i class="fa-solid fa-gem"></i> PICSHELF PRO</div>
+              <span class="pro-pricing-tag" id="modalProActivePricingTag">₹299 <span>/ year</span></span>
             </div>
-            <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text-primary);">Relocate & Reorganize Collections</h4>
-            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0 10px;">
-              Easily move or copy multiple photos between albums in one tap. Keep originals or relocate them seamlessly.
-            </p>
-          </div>
-          <div class="dialog-buttons" style="flex-direction: column; gap: 8px;">
-            <button class="btn btn-primary" onclick="initiateRazorpayPayment()" style="width: 100%; justify-content: center;">
-              <i class="fa-solid fa-bolt"></i> Upgrade to Aura Pro VIP (₹299)
-            </button>
-            <button class="btn btn-outline" onclick="enableVip(); closeVipMoveCopyGateModal(); openMoveCopyModal();" style="border-color: #f59e0b; color: #f59e0b; width: 100%; justify-content: center;">
-              <i class="fa-solid fa-flask"></i> Instant VIP Tester Unlock
-            </button>
-            <button class="btn btn-outline" onclick="closeVipMoveCopyGateModal()" style="width: 100%; justify-content: center;">Cancel</button>
+            <p class="pro-tagline" data-i18n="settings_pro_tagline">Unlock the ultimate AI organizer with unlimited albums, 100% private on-device storage &amp; biometric vault.</p>
+
+            <!-- Dynamic 2-Plan Selector in Modal -->
+            <div class="settings-plan-grid" id="modalSettingsPlanGrid">
+              <div class="settings-plan-card active" id="modalPlanCardYearly" onclick="selectSubscriptionPlan('yearly')">
+                <div class="settings-plan-badge" id="modalPlanBadgeYearly">Save 45% · Best Value</div>
+                <div class="settings-plan-name">Yearly Pro</div>
+                <div class="settings-plan-price-wrap">
+                  <span class="settings-plan-amount" id="modalPriceYearlyDisplay">₹299</span>
+                  <span class="settings-plan-unit">/ 12 mo</span>
+                </div>
+                <div class="settings-plan-subtext" id="modalSubtextYearly">₹24.90 / month</div>
+                <div class="settings-plan-check"><i class="fa-solid fa-circle-check"></i></div>
+              </div>
+
+              <div class="settings-plan-card" id="modalPlanCardHalfYearly" onclick="selectSubscriptionPlan('half_yearly')">
+                <div class="settings-plan-badge flexible" id="modalPlanBadgeHalfYearly">Popular Choice</div>
+                <div class="settings-plan-name">6 Months Pro</div>
+                <div class="settings-plan-price-wrap">
+                  <span class="settings-plan-amount" id="modalPriceHalfYearlyDisplay">₹170</span>
+                  <span class="settings-plan-unit">/ 6 mo</span>
+                </div>
+                <div class="settings-plan-subtext" id="modalSubtextHalfYearly">₹28.30 / month</div>
+                <div class="settings-plan-check"><i class="fa-solid fa-circle-check"></i></div>
+              </div>
+            </div>
+
+            <div class="pro-features-list">
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_1">Unlimited Smart Albums &amp; Custom Tags</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_2">Original Ultra-HD RAW &amp; 4K Export</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_3">Encrypted Biometric Secret Vault</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_4">100% On-Device Privacy &amp; Fast Local Backup</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_5">Pro 3D Holographic Album Cards &amp; Custom Surface Artwork</span></div>
+              <div class="pro-feat-item"><i class="fa-solid fa-circle-check"></i> <span data-i18n="settings_pro_feat_6">Zero Watermark &amp; Priority AI Tagging</span></div>
+            </div>
+
+            <div class="pro-action-box" style="margin-top: 6px;">
+              <button class="btn-pro-razorpay" id="modalStartRazorpayBtn" onclick="initiateRazorpayPayment()">
+                <i class="fa-brands fa-google-play"></i> <span id="modalStartRazorpayBtnText" data-i18n="settings_upgrade_btn">Upgrade with Google Play (₹299)</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2610,18 +3383,18 @@
         <div class="crop-container">
           <!-- Crop Top Bar -->
           <div class="crop-top-bar">
-            <button class="icon-btn-round" onclick="closeCropEditorModal()" title="Cancel">
-              <i class="fa-solid fa-xmark"></i>
+            <button class="icon-btn-round" onclick="closeCropEditorModal()" title="Back" aria-label="Back" data-i18n-title="crop_back" data-i18n-aria="crop_back">
+              <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="crop-title-block">
               <h3 data-i18n="crop_title">Crop & Orient</h3>
               <p id="cropPhotoNameSub">Photo Title</p>
             </div>
             <div class="crop-top-actions">
-              <button class="icon-btn-round" id="cropAngleToggleBtn" onclick="toggleCropAngleDrawer()" title="Custom Angle / Straighten (±1°, ±5°)" aria-label="Custom Rotation Angle">
+              <button class="icon-btn-round" id="cropAngleToggleBtn" onclick="toggleCropAngleDrawer()" title="Custom Angle & Straighten" aria-label="Custom Rotation Angle" data-i18n-title="crop_angle_toggle" data-i18n-aria="crop_angle_toggle">
                 <i class="fa-solid fa-compass-drafting"></i>
               </button>
-              <button class="icon-btn-round" onclick="resetCrop()" title="Reset All Transforms & Crop">
+              <button class="icon-btn-round" onclick="resetCrop()" title="Reset All Transforms & Crop" aria-label="Reset All Transforms & Crop" data-i18n-title="crop_reset_all" data-i18n-aria="crop_reset_all">
                 <i class="fa-solid fa-arrow-rotate-left"></i>
               </button>
             </div>
@@ -2635,10 +3408,10 @@
                 <span class="angle-value-badge" id="cropAngleReadout">0.0°</span>
               </div>
               <div class="angle-drawer-controls">
-                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(-5)" title="Rotate -5° Counter-Clockwise">-5°</button>
-                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(-1)" title="Fine Rotate -1°">-1°</button>
+                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(-5)" title="Rotate -5° Counter-Clockwise" aria-label="Rotate -5° Counter-Clockwise" data-i18n-title="crop_angle_m5" data-i18n-aria="crop_angle_m5">-5°</button>
+                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(-1)" title="Fine Rotate -1°" aria-label="Fine Rotate -1°" data-i18n-title="crop_angle_m1" data-i18n-aria="crop_angle_m1">-1°</button>
                 <div class="angle-slider-wrap">
-                  <input type="range" class="crop-angle-slider" id="cropAngleSlider" min="-45" max="45" value="0" step="0.5" oninput="onCustomAngleSlider(this.value)" title="Slide to adjust angle">
+                  <input type="range" class="crop-angle-slider" id="cropAngleSlider" min="-45" max="45" value="0" step="0.5" oninput="onCustomAngleSlider(this.value)" title="Slide to adjust angle" aria-label="Slide to adjust angle" data-i18n-title="crop_angle_slider_hint" data-i18n-aria="crop_angle_slider_hint">
                   <div class="angle-slider-ticks">
                     <span>-45°</span>
                     <span>-20°</span>
@@ -2647,9 +3420,9 @@
                     <span>+45°</span>
                   </div>
                 </div>
-                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(1)" title="Fine Rotate +1°">+1°</button>
-                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(5)" title="Rotate +5° Clockwise">+5°</button>
-                <button type="button" class="angle-reset-chip" onclick="resetCustomAngle()" title="Reset Angle to 0°">
+                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(1)" title="Fine Rotate +1°" aria-label="Fine Rotate +1°" data-i18n-title="crop_angle_p1" data-i18n-aria="crop_angle_p1">+1°</button>
+                <button type="button" class="angle-step-chip" onclick="adjustCustomAngle(5)" title="Rotate +5° Clockwise" aria-label="Rotate +5° Clockwise" data-i18n-title="crop_angle_p5" data-i18n-aria="crop_angle_p5">+5°</button>
+                <button type="button" class="angle-reset-chip" onclick="resetCustomAngle()" title="Reset Angle to 0°" aria-label="Reset Angle to 0°" data-i18n-title="crop_angle_reset" data-i18n-aria="crop_angle_reset">
                   <i class="fa-solid fa-arrows-rotate"></i> 0°
                 </button>
               </div>
@@ -2659,28 +3432,28 @@
           <!-- Rotation & Orientation Controls (90°, 180°, 270°, Flip H, Flip V) -->
           <div class="crop-transform-bar" id="cropTransformBar">
             <div class="crop-transform-group" role="group" aria-label="Rotation Controls">
-              <button class="transform-chip transform-icon-btn" id="cropRotate90Btn" onclick="setCropRotation(90)" title="Rotate 90° Clockwise" aria-label="Rotate 90° Clockwise">
+              <button class="transform-chip transform-icon-btn" id="cropRotate90Btn" onclick="setCropRotation(90)" title="Rotate 90° Clockwise" aria-label="Rotate 90° Clockwise" data-i18n-title="crop_rotate_90" data-i18n-aria="crop_rotate_90">
                 <i class="fa-solid fa-rotate-right"></i>
               </button>
-              <button class="transform-chip transform-icon-btn" id="cropRotate180Btn" onclick="setCropRotation(180)" title="Rotate 180° (Half Turn)" aria-label="Rotate 180°">
+              <button class="transform-chip transform-icon-btn" id="cropRotate180Btn" onclick="setCropRotation(180)" title="Rotate 180°" aria-label="Rotate 180°" data-i18n-title="crop_rotate_180" data-i18n-aria="crop_rotate_180">
                 <i class="fa-solid fa-arrows-rotate"></i>
               </button>
-              <button class="transform-chip transform-icon-btn" id="cropRotate270Btn" onclick="setCropRotation(270)" title="Rotate 270° (90° Left)" aria-label="Rotate 270°">
+              <button class="transform-chip transform-icon-btn" id="cropRotate270Btn" onclick="setCropRotation(270)" title="Rotate 270° (90° Left)" aria-label="Rotate 270°" data-i18n-title="crop_rotate_270" data-i18n-aria="crop_rotate_270">
                 <i class="fa-solid fa-rotate-left"></i>
               </button>
             </div>
             <div class="transform-bar-divider"></div>
             <div class="crop-transform-group" role="group" aria-label="Flip Controls">
-              <button class="transform-chip transform-icon-btn" id="cropFlipHBtn" onclick="toggleCropFlip('h')" title="Flip Horizontal (Mirror Across Y-Axis)" aria-label="Flip Horizontal">
+              <button class="transform-chip transform-icon-btn" id="cropFlipHBtn" onclick="toggleCropFlip('h')" title="Flip Horizontal" aria-label="Flip Horizontal" data-i18n-title="crop_flip_h_title" data-i18n-aria="crop_flip_h_title">
                 <i class="fa-solid fa-arrows-left-right"></i>
               </button>
-              <button class="transform-chip transform-icon-btn" id="cropFlipVBtn" onclick="toggleCropFlip('v')" title="Flip Vertical (Mirror Across X-Axis)" aria-label="Flip Vertical">
+              <button class="transform-chip transform-icon-btn" id="cropFlipVBtn" onclick="toggleCropFlip('v')" title="Flip Vertical" aria-label="Flip Vertical" data-i18n-title="crop_flip_v_title" data-i18n-aria="crop_flip_v_title">
                 <i class="fa-solid fa-arrows-up-down"></i>
               </button>
             </div>
             <div class="transform-bar-divider"></div>
             <div class="crop-transform-group" role="group" aria-label="Reset Orientation">
-              <button class="transform-chip transform-icon-btn reset-chip" onclick="resetCropTransforms()" title="Reset Rotations & Flips" aria-label="Reset Rotations and Flips">
+              <button class="transform-chip transform-icon-btn reset-chip" onclick="resetCropTransforms()" title="Reset Rotations & Flips" aria-label="Reset Rotations and Flips" data-i18n-title="crop_reset_transforms" data-i18n-aria="crop_reset_transforms">
                 <i class="fa-solid fa-arrow-rotate-left"></i>
               </button>
             </div>
@@ -2688,20 +3461,23 @@
 
           <!-- Aspect Ratio Chooser Bar -->
           <div class="crop-aspect-bar" id="cropAspectBar">
-            <button class="aspect-chip active" data-aspect="free" onclick="setCropAspect('free')" title="Freeform Crop">
+            <button class="aspect-chip active" data-aspect="free" onclick="setCropAspect('free')" title="Freeform Crop" aria-label="Freeform Crop" data-i18n-title="crop_aspect_free" data-i18n-aria="crop_aspect_free">
               <i class="fa-solid fa-vector-square"></i> <span data-i18n="crop_free">Free</span>
             </button>
-            <button class="aspect-chip" data-aspect="1:1" onclick="setCropAspect('1:1')" title="1:1 Square (Instagram / Profile)">
+            <button class="aspect-chip" data-aspect="1:1" onclick="setCropAspect('1:1')" title="1:1 Square" aria-label="1:1 Square" data-i18n-title="crop_aspect_1_1" data-i18n-aria="crop_aspect_1_1">
               <i class="fa-regular fa-square"></i> 1:1
             </button>
-            <button class="aspect-chip" data-aspect="4:5" onclick="setCropAspect('4:5')" title="4:5 Portrait (Stories / Feed)">
+            <button class="aspect-chip" data-aspect="4:5" onclick="setCropAspect('4:5')" title="4:5 Portrait" aria-label="4:5 Portrait" data-i18n-title="crop_aspect_4_5" data-i18n-aria="crop_aspect_4_5">
               <i class="fa-solid fa-mobile-screen"></i> 4:5
             </button>
-            <button class="aspect-chip" data-aspect="3:4" onclick="setCropAspect('3:4')" title="3:4 Standard (Photo Prints)">
+            <button class="aspect-chip" data-aspect="3:4" onclick="setCropAspect('3:4')" title="3:4 Standard" aria-label="3:4 Standard" data-i18n-title="crop_aspect_3_4" data-i18n-aria="crop_aspect_3_4">
               <i class="fa-solid fa-image"></i> 3:4
             </button>
-            <button class="aspect-chip" data-aspect="16:9" onclick="setCropAspect('16:9')" title="16:9 Widescreen (Cinema / Landscape)">
+            <button class="aspect-chip" data-aspect="16:9" onclick="setCropAspect('16:9')" title="16:9 Landscape" aria-label="16:9 Landscape" data-i18n-title="crop_aspect_16_9" data-i18n-aria="crop_aspect_16_9">
               <i class="fa-solid fa-panorama"></i> 16:9
+            </button>
+            <button class="aspect-chip" data-aspect="9:16" onclick="setCropAspect('9:16')" title="9:16 Vertical Story" aria-label="9:16 Vertical Story" data-i18n-title="crop_aspect_9_16" data-i18n-aria="crop_aspect_9_16">
+              <i class="fa-solid fa-mobile-screen-button"></i> 9:16
             </button>
           </div>
 
@@ -2729,16 +3505,16 @@
                 <div class="crop-corner-bracket bracket-br"></div>
 
                 <!-- 4 Corner Handles -->
-                <div class="crop-handle handle-tl" data-handle="tl" title="Drag Corner (Top-Left)"></div>
-                <div class="crop-handle handle-tr" data-handle="tr" title="Drag Corner (Top-Right)"></div>
-                <div class="crop-handle handle-bl" data-handle="bl" title="Drag Corner (Bottom-Left)"></div>
-                <div class="crop-handle handle-br" data-handle="br" title="Drag Corner (Bottom-Right)"></div>
+                <div class="crop-handle handle-tl" data-handle="tl" title="Drag Corner" data-i18n-title="crop_drag_corner"></div>
+                <div class="crop-handle handle-tr" data-handle="tr" title="Drag Corner" data-i18n-title="crop_drag_corner"></div>
+                <div class="crop-handle handle-bl" data-handle="bl" title="Drag Corner" data-i18n-title="crop_drag_corner"></div>
+                <div class="crop-handle handle-br" data-handle="br" title="Drag Corner" data-i18n-title="crop_drag_corner"></div>
 
                 <!-- 4 Edge Handles for Pinpoint Axis Control -->
-                <div class="crop-edge-handle edge-t" data-handle="t" title="Drag Top Edge"></div>
-                <div class="crop-edge-handle edge-b" data-handle="b" title="Drag Bottom Edge"></div>
-                <div class="crop-edge-handle edge-l" data-handle="l" title="Drag Left Edge"></div>
-                <div class="crop-edge-handle edge-r" data-handle="r" title="Drag Right Edge"></div>
+                <div class="crop-edge-handle edge-t" data-handle="t" title="Drag Edge" data-i18n-title="crop_drag_edge"></div>
+                <div class="crop-edge-handle edge-b" data-handle="b" title="Drag Edge" data-i18n-title="crop_drag_edge"></div>
+                <div class="crop-edge-handle edge-l" data-handle="l" title="Drag Edge" data-i18n-title="crop_drag_edge"></div>
+                <div class="crop-edge-handle edge-r" data-handle="r" title="Drag Edge" data-i18n-title="crop_drag_edge"></div>
               </div>
             </div>
           </div>
@@ -2747,51 +3523,312 @@
           <div class="crop-bottom-bar">
             <div class="crop-precision-toolbar" id="cropPrecisionToolbar">
               <div class="precision-btn-group" role="group" aria-label="Nudge Direction">
-                <button type="button" class="precision-btn" onclick="nudgeCrop('left')" title="Nudge Left 1px" aria-label="Nudge Left">
+                <button type="button" class="precision-btn" onclick="nudgeCrop('left')" title="Nudge Left" aria-label="Nudge Left" data-i18n-title="crop_nudge_left" data-i18n-aria="crop_nudge_left">
                   <i class="fa-solid fa-chevron-left"></i>
                 </button>
-                <button type="button" class="precision-btn" onclick="nudgeCrop('up')" title="Nudge Up 1px" aria-label="Nudge Up">
+                <button type="button" class="precision-btn" onclick="nudgeCrop('up')" title="Nudge Up" aria-label="Nudge Up" data-i18n-title="crop_nudge_up" data-i18n-aria="crop_nudge_up">
                   <i class="fa-solid fa-chevron-up"></i>
                 </button>
-                <button type="button" class="precision-btn" onclick="nudgeCrop('down')" title="Nudge Down 1px" aria-label="Nudge Down">
+                <button type="button" class="precision-btn" onclick="nudgeCrop('down')" title="Nudge Down" aria-label="Nudge Down" data-i18n-title="crop_nudge_down" data-i18n-aria="crop_nudge_down">
                   <i class="fa-solid fa-chevron-down"></i>
                 </button>
-                <button type="button" class="precision-btn" onclick="nudgeCrop('right')" title="Nudge Right 1px" aria-label="Nudge Right">
+                <button type="button" class="precision-btn" onclick="nudgeCrop('right')" title="Nudge Right" aria-label="Nudge Right" data-i18n-title="crop_nudge_right" data-i18n-aria="crop_nudge_right">
                   <i class="fa-solid fa-chevron-right"></i>
                 </button>
               </div>
               <div class="precision-divider"></div>
               <div class="precision-btn-group" role="group" aria-label="Box Sizing and Alignment">
-                <button type="button" class="precision-btn" onclick="nudgeCrop('expand')" title="Expand Crop Box (+4px)" aria-label="Expand Crop Box">
+                <button type="button" class="precision-btn" onclick="nudgeCrop('expand')" title="Expand Crop Box" aria-label="Expand Crop Box" data-i18n-title="crop_nudge_expand" data-i18n-aria="crop_nudge_expand">
                   <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                 </button>
-                <button type="button" class="precision-btn" onclick="nudgeCrop('shrink')" title="Shrink Crop Box (-4px)" aria-label="Shrink Crop Box">
+                <button type="button" class="precision-btn" onclick="nudgeCrop('shrink')" title="Shrink Crop Box" aria-label="Shrink Crop Box" data-i18n-title="crop_nudge_shrink" data-i18n-aria="crop_nudge_shrink">
                   <i class="fa-solid fa-down-left-and-up-right-to-center"></i>
                 </button>
-                <button type="button" class="precision-btn" onclick="centerCropBox()" title="Center Crop Box" aria-label="Center Crop Box">
+                <button type="button" class="precision-btn" onclick="centerCropBox()" title="Center Crop Box" aria-label="Center Crop Box" data-i18n-title="crop_center_box" data-i18n-aria="crop_center_box">
                   <i class="fa-solid fa-crosshairs"></i>
                 </button>
               </div>
             </div>
 
             <div class="crop-modal-action-btns">
-              <button class="btn btn-outline" onclick="closeCropEditorModal()" data-i18n="crop_cancel">Cancel</button>
-              <button class="btn btn-primary" onclick="applyAndSaveCrop()">
+              <button class="btn btn-outline" onclick="closeCropEditorModal()" data-i18n="crop_cancel" data-i18n-title="crop_cancel" data-i18n-aria="crop_cancel" title="Cancel">Cancel</button>
+              <button class="btn btn-primary" onclick="applyAndSaveCrop()" data-i18n-title="crop_apply" data-i18n-aria="crop_apply" title="Apply Crop">
                 <i class="fa-solid fa-check"></i> <span data-i18n="crop_apply">Apply Crop</span>
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Resize Full-Screen Modal -->
+      <div class="modal-overlay crop-modal-overlay resize-modal-overlay" id="resizeEditorModal" style="display: none;">
+        <div class="crop-container resize-container">
+
+          <!-- Resize Top Bar -->
+          <div class="crop-top-bar">
+            <button class="icon-btn-round" onclick="closeResizeEditorModal()" title="Back" aria-label="Back" data-i18n-title="crop_back" data-i18n-aria="crop_back">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="crop-title-block">
+              <h3 data-i18n="resize_title">Resize Photo</h3>
+              <p id="resizePhotoNameSub">Photo Title</p>
+            </div>
+            <div class="crop-top-actions">
+              <button class="icon-btn-round" id="resizeAngleToggleBtn" onclick="toggleResizeAngleDrawer()" title="Custom Angle / Straighten" aria-label="Custom Rotation Angle" data-i18n-title="crop_angle_toggle" data-i18n-aria="crop_angle_toggle">
+                <i class="fa-solid fa-compass-drafting"></i>
+              </button>
+              <button class="icon-btn-round" onclick="resetResize()" title="Reset All Transforms" aria-label="Reset All Transforms" data-i18n-title="resize_reset_all" data-i18n-aria="resize_reset_all">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Rotation Angle Drawer -->
+          <div class="crop-angle-drawer" id="resizeCustomAngleDrawer" style="display: none;">
+            <div class="angle-drawer-inner">
+              <div class="angle-drawer-header">
+                <span class="angle-drawer-title"><i class="fa-solid fa-compass-drafting"></i> <span data-i18n="crop_fine_rotation">Fine Rotation &amp; Straighten</span></span>
+                <span class="angle-value-badge" id="resizeAngleReadout">0.0°</span>
+              </div>
+              <div class="angle-drawer-controls">
+                <button type="button" class="angle-step-chip" onclick="adjustResizeCustomAngle(-5)" title="Rotate -5°" aria-label="Rotate -5°" data-i18n-title="crop_angle_m5" data-i18n-aria="crop_angle_m5">-5°</button>
+                <button type="button" class="angle-step-chip" onclick="adjustResizeCustomAngle(-1)" title="Fine Rotate -1°" aria-label="Fine Rotate -1°" data-i18n-title="crop_angle_m1" data-i18n-aria="crop_angle_m1">-1°</button>
+                <div class="angle-slider-wrap">
+                  <input type="range" class="crop-angle-slider" id="resizeAngleSlider" min="-45" max="45" value="0" step="0.5" oninput="onResizeCustomAngleSlider(this.value)" title="Slide to adjust angle" aria-label="Slide to adjust angle" data-i18n-title="crop_angle_slider_hint" data-i18n-aria="crop_angle_slider_hint">
+                  <div class="angle-slider-ticks">
+                    <span>-45°</span>
+                    <span>-20°</span>
+                    <span class="tick-center">0°</span>
+                    <span>+20°</span>
+                    <span>+45°</span>
+                  </div>
+                </div>
+                <button type="button" class="angle-step-chip" onclick="adjustResizeCustomAngle(1)" title="Fine Rotate +1°" aria-label="Fine Rotate +1°" data-i18n-title="crop_angle_p1" data-i18n-aria="crop_angle_p1">+1°</button>
+                <button type="button" class="angle-step-chip" onclick="adjustResizeCustomAngle(5)" title="Rotate +5°" aria-label="Rotate +5°" data-i18n-title="crop_angle_p5" data-i18n-aria="crop_angle_p5">+5°</button>
+                <button type="button" class="angle-reset-chip" onclick="resetResizeCustomAngle()" title="Reset Angle to 0°" aria-label="Reset Angle to 0°" data-i18n-title="crop_angle_reset" data-i18n-aria="crop_angle_reset">
+                  <i class="fa-solid fa-arrows-rotate"></i> 0°
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rotation & Orientation Controls -->
+          <div class="crop-transform-bar" id="resizeTransformBar">
+            <div class="crop-transform-group" role="group" aria-label="Rotation Controls">
+              <button class="transform-chip transform-icon-btn" onclick="setResizeRotation(90)" title="Rotate 90° Clockwise" aria-label="Rotate 90° Clockwise" data-i18n-title="crop_rotate_90" data-i18n-aria="crop_rotate_90">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+              <button class="transform-chip transform-icon-btn" onclick="setResizeRotation(180)" title="Rotate 180°" aria-label="Rotate 180°" data-i18n-title="crop_rotate_180" data-i18n-aria="crop_rotate_180">
+                <i class="fa-solid fa-arrows-rotate"></i>
+              </button>
+              <button class="transform-chip transform-icon-btn" onclick="setResizeRotation(270)" title="Rotate 270°" aria-label="Rotate 270°" data-i18n-title="crop_rotate_270" data-i18n-aria="crop_rotate_270">
+                <i class="fa-solid fa-rotate-left"></i>
+              </button>
+            </div>
+            <div class="transform-bar-divider"></div>
+            <div class="crop-transform-group" role="group" aria-label="Flip Controls">
+              <button class="transform-chip transform-icon-btn" id="resizeFlipHBtn" onclick="toggleResizeFlip('h')" title="Flip Horizontal" aria-label="Flip Horizontal" data-i18n-title="crop_flip_h_title" data-i18n-aria="crop_flip_h_title">
+                <i class="fa-solid fa-arrows-left-right"></i>
+              </button>
+              <button class="transform-chip transform-icon-btn" id="resizeFlipVBtn" onclick="toggleResizeFlip('v')" title="Flip Vertical" aria-label="Flip Vertical" data-i18n-title="crop_flip_v_title" data-i18n-aria="crop_flip_v_title">
+                <i class="fa-solid fa-arrows-up-down"></i>
+              </button>
+            </div>
+            <div class="transform-bar-divider"></div>
+            <div class="crop-transform-group" role="group" aria-label="Reset Orientation">
+              <button class="transform-chip transform-icon-btn reset-chip" onclick="resetResizeTransforms()" title="Reset Rotations &amp; Flips" aria-label="Reset Rotations &amp; Flips" data-i18n-title="crop_reset_transforms" data-i18n-aria="crop_reset_transforms">
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Aspect Ratio / Output Size Presets Bar -->
+          <div class="crop-aspect-bar resize-aspect-bar" id="resizeAspectBar">
+            <button class="aspect-chip active" data-aspect="free" onclick="setResizeAspect('free')" title="Freeform (original dimensions)" aria-label="Freeform (original dimensions)" data-i18n-title="crop_aspect_free" data-i18n-aria="crop_aspect_free">
+              <i class="fa-solid fa-vector-square"></i> <span data-i18n="crop_free">Free</span>
+            </button>
+            <button class="aspect-chip" data-aspect="1:1" onclick="setResizeAspect('1:1')" title="1:1 Square" aria-label="1:1 Square" data-i18n-title="crop_aspect_1_1" data-i18n-aria="crop_aspect_1_1">
+              <i class="fa-regular fa-square"></i> 1:1
+            </button>
+            <button class="aspect-chip" data-aspect="4:5" onclick="setResizeAspect('4:5')" title="4:5 Portrait" aria-label="4:5 Portrait" data-i18n-title="crop_aspect_4_5" data-i18n-aria="crop_aspect_4_5">
+              <i class="fa-solid fa-mobile-screen"></i> 4:5
+            </button>
+            <button class="aspect-chip" data-aspect="3:4" onclick="setResizeAspect('3:4')" title="3:4 Standard" aria-label="3:4 Standard" data-i18n-title="crop_aspect_3_4" data-i18n-aria="crop_aspect_3_4">
+              <i class="fa-solid fa-image"></i> 3:4
+            </button>
+            <button class="aspect-chip" data-aspect="16:9" onclick="setResizeAspect('16:9')" title="16:9 Widescreen" aria-label="16:9 Widescreen" data-i18n-title="crop_aspect_16_9" data-i18n-aria="crop_aspect_16_9">
+              <i class="fa-solid fa-panorama"></i> 16:9
+            </button>
+            <button class="aspect-chip" data-aspect="9:16" onclick="setResizeAspect('9:16')" title="9:16 Vertical" aria-label="9:16 Vertical" data-i18n-title="crop_aspect_9_16" data-i18n-aria="crop_aspect_9_16">
+              <i class="fa-solid fa-mobile-screen-button"></i> 9:16
+            </button>
+          </div>
+
+          <!-- Live Preview Canvas Stage -->
+          <div class="crop-stage-wrapper resize-stage-wrapper" id="resizeStageWrapper">
+            <div class="resize-canvas-wrap" id="resizeCanvasWrap">
+              <canvas id="resizePreviewCanvas"></canvas>
+              <div class="resize-dimension-hud" id="resizeDimensionHud">
+                <i class="fa-solid fa-expand"></i> <span id="resizeDimText">— × —</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual Resize Controls Card -->
+          <div class="resize-controls-card" id="resizeControlsCard">
+
+            <!-- Unit Selector Row -->
+            <div class="resize-unit-row">
+              <span class="resize-section-label"><i class="fa-solid fa-ruler-combined"></i> Unit</span>
+              <div class="resize-unit-chips">
+                <button class="resize-unit-chip active" data-unit="px" onclick="setResizeUnit('px')" title="Pixels (px)" aria-label="Pixels (px)" data-i18n-title="resize_unit_px" data-i18n-aria="resize_unit_px">px</button>
+                <button class="resize-unit-chip" data-unit="mm" onclick="setResizeUnit('mm')" title="Millimeters (mm)" aria-label="Millimeters (mm)" data-i18n-title="resize_unit_mm" data-i18n-aria="resize_unit_mm">mm</button>
+                <button class="resize-unit-chip" data-unit="cm" onclick="setResizeUnit('cm')" title="Centimeters (cm)" aria-label="Centimeters (cm)" data-i18n-title="resize_unit_cm" data-i18n-aria="resize_unit_cm">cm</button>
+                <button class="resize-unit-chip" data-unit="in" onclick="setResizeUnit('in')" title="Inches (in)" aria-label="Inches (in)" data-i18n-title="resize_unit_in" data-i18n-aria="resize_unit_in">in</button>
+              </div>
+              <!-- DPI Selector (visible when physical units selected) -->
+              <div class="resize-dpi-wrap" id="resizeDpiWrap" style="display:none;">
+                <span class="resize-dpi-label"><i class="fa-solid fa-sliders"></i> DPI</span>
+                <div class="resize-dpi-dropdown-container" id="resizeDpiDropdownContainer">
+                  <button type="button" class="resize-dpi-trigger" id="resizeDpiTrigger" onclick="toggleResizeDpiMenu(event)" title="Change Output Density (DPI)" aria-label="Change Output Density (DPI)" data-i18n-title="resize_dpi_trigger_title" data-i18n-aria="resize_dpi_trigger_title">
+                    <span class="resize-dpi-trigger-icon" id="resizeDpiTriggerIcon"><i class="fa-solid fa-gem"></i></span>
+                    <span class="resize-dpi-trigger-text" id="resizeDpiTriggerText">300 DPI</span>
+                    <i class="fa-solid fa-chevron-down resize-dpi-trigger-arrow" id="resizeDpiTriggerArrow"></i>
+                  </button>
+                  <div class="resize-dpi-menu" id="resizeDpiMenu" style="display:none;">
+                    <div class="resize-dpi-menu-header">
+                      <span>Density Profile</span>
+                      <span class="resize-dpi-menu-sublabel">Dots Per Inch</span>
+                    </div>
+                    <button type="button" class="resize-dpi-item active" data-dpi="300" onclick="selectResizeDpi(300, event)" title="300 DPI - Ultra HD Print &amp; Archival" aria-label="300 DPI - Ultra HD Print &amp; Archival" data-i18n-title="resize_dpi_300" data-i18n-aria="resize_dpi_300">
+                      <div class="resize-dpi-item-left">
+                        <span class="resize-dpi-item-icon hd"><i class="fa-solid fa-gem"></i></span>
+                        <div class="resize-dpi-item-info">
+                          <span class="resize-dpi-item-name">300 DPI</span>
+                          <span class="resize-dpi-item-desc">Ultra HD Print & Archival</span>
+                        </div>
+                      </div>
+                      <div class="resize-dpi-item-right">
+                        <span class="resize-dpi-badge hd">MAX</span>
+                        <i class="fa-solid fa-check resize-dpi-check"></i>
+                      </div>
+                    </button>
+                    <button type="button" class="resize-dpi-item" data-dpi="150" onclick="selectResizeDpi(150, event)" title="150 DPI - Balanced Medium Quality" aria-label="150 DPI - Balanced Medium Quality" data-i18n-title="resize_dpi_150" data-i18n-aria="resize_dpi_150">
+                      <div class="resize-dpi-item-left">
+                        <span class="resize-dpi-item-icon med"><i class="fa-solid fa-sliders"></i></span>
+                        <div class="resize-dpi-item-info">
+                          <span class="resize-dpi-item-name">150 DPI</span>
+                          <span class="resize-dpi-item-desc">Balanced Medium Quality</span>
+                        </div>
+                      </div>
+                      <div class="resize-dpi-item-right">
+                        <span class="resize-dpi-badge med">MID</span>
+                        <i class="fa-solid fa-check resize-dpi-check"></i>
+                      </div>
+                    </button>
+                    <button type="button" class="resize-dpi-item" data-dpi="72" onclick="selectResizeDpi(72, event)" title="72 DPI - Draft Screen &amp; Web" aria-label="72 DPI - Draft Screen &amp; Web" data-i18n-title="resize_dpi_72" data-i18n-aria="resize_dpi_72">
+                      <div class="resize-dpi-item-left">
+                        <span class="resize-dpi-item-icon draft"><i class="fa-solid fa-bolt"></i></span>
+                        <div class="resize-dpi-item-info">
+                          <span class="resize-dpi-item-name">72 DPI</span>
+                          <span class="resize-dpi-item-desc">Draft Screen & Web</span>
+                        </div>
+                      </div>
+                      <div class="resize-dpi-item-right">
+                        <span class="resize-dpi-badge draft">FAST</span>
+                        <i class="fa-solid fa-check resize-dpi-check"></i>
+                      </div>
+                    </button>
+                  </div>
+                  <!-- Hidden native select for backwards compatibility & automated tests -->
+                  <select class="resize-dpi-select" id="resizeDpiSelect" onchange="onResizeDpiChange(this.value)" style="display:none;" aria-hidden="true" tabindex="-1">
+                    <option value="300" selected>300 (High Quality Print)</option>
+                    <option value="150">150 (Medium Quality)</option>
+                    <option value="72">72 (Draft / Screen)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Width / Height Inputs Row -->
+            <div class="resize-dim-row">
+              <!-- Width -->
+              <div class="resize-dim-group">
+                <label class="resize-dim-label">W</label>
+                <div class="resize-input-wrap">
+                  <button class="resize-step-btn" onclick="stepResizeDimension('w', -1)" title="Decrease Width" aria-label="Decrease Width" data-i18n-title="resize_dim_w_decrease" data-i18n-aria="resize_dim_w_decrease">
+                    <i class="fa-solid fa-minus"></i>
+                  </button>
+                  <input type="number" class="resize-num-input" id="resizeWidthInput" min="1" max="99999" step="any"
+                    oninput="onResizeWidthInput(this.value)" onblur="onResizeWidthInput(this.value)" placeholder="W" title="Custom Width" aria-label="Custom Width" data-i18n-title="resize_dim_w_input" data-i18n-aria="resize_dim_w_input">
+                  <button class="resize-step-btn" onclick="stepResizeDimension('w', 1)" title="Increase Width" aria-label="Increase Width" data-i18n-title="resize_dim_w_increase" data-i18n-aria="resize_dim_w_increase">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                </div>
+                <span class="resize-unit-badge" id="resizeUnitBadgeW">px</span>
+              </div>
+
+              <!-- Aspect Lock Toggle -->
+              <button class="resize-aspect-lock-btn" id="resizeAspectLockBtn" onclick="toggleResizeAspectLock()" title="Lock / Unlock Aspect Ratio" aria-label="Toggle aspect ratio lock" data-i18n-title="resize_aspect_lock" data-i18n-aria="resize_aspect_lock">
+                <i class="fa-solid fa-link" id="resizeAspectLockIcon"></i>
+              </button>
+
+              <!-- Height -->
+              <div class="resize-dim-group">
+                <label class="resize-dim-label">H</label>
+                <div class="resize-input-wrap">
+                  <button class="resize-step-btn" onclick="stepResizeDimension('h', -1)" title="Decrease Height" aria-label="Decrease Height" data-i18n-title="resize_dim_h_decrease" data-i18n-aria="resize_dim_h_decrease">
+                    <i class="fa-solid fa-minus"></i>
+                  </button>
+                  <input type="number" class="resize-num-input" id="resizeHeightInput" min="1" max="99999" step="any"
+                    oninput="onResizeHeightInput(this.value)" onblur="onResizeHeightInput(this.value)" placeholder="H" title="Custom Height" aria-label="Custom Height" data-i18n-title="resize_dim_h_input" data-i18n-aria="resize_dim_h_input">
+                  <button class="resize-step-btn" onclick="stepResizeDimension('h', 1)" title="Increase Height" aria-label="Increase Height" data-i18n-title="resize_dim_h_increase" data-i18n-aria="resize_dim_h_increase">
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
+                </div>
+                <span class="resize-unit-badge" id="resizeUnitBadgeH">px</span>
+              </div>
+            </div>
+
+            <!-- Fit Mode Row -->
+            <div class="resize-fit-row">
+              <span class="resize-section-label"><i class="fa-solid fa-crop-simple"></i> Fit</span>
+              <div class="resize-fit-chips">
+                <button class="resize-fit-chip" data-fit="contain" onclick="setResizeFitMode('contain')" title="Fit (contain with matte)" aria-label="Fit (contain with matte)" data-i18n-title="resize_fit_contain" data-i18n-aria="resize_fit_contain">Fit</button>
+                <button class="resize-fit-chip active" data-fit="cover" onclick="setResizeFitMode('cover')" title="Fill (crop &amp; cover)" aria-label="Fill (crop &amp; cover)" data-i18n-title="resize_fit_cover" data-i18n-aria="resize_fit_cover">Fill</button>
+                <button class="resize-fit-chip" data-fit="stretch" onclick="setResizeFitMode('stretch')" title="Stretch to exact size" aria-label="Stretch to exact size" data-i18n-title="resize_fit_stretch" data-i18n-aria="resize_fit_stretch">Stretch</button>
+              </div>
+            </div>
+
+            <!-- Quick Presets Strip -->
+            <div class="resize-quick-presets" id="resizeQuickPresets">
+              <!-- populated dynamically by JS -->
+            </div>
+
+          </div>
+
+          <!-- Bottom Action Bar -->
+          <div class="crop-bottom-bar resize-bottom-bar">
+            <div class="crop-modal-action-btns">
+              <button class="btn btn-outline" onclick="closeResizeEditorModal()" data-i18n="crop_cancel" data-i18n-title="crop_cancel" data-i18n-aria="crop_cancel" title="Cancel" aria-label="Cancel">Cancel</button>
+              <button class="btn btn-primary resize-apply-btn" onclick="applyAndSaveResize()" data-i18n-title="resize_apply" data-i18n-aria="resize_apply" title="Apply Resize" aria-label="Apply Resize">
+                <i class="fa-solid fa-check"></i> <span data-i18n="resize_apply">Apply Resize</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- App In-Place OTA Update Modal -->
       <div class="modal-overlay dialog-mode" id="appUpdateModal" style="display: none;">
         <div class="dialog-card luxury-dialog" style="max-width: 440px;">
           <div class="dialog-header">
             <div>
               <span class="dialog-eyebrow"><i class="fa-solid fa-sparkles" style="color: #38bdf8; margin-right: 4px;"></i> <span data-i18n="update_modal_eyebrow">UPDATE AVAILABLE</span></span>
-              <h3 class="dialog-title" id="updateModalTitle" data-i18n="update_modal_title">New Aura Update Ready</h3>
+              <h3 class="dialog-title" id="updateModalTitle" data-i18n="update_modal_title">New PicShelf Update Ready</h3>
             </div>
-            <button class="close-dialog-btn" onclick="closeAppUpdateModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" onclick="closeAppUpdateModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
           <div style="margin: 16px 0;">
@@ -2844,7 +3881,7 @@
               <span class="dialog-eyebrow"><i class="fa-solid fa-heart-pulse" style="color: #a855f7; margin-right: 4px;"></i> <span data-i18n="feedback_modal_eyebrow">COMMUNITY &amp; IMPROVEMENT</span></span>
               <h3 class="dialog-title" data-i18n="feedback_modal_title">Feedback &amp; Suggestions</h3>
             </div>
-            <button class="close-dialog-btn" onclick="closeFeedbackModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" onclick="closeFeedbackModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
 
           <form id="feedbackForm" onsubmit="submitUserFeedback(event)" style="margin-top: 14px;">
@@ -2866,14 +3903,20 @@
 
             <!-- Subject Input -->
             <div style="margin-bottom: 12px;">
-              <label for="feedbackSubjectInput" style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;" data-i18n="feedback_subject_label">Summary / Topic:</label>
-              <input type="text" id="feedbackSubjectInput" class="styled-input feedback-input" required placeholder="Brief summary of your feedback or idea..." data-i18n-placeholder="feedback_subject_placeholder" style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 12px; font-size: 13.5px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label for="feedbackSubjectInput" style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0;" data-i18n="feedback_subject_label">Summary / Topic:</label>
+                <span id="feedbackSubjectCounter" class="feedback-counter">0 / 100</span>
+              </div>
+              <input type="text" id="feedbackSubjectInput" class="styled-input feedback-input" required maxlength="100" placeholder="Brief summary of your feedback or idea..." data-i18n-placeholder="feedback_subject_placeholder" style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 12px; font-size: 13.5px;" oninput="updateFeedbackSubjectCounter()">
             </div>
 
             <!-- Message Textarea -->
             <div style="margin-bottom: 12px;">
-              <label for="feedbackMessageInput" style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;" data-i18n="feedback_desc_label">Details:</label>
-              <textarea id="feedbackMessageInput" class="styled-input feedback-input" required rows="4" placeholder="Share your feedback, suggestions, or ideas to improve Aura..." data-i18n-placeholder="feedback_desc_placeholder" style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 12px; font-size: 13px; resize: vertical; min-height: 80px;"></textarea>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label for="feedbackMessageInput" style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 0;" data-i18n="feedback_desc_label">Details:</label>
+                <span id="feedbackMessageCounter" class="feedback-counter">0 / 400</span>
+              </div>
+              <textarea id="feedbackMessageInput" class="styled-input feedback-input" required maxlength="400" rows="4" placeholder="Share your feedback, suggestions, or ideas to improve PicShelf..." data-i18n-placeholder="feedback_desc_placeholder" style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 12px; font-size: 13px; resize: none; height: 105px; max-height: 115px; overflow-y: auto; overflow-wrap: anywhere; word-break: break-word;" oninput="updateFeedbackMessageCounter()"></textarea>
             </div>
 
             <!-- Optional Contact (Email/Name) -->
@@ -2885,7 +3928,7 @@
             <!-- Diagnostics Pill -->
             <div class="feedback-diagnostics-pill">
               <i class="fa-solid fa-circle-info" style="color: #38bdf8;"></i>
-              <span id="feedbackDiagnosticsText">Aura v2.4.0 · Local Device Diagnostics Attached</span>
+              <span id="feedbackDiagnosticsText">PicShelf v2.4.0 · Local Device Diagnostics Attached</span>
             </div>
 
             <!-- Form Actions -->
@@ -2904,7 +3947,7 @@
         <div class="dialog-card">
           <div class="dialog-header">
             <h3><i class="fa-solid fa-location-dot" style="color:#38bdf8; margin-right:8px;"></i>Set Photo Location</h3>
-            <button class="close-dialog-btn" onclick="closeManualLocationModal()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" onclick="closeManualLocationModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <p class="dialog-desc">Customize place, city, and country tags for this photo.</p>
           <div class="dialog-input-group" style="margin-bottom: 10px;">
@@ -2931,7 +3974,7 @@
         <div class="dialog-card">
           <div class="dialog-header">
             <h3><i class="fa-solid fa-key" style="color:var(--primary); margin-right:8px;"></i>Change Vault PIN</h3>
-            <button class="close-dialog-btn" onclick="closeChangePinModal()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" onclick="closeChangePinModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <p class="dialog-desc">Set a 4-digit PIN for your biometric app lock fallback.</p>
           <div class="dialog-input-group" style="margin-bottom: 14px;">
@@ -2996,7 +4039,7 @@
         <div class="dialog-card" style="max-width: 350px;">
           <div class="dialog-header">
             <h3><i class="fa-solid fa-unlock-keyhole" style="color:#38bdf8; margin-right:8px;"></i>Forgot Passcode?</h3>
-            <button class="close-dialog-btn" onclick="closeForgotPasscodeModal()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="close-dialog-btn" onclick="closeForgotPasscodeModal()" title="Close" data-i18n-title="modal_close" aria-label="Close" data-i18n-aria="modal_close"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <p class="dialog-desc" style="margin-bottom: 18px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.75);">
             Verify your biometric identity (Fingerprint / FaceID) or verify using your phone's screen lock (PIN, Pattern, or Password) to securely reset your passcode.
@@ -3036,15 +4079,118 @@
         </div>
       </div>
 
+      <!-- Download Duplicate Detection Decision Modal (Production Grade) -->
+      <div class="modal-overlay dialog-mode" id="downloadDuplicateModal" style="display: none; position: fixed; inset: 0; z-index: 1000010;">
+        <div class="dialog-card" style="max-width: 380px;">
+          <div class="dialog-header">
+            <h3><i class="fa-solid fa-clone" style="color: #38bdf8; margin-right: 8px;"></i><span data-i18n="download_dup_title">Duplicate Photos Found</span></h3>
+            <button class="close-dialog-btn" id="downloadDuplicateCloseBtn" onclick="document.getElementById('downloadDuplicateModal').style.display='none'" title="Close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="dialog-desc" data-i18n="download_dup_desc" style="margin-bottom: 14px; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.8);">
+            Some of the photos you selected have already been exported previously to this destination.
+          </p>
+          
+          <div class="download-dup-summary-box">
+            <div class="download-dup-badge-row">
+              <span class="dup-stat-pill total" id="duplicateModalTotalText">10 selected</span>
+              <span class="dup-stat-pill dups" id="duplicateModalDupsText">6 already downloaded</span>
+              <span class="dup-stat-pill new" id="duplicateModalNewText">4 new</span>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 18px;">
+            <button type="button" class="btn btn-primary" id="downloadNewOnlyBtn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; font-weight: 600;">
+              <i class="fa-solid fa-cloud-arrow-down"></i> <span data-i18n="download_new_only">Download New Only (Recommended)</span>
+            </button>
+            <button type="button" class="btn btn-outline" id="downloadAllDuplicatesBtn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; font-size: 13px; color: rgba(255,255,255,0.9); border-color: rgba(255,255,255,0.25);">
+              <i class="fa-solid fa-copy"></i> <span data-i18n="download_all">Download All (Keep Copies)</span>
+            </button>
+            <button type="button" class="btn btn-outline" id="downloadDuplicateCancelBtn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; font-size: 12px; opacity: 0.8;">
+              <span data-i18n="btn_cancel">Cancel</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Download Progress Modal (Production Grade) -->
+      <div class="modal-overlay dialog-mode" id="downloadProgressModal" style="display: none; position: fixed; inset: 0; z-index: 1000012;">
+        <div class="dialog-card" style="max-width: 420px; text-align: center; padding: 24px 22px;">
+          <div class="download-progress-icon-wrap">
+            <i class="fa-solid fa-cloud-arrow-down" style="color: #38bdf8; font-size: 26px;"></i>
+          </div>
+          <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 700; color: #fff;" id="downloadProgressTitle">Exporting Photos...</h3>
+
+          <!-- Prominent Saved Folder Location Box with Full Path Visibility -->
+          <div class="download-location-card">
+            <div class="download-location-header">
+              <i class="fa-solid fa-folder-open"></i>
+              <span>SAVED FOLDER LOCATION</span>
+            </div>
+            <div class="download-location-path" id="downloadProgressPath">Pictures/PicShelf/...</div>
+            <div class="download-location-hint">
+              <i class="fa-solid fa-circle-check" style="color: #10b981;"></i>
+              <span>Accessible in your Phone Gallery, Google Photos &amp; Files app</span>
+            </div>
+          </div>
+
+          <div class="download-progress-track">
+            <div class="download-progress-fill" id="downloadProgressBarFill" style="width: 0%;"></div>
+          </div>
+
+          <div class="download-progress-stats-row">
+            <span class="download-count-label" id="downloadProgressCount">0 of 0</span>
+            <div class="download-pills-wrap">
+              <span class="download-pill success" id="downloadProgressSuccessPill">0 saved</span>
+              <span class="download-pill failed" id="downloadProgressFailedPill" style="display: none;">0 failed</span>
+            </div>
+          </div>
+
+          <p class="download-progress-status-msg" id="downloadProgressStatusText">Preparing photos for safe storage...</p>
+
+          <div class="download-progress-actions" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+            <button type="button" class="btn btn-outline" id="downloadProgressCancelBtn" onclick="DownloadManager.cancelActiveSession()" style="min-width: 110px;">
+              <i class="fa-solid fa-ban" style="margin-right: 6px;"></i><span>Cancel</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="downloadProgressRetryBtn" style="display: none; min-width: 120px;">
+              <i class="fa-solid fa-rotate-right" style="margin-right: 6px;"></i><span>Retry Failed</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="downloadProgressDoneBtn" style="display: none; min-width: 140px; font-weight: 700; border-radius: 9999px; padding: 10px 24px;" onclick="DownloadManager.closeProgressModal()">
+              <i class="fa-solid fa-check" style="margin-right: 6px;"></i><span>Done</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Download History & Session Registry Modal -->
+      <div class="modal-overlay dialog-mode" id="downloadHistoryModal" style="display: none; position: fixed; inset: 0; z-index: 1000014;">
+        <div class="dialog-card" style="max-width: 440px; max-height: 85vh; display: flex; flex-direction: column;">
+          <div class="dialog-header">
+            <h3><i class="fa-solid fa-clock-rotate-left" style="color: #38bdf8; margin-right: 8px;"></i><span data-i18n="download_history_title">Download History</span></h3>
+            <button class="close-dialog-btn" onclick="document.getElementById('downloadHistoryModal').style.display='none'" title="Close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="dialog-desc" style="margin-bottom: 12px; font-size: 12px; color: rgba(255,255,255,0.7);">
+            All export sessions and physical MediaStore batch locations.
+          </p>
+          <div class="download-history-list" id="downloadHistoryList" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; max-height: 400px;">
+            <!-- Rendered dynamically -->
+          </div>
+          <div style="margin-top: 14px; text-align: right;">
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('downloadHistoryModal').style.display='none'" style="padding: 8px 20px; font-size: 13px;">
+              <span>Close</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Luxury Biometric & PIN App Lock Screen Overlay -->
       <div class="app-lock-overlay" id="appLockOverlay" style="display: none;">
         <div class="app-lock-backdrop"></div>
         <div class="app-lock-card">
           <div class="lock-brand-icon">
-            <img src="icon.png" alt="Aura Photos">
+            <img src="icon.png" alt="PicShelf">
             <div class="lock-aura-ring"></div>
           </div>
-          <h2 class="lock-title">Aura Photos Vault</h2>
+          <h2 class="lock-title">PicShelf Vault</h2>
           <p class="lock-subtitle" id="appLockSubtitle">Vault is Locked</p>
 
           <!-- Biometric FaceID / Fingerprint Trigger Button -->
@@ -3103,6 +4249,7 @@
   </main>
 
   <script src="i18n.js"></script>
+  <script src="download_manager.js"></script>
   <script src="app.js"></script>
 </body>
 

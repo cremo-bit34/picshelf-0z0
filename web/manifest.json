@@ -1,6 +1,6 @@
 {
-  "name": "Aura Photo Organizer",
-  "short_name": "Aura Photos",
+  "name": "PicShelf Photo Organizer",
+  "short_name": "PicShelf",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
